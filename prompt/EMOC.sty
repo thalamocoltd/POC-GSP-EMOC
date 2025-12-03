@@ -1,0 +1,125 @@
+Design a professional web application named "eMoC (Electronic Management of Change)" with the following specifications:
+
+NAVIGATION STRUCTURE:
+- Left sidebar navigation (collapsible, collapsed by default)
+- Menu items: Home, New MOC Request, Search, Admin, Settings
+- Display as icons only when collapsed, show text labels on hover
+- Highlight active menu item
+- Responsive behavior for mobile/tablet
+
+HOME PAGE LAYOUT:
+
+Header Section:
+- Application name "PTT GSP eMoC"
+- Banner image
+
+TO DO LIST Table:
+- Table title: "TO DO LIST"
+- Columns:
+  • MOC No (filterable, sortable, hyperlink to MOC Detail Form Page)
+  • MOC Title (searchable, sortable, hyperlink to MOC Detail Form Page)
+  • Type (filterable, sortable) - values: Permanent/Temporary/Overriding
+  • Task (filterable, sortable) - examples: "Assign MOC Champion", "Review Risk Assessment"
+  • Assigned To (searchable, sortable) - fixed full name display
+  • Assigned On (filterable, sortable) - format: DD/MM/YYYY HH:MM
+  • Part (filterable, sortable) - values: Initiation/Review/Implementation/Closeout
+
+Table Features:
+- Search box for table-wide search
+- Filter icons/dropdowns for filterable columns
+- Sortable column headers (click to sort ascending/descending)
+- Pagination: 10 items per page with page controls
+
+Related MOC Table:
+- Table title: "Related MOC"
+- Columns:
+  • MOC No (filterable, sortable, hyperlink to MOC Detail Form Page)
+  • MOC Title (searchable, sortable, hyperlink to MOC Detail Form Page)
+  • Type (filterable, sortable) - values: Permanent/Temporary/Overriding
+  • Status (filterable, sortable) - displays current task
+  • Initiation (status icon column, display at same level as other columns)
+  • Review (status icon column, display at same level as other columns)
+  • Implementation (status icon column, display at same level as other columns)
+  • Closeout (status icon column, display at same level as other columns)
+  • MOC Champion (displays full name)
+  • Last Updated (format: DD/MM/YYYY HH:MM)
+
+Part Status Icons (for Initiation, Review, Implementation, Closeout columns):
+- Grey circle = Not Started
+- Yellow circle = In Progress
+- Green checkmark = Completed
+- Red cross = Rejected/Cancelled
+
+Table Features:
+- Search box for table-wide search
+- Filter icons/dropdowns for filterable columns
+- Sortable column headers (click to sort)
+- Pagination: 10 items per page with page controls
+
+NEW MOC REQUEST FORM (Multi-step):
+
+Step 1 - MOC Prescreening Form:
+Questions:
+- Is this change related to TPM Loss? (Yes/No radio buttons, required)
+- Is this change related to Safety? (Yes/No radio buttons, required)
+- Is this change related to Environment? (Yes/No radio buttons, required)
+- Is this change related to Quality? (Yes/No radio buttons, required)
+
+Buttons: Next | Cancel
+
+Step 2 - Initiation Request Form:
+
+Section: General Information
+1. Requester Name (read-only field, auto-filled with logged-in user's full name)
+2. Request Date (read-only field, auto-filled with current date/time, format: DD/MM/YYYY HH:MM)
+3. MOC Title (single-line text, required)
+4. Length of Change (dropdown: Permanent/Temporary/Overriding, required)
+5. Type of Change (dropdown: Plant Change/Maintenance Change/Process Change, required)
+6. Priority of Change (radio buttons: Normal/Emergency, required)
+7. Area (dropdown, required)
+8. Unit (cascading dropdown from Area, required)
+9. Cost Estimated of Change (THB currency format, required)
+
+Section: Change Details
+10. Detail of Change (textarea, required)
+11. Reason for Change (textarea, required)
+12. Scope of Work (textarea, required)
+13. Benefits Value (checkbox list: Safety, Environment, Community, Reputation, Law, Money, required)
+14. Expected Benefits (textarea, required)
+15. Estimated Value (Baht/year) (THB currency format, required)
+
+Section: Review of Change
+16. Risk Assessment Before Change (button with color indicator showing risk level, default "Please select", opens modal dialog, updates after modal closes, required)
+17. Risk Assessment After Change (same behavior as field 16, required)
+
+Section: Attachments
+18. Attachments (multi-file upload component with guideline text: "For example, Basic design of change, Relevant document such as photo, drawing.")
+
+Buttons: Save Draft | Submit | Cancel
+
+DESIGN SPECIFICATIONS:
+- Professional, clean, minimal aesthetic
+- Primary color theme: Light blue
+- Fully responsive design (desktop, tablet, mobile)
+- Consistent design system across all pages
+- Data tables with:
+  • Clear column headers with sort indicators
+  • Filter icons integrated into headers
+  • Hover states for interactive elements
+  • Hyperlink styling for MOC No and MOC Title
+  • Part status columns (Initiation, Review, Implementation, Closeout) aligned at same level as other columns
+  • Status icons clearly visible and color-coded
+  • Pagination controls at table bottom
+  • Search input with search icon
+- Form elements:
+  • Clear section headers for form organization
+  • Read-only fields visually distinct from editable fields
+  • Clear required field indicators
+  • Validation feedback
+  • Currency input formatting
+  • Cascading dropdown logic
+  • Checkbox list with multiple selections
+  • Modal dialogs for risk assessment
+  • File upload with multiple file support, file list display, and helpful guideline text
+- Modern UI components with proper spacing, typography, and interactive states
+- Loading states for async operations
