@@ -6,8 +6,8 @@ import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
 import { formatFileSize } from "../../lib/emoc-utils";
-import { PartProgressBar } from "../ui/PartProgressBar";
 import { TaskCardList } from "../workflow/TaskCardList";
+import { TaskSection } from "../workflow/TaskSection";
 import { INITIATION_TASKS, REVIEW_TASKS, IMPLEMENTATION_TASKS, CLOSEOUT_TASKS } from "../../lib/workflow-demo-data";
 
 interface ViewRequestFormProps {
@@ -151,13 +151,6 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               {step === 4 && "Step 4: Closeout"}
             </p>
           </div>
-
-          {/* Progress Bar */}
-          {(step >= 1 && step <= 4) && (
-            <div className="mb-8">
-              <PartProgressBar currentPart={getPartName(step) as "Initiation" | "Review" | "Implementation" | "Closeout"} />
-            </div>
-          )}
 
           {/* General Information */}
           <section id="section-general-info" className="space-y-6 scroll-mt-24">
@@ -321,50 +314,15 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
             )}
           </section>
 
-          {/* Step 2: Review Status Section */}
+          {/* Step 2: Review Tasks Section */}
           {step === 2 && (
-            <section id="section-review-status" className="space-y-6 scroll-mt-24">
-              <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#006699]" />
-                Review Status
-              </h3>
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                    <Clock className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-[#1C1C1E] mb-2">Awaiting Review</h4>
-                    <p className="text-sm text-[#68737D] mb-4">
-                      This MOC request is currently pending review by the designated approvers.
-                    </p>
-                    <div className="space-y-3">
-                      <Label className="text-[13px] font-medium text-[#68737D]">Assigned Reviewers</Label>
-                      <div className="space-y-2">
-                        {[
-                          { name: "Sarah Johnson", role: "Technical Manager", status: "Pending" },
-                          { name: "Michael Chen", role: "Safety Officer", status: "Pending" },
-                          { name: "David Williams", role: "Operations Lead", status: "Pending" }
-                        ].map((reviewer, idx) => (
-                          <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <User className="w-5 h-5 text-gray-600" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-[#1C1C1E]">{reviewer.name}</p>
-                              <p className="text-xs text-[#68737D]">{reviewer.role}</p>
-                            </div>
-                            <span className="text-xs font-medium px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300">
-                              {reviewer.status}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <TaskSection
+              sectionId="section-review-tasks"
+              title="Approval Tasks"
+              description="Review and approval tasks assigned to the relevant stakeholders"
+            >
+              <TaskCardList tasks={REVIEW_TASKS} showItemNumbers={true} />
+            </TaskSection>
           )}
 
           {/* Step 3: Implementation Details Section */}
@@ -479,29 +437,35 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
             </section>
           )}
 
-          {/* Task Cards Sections */}
+          {/* Step 1: Approval Tasks Section */}
           {step === 1 && (
-            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
-              <TaskCardList tasks={INITIATION_TASKS} partName="Initiation" />
-            </section>
-          )}
-
-          {step === 2 && (
-            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
-              <TaskCardList tasks={REVIEW_TASKS} partName="Review" />
-            </section>
+            <TaskSection
+              sectionId="section-initiation-tasks"
+              title="Approval Tasks"
+              description="Initial review and approval tasks in the MOC approval chain"
+            >
+              <TaskCardList tasks={INITIATION_TASKS} showItemNumbers={true} />
+            </TaskSection>
           )}
 
           {step === 3 && (
-            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
-              <TaskCardList tasks={IMPLEMENTATION_TASKS} partName="Implementation" />
-            </section>
+            <TaskSection
+              sectionId="section-implementation-tasks"
+              title="Implementation Tasks"
+              description="Tasks assigned to the implementation team"
+            >
+              <TaskCardList tasks={IMPLEMENTATION_TASKS} showItemNumbers={true} />
+            </TaskSection>
           )}
 
           {step === 4 && (
-            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
-              <TaskCardList tasks={CLOSEOUT_TASKS} partName="Closeout" />
-            </section>
+            <TaskSection
+              sectionId="section-closeout-tasks"
+              title="Closeout Tasks"
+              description="Final verification and handover tasks"
+            >
+              <TaskCardList tasks={CLOSEOUT_TASKS} showItemNumbers={true} />
+            </TaskSection>
           )}
         </div>
       </div>

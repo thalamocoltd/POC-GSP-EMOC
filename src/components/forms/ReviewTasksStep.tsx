@@ -2,22 +2,22 @@ import React from "react";
 import { StepLayout } from "./StepLayout";
 import { GeneralInfoSection } from "./GeneralInfoSection";
 import { InitiationFormData } from "../../types/emoc";
-import { Label } from "../ui/label";
-import { CheckCircle2, Clock, User } from "lucide-react";
+import { TaskCardList } from "../workflow/TaskCardList";
+import { REVIEW_TASKS } from "../../lib/workflow-demo-data";
 
-interface ReviewApprovalStepProps {
+interface ReviewTasksStepProps {
   data: InitiationFormData | null;
   onPrevious: () => void;
   onNext: () => void;
   onBack: () => void;
 }
 
-export const ReviewApprovalStep = ({
+export const ReviewTasksStep = ({
   data,
   onPrevious,
   onNext,
   onBack
-}: ReviewApprovalStepProps) => {
+}: ReviewTasksStepProps) => {
   return (
     <StepLayout
       title="Review & Approval"
@@ -31,13 +31,16 @@ export const ReviewApprovalStep = ({
       {/* General Information Section */}
       <GeneralInfoSection data={data} />
 
-      {/* Demo Message */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-        <p className="text-sm text-[#68737D]">
-          <strong>Demo Mode:</strong> This is a mockup of the Review & Approval step.
-          In a production environment, this would show actual review workflows, comments,
-          and approval status.
-        </p>
+      {/* Review Tasks Section */}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold text-[#1C1C1E] mb-2">Review Tasks</h3>
+          <p className="text-sm text-[#68737D]">
+            Review and approval tasks assigned to the relevant stakeholders
+          </p>
+        </div>
+
+        <TaskCardList tasks={REVIEW_TASKS} stage="readonly" />
       </div>
     </StepLayout>
   );

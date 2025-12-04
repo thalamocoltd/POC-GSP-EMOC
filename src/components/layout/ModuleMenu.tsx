@@ -53,6 +53,7 @@ const menuItems: MenuItem[] = [
       { id: "1.2", label: "Change Details", targetId: "section-change-details" },
       { id: "1.3", label: "Review of Change", targetId: "section-risk" },
       { id: "1.4", label: "Attachments", targetId: "section-attachments" },
+      { id: "1.5", label: "Approval Tasks", targetId: "section-initiation-tasks" },
     ]
   },
   {
@@ -61,7 +62,7 @@ const menuItems: MenuItem[] = [
     step: 2,
     subItems: [
       { id: "2.1", label: "General Information", targetId: "section-general-info" },
-      { id: "2.2", label: "Review Status", targetId: "section-review-status" },
+      { id: "2.2", label: "Approval Tasks", targetId: "section-review-tasks" },
     ]
   },
   {
@@ -71,6 +72,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { id: "3.1", label: "General Information", targetId: "section-general-info" },
       { id: "3.2", label: "Implementation Details", targetId: "section-implementation-details" },
+      { id: "3.3", label: "Implementation Tasks", targetId: "section-implementation-tasks" },
     ]
   },
   {
@@ -80,6 +82,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { id: "4.1", label: "General Information", targetId: "section-general-info" },
       { id: "4.2", label: "Closeout Status", targetId: "section-closeout-status" },
+      { id: "4.3", label: "Closeout Tasks", targetId: "section-closeout-tasks" },
     ]
   },
 ];

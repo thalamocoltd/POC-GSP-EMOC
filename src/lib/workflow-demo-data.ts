@@ -3,19 +3,19 @@ import { Task } from "../types/workflow";
 export const INITIATION_TASKS: Task[] = [
   {
     id: "task-1-1",
-    taskName: "Item 1: Initial Review and approve MOC Request",
+    taskName: "Initial Review and Approve MOC Request",
     role: "Direct Manager of Requester",
     assignedTo: "Alice Johnson",
-    assignedOn: "28/05/2024 14:30",
+    assignedOn: "15/01/2025 10:00",
     completedOn: null,
     status: "In Progress",
     comments: "",
-    attachments: [],
+    attachments: ["P&ID_Diagram.pdf", "Vendor_Quote.pdf"],
     actions: ["Approve", "Reject", "Save Draft", "Discard"]
   },
   {
     id: "task-1-2",
-    taskName: "Item 2: Review and Approve MOC Request",
+    taskName: "Review and Approve MOC Request",
     role: "Division Manager",
     assignedTo: "Bob Smith",
     assignedOn: null,
@@ -27,7 +27,7 @@ export const INITIATION_TASKS: Task[] = [
   },
   {
     id: "task-1-3",
-    taskName: "Item 3: Review and Approve MOC Request",
+    taskName: "Review and Approve MOC Request",
     role: "VP Operation",
     assignedTo: "Carol Davis",
     assignedOn: null,

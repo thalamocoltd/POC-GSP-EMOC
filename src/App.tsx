@@ -51,15 +51,31 @@ function AppContent() {
   const [currentMocStep, setCurrentMocStep] = useState<number>(1);
   const [mocFormData, setMocFormData] = useState<InitiationFormData | null>(null);
   const [mocMode, setMocMode] = useState<"create" | "view">("create");
+  const [pendingAutofillPriority, setPendingAutofillPriority] = useState<"normal" | "emergency" | "">();
 
   // Handlers
   const handleAICommand = (command: string) => {
     setIsProcessing(true);
+
+    // Extract priority from command (e.g., "autofill:normal" or "autofill:emergency")
+    if (command.startsWith("autofill:")) {
+      const priority = command.split(":")[1] as "normal" | "emergency";
+      // Simulate processing delay
+      setTimeout(() => {
+        handleProcessingComplete(priority);
+      }, 1500);
+    } else if (command === "autofill") {
+      // Fallback for old format without priority
+      setTimeout(() => {
+        handleProcessingComplete("normal");
+      }, 1500);
+    }
   };
 
-  const handleProcessingComplete = () => {
+  const handleProcessingComplete = (priority?: "normal" | "emergency") => {
     setIsProcessing(false);
     setIsAIAutofilled(true);
+    setPendingAutofillPriority(priority || "");
     setCurrentPage("create-request");
   };
 
@@ -93,6 +109,8 @@ function AppContent() {
     setCurrentMocStep(1);
     setMocFormData(null);
     setMocMode("create");
+    setIsAIAutofilled(false);
+    setPendingAutofillPriority("");
   };
 
   const handleStepTransition = (targetStep: number) => {
@@ -270,6 +288,7 @@ function AppContent() {
               onSubmit={(data) => handleStepComplete(1, data)}
               isAIAutofilled={isAIAutofilled}
               onFormDirtyChange={setIsCreateFormDirty}
+              autofillPriority={pendingAutofillPriority as "normal" | "emergency" | undefined}
             />
           </motion.div>
         )}

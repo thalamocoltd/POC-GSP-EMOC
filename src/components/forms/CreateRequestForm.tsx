@@ -7,6 +7,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "../ui/tooltip";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { RiskAssessmentModal } from "../emoc/RiskAssessmentModal";
 import { FileUploadSection } from "../emoc/FileUploadSection";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
@@ -21,6 +22,7 @@ interface CreateRequestFormProps {
   onSubmit: (data: InitiationFormData) => void;
   isAIAutofilled?: boolean;
   onFormDirtyChange?: (isDirty: boolean) => void;
+  autofillPriority?: "normal" | "emergency";
 }
 
 // Mapping of field IDs to user-friendly labels
@@ -42,8 +44,8 @@ const FIELD_LABELS: Record<string, string> = {
   riskAfterChange: 'Risk Assessment (After)',
 };
 
-// Demo autofill data for AI assistant
-const DEMO_AUTOFILL_DATA: Partial<InitiationFormData> = {
+// Demo autofill data - Normal Priority
+const DEMO_AUTOFILL_DATA_NORMAL: Partial<InitiationFormData> = {
   mocTitle: "Upgrade Pump P-101 Motor to IE3 Standard for Energy Efficiency",
   lengthOfChange: "length-1",
   typeOfChange: "type-2",
@@ -65,10 +67,38 @@ const DEMO_AUTOFILL_DATA: Partial<InitiationFormData> = {
   riskAfterChange: createRiskAssessment(2, 2),
 };
 
-export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, onFormDirtyChange }: CreateRequestFormProps) => {
+// Demo autofill data - Emergency Priority
+const DEMO_AUTOFILL_DATA_EMERGENCY: Partial<InitiationFormData> = {
+  mocTitle: "Emergency: Compressor C-205 Seal Replacement - Production Critical",
+  lengthOfChange: "length-2",
+  typeOfChange: "type-1",
+  priorityId: "priority-2",
+  areaId: "area-2",
+  unitId: "unit-2-2",
+  estimatedDurationStart: "04/12/2025",
+  estimatedDurationEnd: "05/12/2025",
+  tpmLossType: "tpm-1",
+  lossEliminateValue: 1200000,
+  detailOfChange: "Emergency replacement of seal assembly in Compressor C-205 main housing. Seal failure detected during routine inspection with visible oil leakage. Current seals model: XYZ-3000A, replacement model: XYZ-3000B upgraded seal assembly. Temporary measures in place but permanent replacement required within 24 hours to prevent equipment damage.",
+  reasonForChange: "Seal failure creates immediate risk of oil contamination in production line, potential equipment damage to compressor unit estimated at 1.2M THB, and production halt affecting critical delivery schedules. Compressor C-205 is single point of failure for Line 3 production.",
+  scopeOfWork: "1. Immediate shutdown of Compressor C-205\n2. Drain and dispose of contaminated oil\n3. Remove old seal assembly\n4. Install new seal kit (XYZ-3000B)\n5. Refill with fresh compressor oil\n6. Pressure test and safety verification\n7. Restart and monitor operation\n\nEstimated Duration: 2-3 hours (expedited)",
+  estimatedBenefit: 1200000,
+  estimatedCost: 150000,
+  benefits: ["benefit-1", "benefit-3"],
+  expectedBenefits: "Prevent equipment failure (value 1.2M THB). Maintain production continuity for Line 3 and downstream operations. Avoid safety hazard from oil spillage. Ensure regulatory compliance for equipment maintenance records.",
+  riskBeforeChange: createRiskAssessment(4, 4),
+  riskAfterChange: createRiskAssessment(1, 1),
+};
+
+// Helper to get correct demo data based on priority
+const getDemoAutofillData = (priority?: string) =>
+  priority === "emergency" ? DEMO_AUTOFILL_DATA_EMERGENCY : DEMO_AUTOFILL_DATA_NORMAL;
+
+export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, onFormDirtyChange, autofillPriority }: CreateRequestFormProps) => {
   const { openAssistantForField, reportValidationErrors, reportValidationSuccess } = useAI();
   const { setErrors: setContextErrors } = useValidationErrors();
   const [hasReportedErrors, setHasReportedErrors] = useState(false);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<InitiationFormData>({
@@ -146,19 +176,21 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
   // Auto-fill form with demo data when AI autofill is triggered
   useEffect(() => {
     if (isAIAutofilled) {
+      const demoData = getDemoAutofillData(autofillPriority);
+
       setFormData((prev: InitiationFormData) => ({
         ...prev,
-        ...DEMO_AUTOFILL_DATA
+        ...demoData
       }));
 
-      if (DEMO_AUTOFILL_DATA.areaId) {
-        setSelectedAreaId(DEMO_AUTOFILL_DATA.areaId);
-        setAvailableUnits(getUnitsByAreaId(DEMO_AUTOFILL_DATA.areaId));
+      if (demoData.areaId) {
+        setSelectedAreaId(demoData.areaId);
+        setAvailableUnits(getUnitsByAreaId(demoData.areaId));
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [isAIAutofilled]);
+  }, [isAIAutofilled, autofillPriority]);
 
   // Notify parent when form dirty state changes
   useEffect(() => {
@@ -308,16 +340,19 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
     const { isValid, errors: validationErrors } = validateAll();
     if (isValid) {
       console.log("Form Valid & Submitted:", formData);
-      // Show success alert
-      alert("✓ MOC Request submitted successfully!\n\nThe request has been submitted for review.");
-      // Reset dirty state and return to dashboard
-      setIsFormDirty(false);
-      onBack();
+      // Show success dialog instead of alert
+      setShowSubmitDialog(true);
     } else {
       // Send validation errors to chat panel
       reportValidationErrors(validationErrors, handleScrollToField, handleAutoFill);
       setHasReportedErrors(true);
     }
+  };
+
+  const handleSubmitConfirm = () => {
+    setShowSubmitDialog(false);
+    setIsFormDirty(false);
+    onBack();
   };
 
   const getRiskLevelConfig = (level: string | null) => {
@@ -438,7 +473,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                   {renderLabelWithAI("MOC Title", "mocTitle", true)}
                   <Input
                     className={cn(
-                      "h-11 bg-white transition-all duration-500",
+                      "h-11 bg-gray-50 transition-all duration-500",
                       errors.mocTitle ? "border-red-300 focus:border-red-500 focus:ring-red-200" : "border-[#D4D9DE] focus:ring-[#1F73B7]/20 focus:border-[#1F73B7]",
                       highlightedField === 'mocTitle' && "ring-2 ring-[#006699] bg-blue-50 border-[#006699]"
                     )}
@@ -449,52 +484,6 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                   />
                   {errors.mocTitle && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.mocTitle}</span>}
                 </div>
-
-                {!isEmergency && (
-                  <div className="space-y-2" id="field-lengthOfChange">
-                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
-                    <Select
-                      value={formData.lengthOfChange || ""}
-                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-11 bg-white",
-                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                      )}>
-                        <SelectValue placeholder="Select length of change" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LENGTH_OF_CHANGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
-                  </div>
-                )}
-
-                {!isEmergency && !isOverriding && (
-                  <div className="space-y-2" id="field-typeOfChange">
-                    {renderLabelWithAI("Type of Change", "typeOfChange", true)}
-                    <Select
-                      value={formData.typeOfChange || ""}
-                      onValueChange={(value) => handleInputChange('typeOfChange', value)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-11 bg-white",
-                        errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                      )}>
-                        <SelectValue placeholder="Select type of change" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TYPE_OF_CHANGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
-                  </div>
-                )}
 
                 <div className="space-y-2" id="field-priorityId">
                   {renderLabelWithAI("Priority of Change", "priorityId", true)}
@@ -531,6 +520,52 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                   {errors.priorityId && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.priorityId}</span>}
                 </div>
 
+                {!isEmergency && (
+                  <div className="space-y-2" id="field-lengthOfChange">
+                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
+                    <Select
+                      value={formData.lengthOfChange || ""}
+                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-gray-50",
+                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select length of change" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LENGTH_OF_CHANGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
+                  </div>
+                )}
+
+                {!isEmergency && !isOverriding && (
+                  <div className="space-y-2" id="field-typeOfChange">
+                    {renderLabelWithAI("Type of Change", "typeOfChange", true)}
+                    <Select
+                      value={formData.typeOfChange || ""}
+                      onValueChange={(value) => handleInputChange('typeOfChange', value)}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-gray-50",
+                        errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select type of change" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TYPE_OF_CHANGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
+                  </div>
+                )}
+
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2" id="field-areaId">
                     <Label className="text-[13px] font-medium text-[#1C1C1E]">
@@ -541,7 +576,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                       onValueChange={(value) => handleInputChange('areaId', value)}
                     >
                       <SelectTrigger className={cn(
-                        "h-11 bg-white",
+                        "h-11 bg-gray-50",
                         errors.areaId ? "border-red-300" : "border-[#D4D9DE]"
                       )}>
                         <div className="flex items-center gap-2">
@@ -576,7 +611,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                       disabled={!formData.areaId}
                     >
                       <SelectTrigger className={cn(
-                        "h-11 bg-white",
+                        "h-11 bg-gray-50",
                         errors.unitId ? "border-red-300" : "border-[#D4D9DE]"
                       )}>
                         <SelectValue placeholder={formData.areaId ? "Select unit" : "Select area first"} />
@@ -629,7 +664,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                       onValueChange={(value: string) => handleInputChange('tpmLossType', value)}
                     >
                       <SelectTrigger className={cn(
-                        "h-11 bg-white",
+                        "h-11 bg-gray-50",
                         errors.tpmLossType ? "border-red-300" : "border-[#D4D9DE]"
                       )}>
                         <SelectValue placeholder="Select TPM loss type" />
@@ -766,7 +801,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                             "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all duration-200 flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer",
                             isSelected
                               ? "border-[#006699] bg-[#006699] text-white shadow-md"
-                              : "border-[#D4D9DE] bg-white text-[#68737D] hover:border-[#006699] hover:text-[#006699] hover:shadow-sm",
+                              : "border-[#D4D9DE] bg-gray-50 text-[#68737D] hover:border-[#006699] hover:text-[#006699] hover:shadow-sm",
                             errors.benefits && !isSelected && "border-red-300"
                           )}
                         >
@@ -1038,6 +1073,28 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
             setIsRiskAfterModalOpen(false);
           }}
         />
+
+      {/* Submit Success Dialog */}
+      <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <AlertDialogContent className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <AlertDialogHeader>
+            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+            </div>
+            <AlertDialogTitle className="text-center text-lg">
+              MOC Request Submitted Successfully
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Your request has been submitted for review and will be assigned to appropriate reviewers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-center gap-3">
+            <AlertDialogAction onClick={handleSubmitConfirm} className="bg-green-600 hover:bg-green-700 text-white">
+              Back to Dashboard
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </TooltipProvider>
   );

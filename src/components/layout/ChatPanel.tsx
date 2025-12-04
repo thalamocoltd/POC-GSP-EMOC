@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Sparkles, ArrowUp, ArrowRight, Check } from "lucide-react";
+import { X, Sparkles, ArrowUp, ArrowRight, Check, Clock, AlertTriangle } from "lucide-react";
 import { cn } from "../ui/utils";
 import { useAI } from "../../context/AIContext";
 
@@ -21,6 +21,13 @@ interface Message {
   };
   type?: 'normal' | 'validation-error';
   errors?: Record<string, string>;
+  priorityOptions?: Array<{
+    label: string;
+    description: string;
+    icon: string;
+    color: string;
+    command: string;
+  }>;
 }
 
 // Field interaction types
@@ -463,12 +470,31 @@ export const ChatPanel = ({ isOpen, onClose, onCommand }: ChatPanelProps) => {
         aiResponse = {
           id: (Date.now() + 1).toString(),
           role: "ai",
-          content: "I've prepared a sample MOC request with pre-filled data. Click the button below to review the form.",
+          content: "I can help you create a MOC request. Select the request type:",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           action: {
-            label: "Open Pre-filled Form",
-            onClick: () => onCommand("autofill"),
+            label: "Choose Priority",
+            onClick: () => {
+              // This will be handled by the UI rendering the priority buttons
+            },
           },
+          // Store priority options for rendering in the message display
+          priorityOptions: [
+            {
+              label: "Normal Request",
+              description: "Standard planning & review process",
+              icon: "clock",
+              color: "green",
+              command: "autofill:normal",
+            },
+            {
+              label: "Emergency Request",
+              description: "Immediate action required",
+              icon: "alert",
+              color: "red",
+              command: "autofill:emergency",
+            },
+          ] as any,
         };
       } else {
         aiResponse = {
@@ -558,7 +584,39 @@ export const ChatPanel = ({ isOpen, onClose, onCommand }: ChatPanelProps) => {
                     ) : (
                       <>
                         {msg.content}
-                        {msg.action && (
+                        {msg.priorityOptions ? (
+                          <div className="mt-3 space-y-2">
+                            {msg.priorityOptions.map((option) => (
+                              <button
+                                key={option.command}
+                                type="button"
+                                onClick={() => onCommand(option.command)}
+                                className={cn(
+                                  "w-full p-3 rounded-lg border-2 text-left flex items-start gap-3 transition-colors",
+                                  option.color === "green"
+                                    ? "border-green-300 bg-green-50 hover:bg-green-100"
+                                    : "border-red-300 bg-red-50 hover:bg-red-100"
+                                )}
+                              >
+                                <div className="flex-shrink-0 mt-1">
+                                  {option.icon === "clock" ? (
+                                    <Clock className={cn("w-4 h-4", option.color === "green" ? "text-green-600" : "text-red-600")} />
+                                  ) : (
+                                    <AlertTriangle className={cn("w-4 h-4", option.color === "green" ? "text-green-600" : "text-red-600")} />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className={cn("font-medium", option.color === "green" ? "text-green-900" : "text-red-900")}>
+                                    {option.label}
+                                  </div>
+                                  <div className={cn("text-xs", option.color === "green" ? "text-green-700" : "text-red-700")}>
+                                    {option.description}
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : msg.action ? (
                           <button
                             type="button"
                             onClick={msg.action.onClick}
@@ -566,7 +624,7 @@ export const ChatPanel = ({ isOpen, onClose, onCommand }: ChatPanelProps) => {
                           >
                             {msg.action.label} <ArrowRight className="w-4 h-4" />
                           </button>
-                        )}
+                        ) : null}
                       </>
                     )}
                   </div>

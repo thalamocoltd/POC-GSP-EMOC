@@ -3,31 +3,42 @@ import { AreaOption, TPMLossTypeOption, PriorityOption } from "../types/emoc";
 export const AREA_OPTIONS: AreaOption[] = [
   {
     id: "area-1",
-    name: "โรงแยกก๊าซธรรมชาติระยอง",
+    name: "Production Area A",
     units: [
-      { id: "unit-1-1", name: "Unit 1", areaId: "area-1" },
-      { id: "unit-1-2", name: "Unit 2", areaId: "area-1" },
-      { id: "unit-1-3", name: "Unit 3", areaId: "area-1" },
-      { id: "unit-1-4", name: "Unit 4", areaId: "area-1" },
-      { id: "unit-1-5", name: "Unit 5", areaId: "area-1" },
-      { id: "unit-1-6", name: "Unit 6", areaId: "area-1" }
+      { id: "unit-1-1", name: "Production Area A UNIT - 1", areaId: "area-1" },
+      { id: "unit-1-2", name: "Production Area A UNIT - 2", areaId: "area-1" },
+      { id: "unit-1-3", name: "Production Area A UNIT - 3", areaId: "area-1" }
     ]
   },
   {
     id: "area-2",
-    name: "โรงแยกก๊าซธรรมชาติขนอม",
+    name: "Production Area B",
     units: [
-      { id: "unit-2-1", name: "Unit 1", areaId: "area-2" },
-      { id: "unit-2-2", name: "Unit 2", areaId: "area-2" }
+      { id: "unit-2-1", name: "Production Area B UNIT - 1", areaId: "area-2" },
+      { id: "unit-2-2", name: "Production Area B UNIT - 2", areaId: "area-2" }
     ]
   },
   {
     id: "area-3",
-    name: "คลังภาคตะวันออก",
+    name: "Utilities",
     units: [
-      { id: "unit-3-1", name: "Terminal 1", areaId: "area-3" },
-      { id: "unit-3-2", name: "Terminal 2", areaId: "area-3" },
-      { id: "unit-3-3", name: "Utilities", areaId: "area-3" }
+      { id: "unit-3-1", name: "Utilities UNIT - 1", areaId: "area-3" },
+      { id: "unit-3-2", name: "Utilities UNIT - 2", areaId: "area-3" }
+    ]
+  },
+  {
+    id: "area-4",
+    name: "Storage",
+    units: [
+      { id: "unit-4-1", name: "Storage UNIT - 1", areaId: "area-4" },
+      { id: "unit-4-2", name: "Storage UNIT - 2", areaId: "area-4" }
+    ]
+  },
+  {
+    id: "area-5",
+    name: "Laboratory",
+    units: [
+      { id: "unit-5-1", name: "Laboratory UNIT - 1", areaId: "area-5" }
     ]
   }
 ];

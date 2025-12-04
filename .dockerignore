@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build output
+build
+dist
+
+# IDE & Editor
+.vscode
+.idea
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+
+# Misc
+.claude
+prompt
+*.md
