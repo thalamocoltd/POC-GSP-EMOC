@@ -4,8 +4,11 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
-import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
+import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
 import { formatFileSize } from "../../lib/emoc-utils";
+import { PartProgressBar } from "../ui/PartProgressBar";
+import { TaskCardList } from "../workflow/TaskCardList";
+import { INITIATION_TASKS, REVIEW_TASKS, IMPLEMENTATION_TASKS, CLOSEOUT_TASKS } from "../../lib/workflow-demo-data";
 
 interface ViewRequestFormProps {
   id: string | null;
@@ -31,13 +34,17 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
         priorityId: "priority-2", // Emergency
         areaId: "area-1",
         unitId: "unit-1-1",
-        costEstimated: 800000,
+        estimatedDurationStart: "2025-12-06",
+        estimatedDurationEnd: "2025-12-08",
+        tpmLossType: "tpm-1", // Safety
+        lossEliminateValue: 800000,
         detailOfChange: "The current cooling system efficiency has dropped by 15% over the last quarter due to aging components.",
         reasonForChange: "Production output is limited during peak hours. Risk of overheating.",
         scopeOfWork: "Replace cooling pumps P-101A/B. Install new heat exchanger. Update control logic.",
-        benefitsValue: ["benefit-1", "benefit-6"], // Safety, Money
-        expectedBenefits: "Expected efficiency increase of 20%. Reduced maintenance costs.",
-        estimatedValue: 1200000,
+        estimatedBenefit: 1200000,
+        estimatedCost: 800000,
+        benefits: ["benefit-1", "benefit-6"], // Safety, Money
+        expectedBenefits: "Expected efficiency increase of 20%. Reduced maintenance costs. Prevent potential production shutdown.",
         riskBeforeChange: {
           likelihood: 3,
           impact: 3,
@@ -73,7 +80,14 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
   const getLengthOfChangeName = (id: string) => LENGTH_OF_CHANGE_OPTIONS.find(l => l.id === id)?.name || id;
   const getTypeOfChangeName = (id: string) => TYPE_OF_CHANGE_OPTIONS.find(t => t.id === id)?.name || id;
   const getPriorityName = (id: string) => PRIORITY_OPTIONS.find(p => p.id === id)?.name || id;
-  const getBenefitsValueNames = (ids: string[]) => ids.map(id => BENEFITS_VALUE_OPTIONS.find(b => b.id === id)?.name || id).join(", ");
+  const getBenefitNames = (ids: string[]) => ids.map(id => BENEFITS_VALUE_OPTIONS.find(b => b.id === id)?.name || id).join(", ");
+  const getTPMLossTypeName = (id: string) => TPM_LOSS_TYPE_OPTIONS.find(t => t.id === id)?.name || id;
+
+  // Get step-specific part name
+  const getPartName = (stepNum: number) => {
+    const parts = ["Initiation", "Review", "Implementation", "Closeout"];
+    return parts[stepNum - 1] || "Unknown";
+  };
 
   const getRiskLevelConfig = (level: string | null) => {
     if (!level) return { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600", badge: "bg-gray-100 text-gray-700" };
@@ -138,6 +152,13 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
             </p>
           </div>
 
+          {/* Progress Bar */}
+          {(step >= 1 && step <= 4) && (
+            <div className="mb-8">
+              <PartProgressBar currentPart={getPartName(step) as "Initiation" | "Review" | "Implementation" | "Closeout"} />
+            </div>
+          )}
+
           {/* General Information */}
           <section id="section-general-info" className="space-y-6 scroll-mt-24">
             <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
@@ -150,8 +171,12 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                 <ReadOnlyField label="Request Date" value={data.requestDate} />
               </div>
               <ReadOnlyField label="MOC Title" value={data.mocTitle} />
-              <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
-              <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
+              {data.lengthOfChange && (
+                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
+              )}
+              {data.typeOfChange && (
+                <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
+              )}
               {/* Enhanced Priority Field */}
               <div className="space-y-1.5">
                 <Label className="text-[13px] font-medium text-[#68737D]">Priority of Change</Label>
@@ -187,7 +212,14 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                 <ReadOnlyField label="Area" value={getAreaName(data.areaId)} />
                 <ReadOnlyField label="Unit" value={getUnitName(data.areaId, data.unitId)} />
               </div>
-              <ReadOnlyField label="Cost Estimated of Change (THB)" value={data.costEstimated.toLocaleString()} />
+              <div className="grid sm:grid-cols-2 gap-6">
+                <ReadOnlyField label="Start Date" value={data.estimatedDurationStart} />
+                <ReadOnlyField label="End Date" value={data.estimatedDurationEnd} />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-6">
+                <ReadOnlyField label="TPM Loss Type" value={getTPMLossTypeName(data.tpmLossType)} />
+                <ReadOnlyField label="Loss Eliminate Value (THB)" value={data.lossEliminateValue.toLocaleString()} />
+              </div>
             </div>
           </section>
 
@@ -200,9 +232,12 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               <ReadOnlyField label="Detail of Change" value={data.detailOfChange} multiline />
               <ReadOnlyField label="Reason for Change" value={data.reasonForChange} multiline />
               <ReadOnlyField label="Scope of Work" value={data.scopeOfWork} multiline />
-              <ReadOnlyField label="Benefits Value" value={getBenefitsValueNames(data.benefitsValue)} />
+              <div className="grid sm:grid-cols-2 gap-6">
+                <ReadOnlyField label="Estimated Benefit (THB)" value={data.estimatedBenefit.toLocaleString()} />
+                <ReadOnlyField label="Estimated Cost (THB)" value={data.estimatedCost.toLocaleString()} />
+              </div>
+              <ReadOnlyField label="Benefits" value={getBenefitNames(data.benefits)} />
               <ReadOnlyField label="Expected Benefits" value={data.expectedBenefits} multiline />
-              <ReadOnlyField label="Estimated Value (Baht/year)" value={data.estimatedValue.toLocaleString()} />
             </div>
           </section>
 
@@ -441,6 +476,31 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                   </div>
                 </div>
               </div>
+            </section>
+          )}
+
+          {/* Task Cards Sections */}
+          {step === 1 && (
+            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
+              <TaskCardList tasks={INITIATION_TASKS} partName="Initiation" />
+            </section>
+          )}
+
+          {step === 2 && (
+            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
+              <TaskCardList tasks={REVIEW_TASKS} partName="Review" />
+            </section>
+          )}
+
+          {step === 3 && (
+            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
+              <TaskCardList tasks={IMPLEMENTATION_TASKS} partName="Implementation" />
+            </section>
+          )}
+
+          {step === 4 && (
+            <section className="space-y-6 mt-10 pt-10 border-t border-[#F0F2F5]">
+              <TaskCardList tasks={CLOSEOUT_TASKS} partName="Closeout" />
             </section>
           )}
         </div>
