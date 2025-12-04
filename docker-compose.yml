@@ -69,7 +69,3 @@ services:
 networks:
   poc-network:
     driver: bridge
-    # Optional: Configure network settings for VPS
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

@@ -366,7 +366,8 @@ make logs
 
 | Issue | Solution |
 |-------|----------|
-| Port in use | Change port in docker-compose.yml |
+| Network conflict | `docker network prune` |
+| Port in use | Change port in docker-compose.yml or `kill -9 <PID>` |
 | Container exits | Check logs: `make logs` |
 | Can't access | Check firewall: `ufw status` |
 | High memory | Adjust limits in docker-compose.yml |
@@ -374,10 +375,11 @@ make logs
 
 ### Still Stuck?
 
-1. Check full documentation in HOSTINGER_DEPLOYMENT.md
-2. Review logs: `make logs`
-3. Check container status: `make status`
-4. Test health: `make health`
+1. **See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)** for detailed solutions
+2. Check full documentation in [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md)
+3. Review logs: `make logs`
+4. Check container status: `make status`
+5. Test health: `make health`
 
 ---
 
