@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, ChevronDown, Home, ChevronRight, User, Settings, LogOut, Bell } from "lucide-react";
+import { Sparkles, ChevronDown, Home, ChevronRight, User, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { cn } from "../ui/utils";
 import { LocationSelector, LocationId } from "../dashboard/LocationSelector";
@@ -12,6 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 
+interface RequestData {
+  mocNo: string;
+  title: string;
+}
+
 interface HeaderProps {
   onChatToggle: () => void;
   isChatOpen: boolean;
@@ -20,19 +25,19 @@ interface HeaderProps {
   isMobile?: boolean;
   currentLocation?: LocationId;
   onLocationChange?: (id: LocationId) => void;
-  viewingId?: string | null;
-  onNavigate?: (page: string) => void;
+  requestData?: RequestData | null;
+  onNavigate: (page: string) => void;
 }
 
-export const Header = ({ 
-  onChatToggle, 
-  isChatOpen, 
-  currentPage = "dashboard", 
-  showModuleMenu = false, 
+export const Header = ({
+  onChatToggle,
+  isChatOpen,
+  currentPage = "dashboard",
+  showModuleMenu = false,
   isMobile = false,
   currentLocation = "rayong",
   onLocationChange,
-  viewingId,
+  requestData,
   onNavigate
 }: HeaderProps) => {
   // Don't show breadcrumb on dashboard
@@ -44,16 +49,22 @@ export const Header = ({
   
   const getBreadcrumbTitle = () => {
     switch (currentPage) {
-      case "create-request": return "Create Request";
-      case "qualification": return "MOC Prescreening";
-      case "view-request": return "View Request";
+      case "create-request": return "Create New MoC";
+      case "qualification": return "MOC Prescreening Form";
+      case "view-request":
+        return requestData
+          ? `${requestData.mocNo} - ${requestData.title}`
+          : "View Request";
+      case "search": return "Search";
+      case "report": return "Report";
+      case "admin": return "Admin";
       case "coming-soon": return "Coming Soon";
       default: return "Dashboard";
     }
   };
 
   const handleHomeClick = () => {
-    if (onNavigate) onNavigate("dashboard");
+    onNavigate("dashboard");
   };
 
   return (
@@ -76,43 +87,23 @@ export const Header = ({
           <>
             <div className="h-6 w-px bg-[#D4D9DE] mr-4 hidden md:block" />
             <div className="flex items-center text-sm text-[#68737D] animate-in fade-in slide-in-from-left-4">
-              <button 
+              <button
                 onClick={handleHomeClick}
                 className="flex items-center gap-2 hover:text-[#1d3654] hover:bg-gray-100 px-2 py-1 rounded transition-colors cursor-pointer"
               >
                 <Home className="w-4 h-4" />
                 <span className="font-medium">Home</span>
               </button>
-              
+
               <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
-              
+
               <button
-                onClick={handleHomeClick}
-                className="flex items-center gap-2 hover:text-[#1d3654] hover:bg-gray-100 px-2 py-1 rounded transition-colors cursor-pointer"
-              >
-                <span className="font-medium">Operations</span>
-              </button>
-              
-              <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
-              
-              <button
-                onClick={() => currentPage && onNavigate?.(currentPage)}
-                className={cn(
-                  "font-semibold text-[#1d3654] px-2 py-1 rounded transition-colors",
-                  "hover:bg-gray-100 cursor-pointer hover:text-[#1d3654]"
-                )}
+                onClick={() => onNavigate(currentPage)}
+                className="font-semibold text-[#1d3654] px-2 py-1 rounded transition-colors hover:bg-gray-100 cursor-pointer max-w-[500px] truncate"
+                title={getBreadcrumbTitle()}
               >
                 {getBreadcrumbTitle()}
               </button>
-
-              {viewingId && currentPage === "view-request" && (
-                <>
-                  <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
-                  <span className="font-bold text-[#006699] px-2 py-1">
-                    {viewingId}
-                  </span>
-                </>
-              )}
             </div>
           </>
         )}
@@ -154,8 +145,8 @@ export const Header = ({
                 </AvatarFallback>
               </Avatar>
               <div className="hidden md:flex flex-col items-start">
-                <span className="text-sm font-bold text-[#1C1C1E] leading-none">Chatree D {"<"}R-P1/1560{">"}</span>
-                <span className="text-[11px] text-[#68737D] mt-1">chatree.d@pttgsp.com</span>
+                <span className="text-sm font-bold text-[#1C1C1E] leading-none">Chatree Dechabumphen (พอญ.)</span>
+                <span className="text-[11px] text-[#68737D] mt-1">chatree.d@pttplc.com</span>
               </div>
               <ChevronDown className="w-4 h-4 text-[#68737D] hidden md:block group-hover:text-[#1C1C1E] transition-colors" />
             </button>
@@ -163,22 +154,14 @@ export const Header = ({
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuLabel>
               <div className="flex flex-col gap-1">
-                <span className="font-semibold">Chatree D {"<"}R-P1/1560{">"}</span>
-                <span className="text-xs text-[#68737D] font-normal">chatree.d@pttgsp.com</span>
+                <span className="font-semibold">Chatree Dechabumphen (พอญ.)</span>
+                <span className="text-xs text-[#68737D] font-normal">chatree.d@pttplc.com</span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Bell className="mr-2 h-4 w-4" />
-              <span>Notifications</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-red-600">

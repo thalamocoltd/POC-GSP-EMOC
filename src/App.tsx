@@ -9,6 +9,9 @@ import { MOCQualificationWizard } from "./components/emoc/MOCQualificationWizard
 import { CreateRequestForm } from "./components/forms/CreateRequestForm";
 import { ViewRequestForm } from "./components/forms/ViewRequestForm";
 import { ComingSoon } from "./components/common/ComingSoon";
+import { SearchPage } from "./components/pages/SearchPage";
+import { ReportPage } from "./components/pages/ReportPage";
+import { AdminPage } from "./components/pages/AdminPage";
 import { ProcessingOverlay } from "./components/ui/ProcessingOverlay";
 import { useIsMobile } from "./components/ui/use-mobile";
 import { cn } from "./components/ui/utils";
@@ -27,6 +30,11 @@ import {
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
 
+interface RequestData {
+  mocNo: string;
+  title: string;
+}
+
 function AppContent() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,9 +42,10 @@ function AppContent() {
   const { clearErrors: clearValidationErrors } = useValidationErrors();
 
   // Navigation State
-  type PageType = "dashboard" | "qualification" | "create-request" | "view-request" | "coming-soon";
+  type PageType = "dashboard" | "qualification" | "create-request" | "view-request" | "search" | "report" | "admin" | "coming-soon";
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
   const [currentViewId, setCurrentViewId] = useState<string | null>(null);
+  const [currentRequestData, setCurrentRequestData] = useState<RequestData | null>(null);
   const [isAIAutofilled, setIsAIAutofilled] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -48,7 +57,7 @@ function AppContent() {
   const [showLocationChangeDialog, setShowLocationChangeDialog] = useState(false);
 
   // MOC Navigation State
-  const [currentMocStep, setCurrentMocStep] = useState<number>(1);
+  const [currentMocStep, setCurrentMocStep] = useState<number>(0);
   const [mocFormData, setMocFormData] = useState<InitiationFormData | null>(null);
   const [mocMode, setMocMode] = useState<"create" | "view">("create");
   const [pendingAutofillPriority, setPendingAutofillPriority] = useState<"normal" | "emergency" | "">();
@@ -82,19 +91,21 @@ function AppContent() {
   const handleCreateRequest = () => {
     setIsAIAutofilled(false);
     setMocMode("create");
-    setCurrentMocStep(1);
+    setCurrentMocStep(0); // Start at step 0 (prescreening)
     setMocFormData(null);
     setCurrentPage("qualification");
   };
 
-  const handleViewRequest = (id: string, step?: number) => {
-    setCurrentViewId(id);
+  const handleViewRequest = (mocNo: string, title: string, step?: number) => {
+    setCurrentRequestData({ mocNo, title });
+    setCurrentViewId(mocNo);
     setMocMode("view");
     setCurrentMocStep(step || 1);
     setCurrentPage("view-request");
   };
 
   const handleQualificationQualified = () => {
+    setCurrentMocStep(1); // Move to step 1 after prescreening
     setCurrentPage("create-request");
   };
 
@@ -106,6 +117,7 @@ function AppContent() {
     clearValidationErrors();
     setCurrentPage("dashboard");
     setCurrentViewId(null);
+    setCurrentRequestData(null);
     setCurrentMocStep(1);
     setMocFormData(null);
     setMocMode("create");
@@ -114,7 +126,7 @@ function AppContent() {
   };
 
   const handleStepTransition = (targetStep: number) => {
-    if (targetStep < 1 || targetStep > 4) return;
+    if (targetStep < 0 || targetStep > 4) return; // Allow step 0
     // Scroll to top for clear visual feedback
     window.scrollTo({ top: 0, behavior: "smooth" });
     setCurrentMocStep(targetStep);
@@ -130,8 +142,14 @@ function AppContent() {
   };
 
   const handleStepNavigation = (targetStep: number) => {
-    if (mocMode === "view" && targetStep >= 1 && targetStep <= 4) {
+    // In view mode: allow navigation to any step
+    if (mocMode === "view" && targetStep >= 0 && targetStep <= 4) {
       handleStepTransition(targetStep);
+    }
+    // In create mode: allow navigation to step 0 (MOC Prescreening)
+    if (mocMode === "create" && targetStep === 0) {
+      handleStepTransition(targetStep);
+      setCurrentPage("qualification");
     }
   };
 
@@ -180,9 +198,28 @@ function AppContent() {
     setShowLocationChangeDialog(false);
   };
 
+  const handleNavigate = (page: string) => {
+    switch (page) {
+      case "dashboard":
+        handleBackToDashboard();
+        break;
+      case "qualification":
+        handleCreateRequest();
+        break;
+      case "search":
+      case "report":
+      case "admin":
+        setCurrentPage(page as PageType);
+        break;
+      default:
+        // Stay on current page
+        break;
+    }
+  };
+
   // Determine if showing module menu
-  // Show menu for create and view pages
-  const showModuleMenu = currentPage === "create-request" || currentPage === "view-request";
+  // Show menu for qualification, create and view pages
+  const showModuleMenu = currentPage === "qualification" || currentPage === "create-request" || currentPage === "view-request";
 
   return (
     <div className="min-h-screen bg-[#F2F2F2] font-sans text-[#1C1C1E]">
@@ -194,6 +231,9 @@ function AppContent() {
         onNavigate={(page) => {
           if (page === "dashboard") setCurrentPage("dashboard");
           else if (page === "qualification") handleCreateRequest();
+          else if (page === "search") setCurrentPage("search");
+          else if (page === "report") setCurrentPage("report");
+          else if (page === "admin") setCurrentPage("admin");
           else setCurrentPage("coming-soon");
         }}
         currentPage={currentPage}
@@ -208,7 +248,8 @@ function AppContent() {
         isMobile={isMobile}
         currentLocation={currentLocation}
         onLocationChange={handleLocationChange}
-        viewingId={currentViewId}
+        requestData={currentRequestData}
+        onNavigate={handleNavigate}
       />
 
       {/* Module Menu */}
@@ -217,7 +258,7 @@ function AppContent() {
           isMobile={isMobile}
           currentStep={currentMocStep}
           isReadOnly={mocMode === "view"}
-          onStepClick={mocMode === "view" ? handleStepNavigation : undefined}
+          onStepClick={handleStepNavigation}
         />
       )}
 
@@ -273,6 +314,7 @@ function AppContent() {
             onBack={handleBackToDashboard}
             onQualified={handleQualificationQualified}
             onNotQualified={handleQualificationNotQualified}
+            isMobile={isMobile}
           />
         )}
 
@@ -308,6 +350,18 @@ function AppContent() {
               onStepChange={handleStepNavigation}
             />
           </motion.div>
+        )}
+
+        {currentPage === "search" && (
+          <SearchPage onBack={handleBackToDashboard} />
+        )}
+
+        {currentPage === "report" && (
+          <ReportPage onBack={handleBackToDashboard} />
+        )}
+
+        {currentPage === "admin" && (
+          <AdminPage onBack={handleBackToDashboard} />
         )}
 
         {currentPage === "coming-soon" && (

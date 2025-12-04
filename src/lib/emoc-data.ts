@@ -1,4 +1,4 @@
-import { AreaOption, TPMLossTypeOption, PriorityOption } from "../types/emoc";
+import { AreaOption, TPMLossTypeOption, PriorityOption, SeverityDescription, ProbabilityDescription } from "../types/emoc";
 
 export const AREA_OPTIONS: AreaOption[] = [
   {
@@ -84,3 +84,67 @@ export function getUnitsByAreaId(areaId: string) {
   const area = getAreaById(areaId);
   return area?.units || [];
 }
+
+// NEW: Severity/Consequence descriptions for risk assessment
+export const SEVERITY_DESCRIPTIONS: SeverityDescription[] = [
+  {
+    level: "Minor",
+    numericValue: 1,
+    people: "Minor - Injury first aid / Major Injury medical treatment",
+    assets: "No Minor damage / < $100,000 Localised damage < $1 Million",
+    environmentCommunity: "No Minor effect / - Effect Local community <1 month recovery / - Effect environment recovery Short term < 5 Years or < $50,000",
+    security: "No Limit impact* / Localised impact"
+  },
+  {
+    level: "Moderate",
+    numericValue: 2,
+    people: "Major medical treatment",
+    assets: "Major damage > $1 Million",
+    environmentCommunity: "- Effect Local community 1-6 month recovery / - Effect environment recovery Short term < 5 Years or < $50,000",
+    security: "National impact"
+  },
+  {
+    level: "Major",
+    numericValue: 3,
+    people: "PTD or 1 to 3 Fatalities",
+    assets: "Major damage > $10 Million",
+    environmentCommunity: "- Effect Local community 1-6 month recovery / - Effect environment recovery Short term 5-10 Years or < $150,000",
+    security: "National impact"
+  },
+  {
+    level: "Catastrophic",
+    numericValue: 4,
+    people: "More than 3 Fatalities",
+    assets: "Extensive damage > $10 Million",
+    environmentCommunity: "- Effect Local community >6 month recovery or government involve / - Effect environment recovery Short term > 5 Years or > $150,000",
+    security: "International impact"
+  }
+];
+
+// NEW: Probability descriptions for risk assessment
+export const PROBABILITY_DESCRIPTIONS: ProbabilityDescription[] = [
+  {
+    level: "A",
+    numericValue: 1,
+    label: "Rare",
+    description: "Incident has occurred in oil and gas industry once in >10 years"
+  },
+  {
+    level: "B",
+    numericValue: 2,
+    label: "Unlikely",
+    description: "Incident has occurred in oil and gas industry once with in 5-10 years"
+  },
+  {
+    level: "C",
+    numericValue: 3,
+    label: "Possible",
+    description: "Incident has occurred in oil and gas industry once within 1 year"
+  },
+  {
+    level: "D",
+    numericValue: 4,
+    label: "Likely",
+    description: "Incident has already happened or could occur in oil & gas industry more than once per year"
+  }
+];

@@ -18,7 +18,7 @@ const locationImages: Record<LocationId, string> = {
 
 interface DashboardProps {
   onCreateRequest: () => void;
-  onViewRequest: (id: string) => void;
+  onViewRequest: (mocNo: string, title: string, step?: number) => void;
   currentLocation?: LocationId;
   isSwitchingLocation?: boolean;
 }
@@ -66,17 +66,11 @@ export const Dashboard = ({
         
         <div className="relative h-full flex flex-col justify-center px-6 md:px-10 lg:px-12 text-white z-10">
           <h1 className="text-3xl md:text-5xl font-bold mb-2 tracking-tight animate-in slide-in-from-left duration-500 delay-100">
-            GSP eMoC
+            PTT GSP eMoC
           </h1>
           <p className="text-blue-100/90 text-lg md:text-xl font-medium max-w-xl animate-in slide-in-from-left duration-500 delay-200">
             Electronic Management of Change System
           </p>
-          <div className="mt-3 flex items-center gap-2 animate-in fade-in duration-700 delay-300">
-             <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-medium border border-white/20 flex items-center gap-2 shadow-sm">
-               <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-               {locations.find(l => l.id === currentLocation)?.name}
-             </span>
-          </div>
         </div>
       </div>
 

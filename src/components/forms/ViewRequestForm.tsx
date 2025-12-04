@@ -5,7 +5,7 @@ import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
-import { formatFileSize } from "../../lib/emoc-utils";
+import { formatFileSize, createRiskAssessment } from "../../lib/emoc-utils";
 import { TaskCardList } from "../workflow/TaskCardList";
 import { TaskSection } from "../workflow/TaskSection";
 import { INITIATION_TASKS, REVIEW_TASKS, IMPLEMENTATION_TASKS, CLOSEOUT_TASKS } from "../../lib/workflow-demo-data";
@@ -45,25 +45,14 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
         estimatedCost: 800000,
         benefits: ["benefit-1", "benefit-6"], // Safety, Money
         expectedBenefits: "Expected efficiency increase of 20%. Reduced maintenance costs. Prevent potential production shutdown.",
-        riskBeforeChange: {
-          likelihood: 3,
-          impact: 3,
-          score: 9,
-          level: "Medium",
-          likelihoodLabel: "Possible",
-          impactLabel: "Moderate"
-        },
-        riskAfterChange: {
-          likelihood: 1,
-          impact: 3,
-          score: 3,
-          level: "Low",
-          likelihoodLabel: "Rare",
-          impactLabel: "Moderate"
-        },
+        riskBeforeChange: createRiskAssessment(3, 3),
+        riskAfterChange: createRiskAssessment(1, 3),
         attachments: [
           { id: "1", category: "Technical Information", fileName: "P&ID Diagram.pdf", fileSize: 2500000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
-          { id: "2", category: "Technical Information", fileName: "Vendor Quote.pdf", fileSize: 1150000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" }
+          { id: "2", category: "Technical Information", fileName: "Vendor Quote.pdf", fileSize: 1150000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
+          { id: "3", category: "Minute of Meeting", fileName: "Team_Meeting_Notes.pdf", fileSize: 850000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
+          { id: "4", category: "Other Documents", fileName: "Risk_Assessment.xlsx", fileSize: 950000, fileType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
+          { id: "5", category: "Temp1", fileName: "Equipment_Photo.jpg", fileSize: 3200000, fileType: "image/jpeg", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" }
         ]
       });
       setIsLoading(false);
@@ -72,7 +61,7 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
   }, [id]);
 
   if (isLoading || !data) {
-    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"/></div>;
+    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" /></div>;
   }
 
   const getAreaName = (id: string) => AREA_OPTIONS.find(a => a.id === id)?.name || id;
@@ -113,10 +102,10 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
   );
 
   return (
-    <div className="max-w-[860px] pb-32 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto pb-32 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Actions */}
       <div className="flex items-center justify-between mb-6">
-        <button 
+        <button
           onClick={onBack}
           className="text-[#68737D] hover:text-[#1C1C1E] flex items-center gap-2 text-sm font-medium transition-colors"
         >
@@ -124,10 +113,10 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
           Back to Dashboard
         </button>
         <div className="flex items-center gap-2">
-           <span className="text-sm text-gray-500">Status:</span>
-           <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
-             Pending Review
-           </span>
+          <span className="text-sm text-gray-500">Status:</span>
+          <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
+            Pending Review
+          </span>
         </div>
       </div>
 
@@ -164,12 +153,10 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                 <ReadOnlyField label="Request Date" value={data.requestDate} />
               </div>
               <ReadOnlyField label="MOC Title" value={data.mocTitle} />
-              {data.lengthOfChange && (
-                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
-              )}
-              {data.typeOfChange && (
-                <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
-              )}
+              <div className="grid sm:grid-cols-2 gap-6">
+                <ReadOnlyField label="Area" value={getAreaName(data.areaId)} />
+                <ReadOnlyField label="Unit" value={getUnitName(data.areaId, data.unitId)} />
+              </div>
               {/* Enhanced Priority Field */}
               <div className="space-y-1.5">
                 <Label className="text-[13px] font-medium text-[#68737D]">Priority of Change</Label>
@@ -201,10 +188,12 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                   );
                 })()}
               </div>
-              <div className="grid sm:grid-cols-2 gap-6">
-                <ReadOnlyField label="Area" value={getAreaName(data.areaId)} />
-                <ReadOnlyField label="Unit" value={getUnitName(data.areaId, data.unitId)} />
-              </div>
+              {data.lengthOfChange && (
+                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
+              )}
+              {data.typeOfChange && (
+                <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
+              )}
               <div className="grid sm:grid-cols-2 gap-6">
                 <ReadOnlyField label="Start Date" value={data.estimatedDurationStart} />
                 <ReadOnlyField label="End Date" value={data.estimatedDurationEnd} />
@@ -225,6 +214,15 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               <ReadOnlyField label="Detail of Change" value={data.detailOfChange} multiline />
               <ReadOnlyField label="Reason for Change" value={data.reasonForChange} multiline />
               <ReadOnlyField label="Scope of Work" value={data.scopeOfWork} multiline />
+            </div>
+          </section>
+
+          {/* Estimated Benefit / Cost */}
+          <section id="section-benefit-cost" className="space-y-6 scroll-mt-24">
+            <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
+              Estimated Benefit / Cost
+            </h3>
+            <div className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <ReadOnlyField label="Estimated Benefit (THB)" value={data.estimatedBenefit.toLocaleString()} />
                 <ReadOnlyField label="Estimated Cost (THB)" value={data.estimatedCost.toLocaleString()} />
@@ -242,47 +240,35 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
             </h3>
 
             <div className="space-y-4">
-               {/* Risk Before */}
-               <div>
-                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment Before Change</Label>
-                  {(() => {
-                    const config = getRiskLevelConfig(data.riskBeforeChange.level);
-                    return (
-                      <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
-                        <div className="flex items-center gap-3">
-                          <span className={cn("px-4 py-2 rounded-lg font-bold text-base border-2", config.badge)}>
-                            {data.riskBeforeChange.level || "N/A"}
-                          </span>
-                          <div>
-                            <div className={cn("text-2xl font-bold", config.text)}>{data.riskBeforeChange.score}</div>
-                            <div className="text-xs text-[#68737D]">Risk Score</div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-               </div>
+              {/* Risk Before */}
+              <div>
+                <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment Before Change</Label>
+                {(() => {
+                  const config = getRiskLevelConfig(data.riskBeforeChange.level);
+                  return (
+                    <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
+                      <span className={cn("px-4 py-2 rounded-lg font-bold text-lg border-2", config.badge)}>
+                        {data.riskBeforeChange.level || "N/A"} : {data.riskBeforeChange.riskCode || data.riskBeforeChange.score}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
 
-               {/* Risk After */}
-               <div>
-                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment After Change</Label>
-                  {(() => {
-                    const config = getRiskLevelConfig(data.riskAfterChange.level);
-                    return (
-                      <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
-                        <div className="flex items-center gap-3">
-                          <span className={cn("px-4 py-2 rounded-lg font-bold text-base border-2", config.badge)}>
-                            {data.riskAfterChange.level || "N/A"}
-                          </span>
-                          <div>
-                            <div className={cn("text-2xl font-bold", config.text)}>{data.riskAfterChange.score}</div>
-                            <div className="text-xs text-[#68737D]">Risk Score</div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-               </div>
+              {/* Risk After */}
+              <div>
+                <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment After Change</Label>
+                {(() => {
+                  const config = getRiskLevelConfig(data.riskAfterChange.level);
+                  return (
+                    <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
+                      <span className={cn("px-4 py-2 rounded-lg font-bold text-lg border-2", config.badge)}>
+                        {data.riskAfterChange.level || "N/A"} : {data.riskAfterChange.riskCode || data.riskAfterChange.score}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </section>
 
@@ -293,21 +279,36 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
             </h3>
 
             {data.attachments.length > 0 ? (
-              <div className="grid gap-3">
-                {data.attachments.map((file) => (
-                  <div key={file.id} className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center mr-3">
-                      <FileText className="w-5 h-5 text-blue-600" />
+              <div className="space-y-6">
+                {["Technical Information", "Minute of Meeting", "Other Documents", "Temp1", "Temp2", "Temp3"].map((category) => {
+                  const categoryFiles = data.attachments.filter(f => f.category === category);
+                  if (categoryFiles.length === 0) return null;
+
+                  return (
+                    <div key={category} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[13px] font-medium text-[#1C1C1E]">{category}</label>
+                        <span className="text-xs text-[#68737D] bg-gray-100 px-2 py-1 rounded">
+                          {categoryFiles.length} file{categoryFiles.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
+                        {categoryFiles.map((file) => (
+                          <div key={file.id} className="flex items-center p-3 hover:bg-[#F7F8FA] transition-colors">
+                            <FileText className="w-5 h-5 text-[#68737D] mr-3" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#1C1C1E] truncate">{file.fileName}</p>
+                              <p className="text-xs text-[#68737D]">{formatFileSize(file.fileSize)}</p>
+                            </div>
+                            <Button variant="ghost" size="sm" className="text-[#006699] shrink-0 ml-2">
+                              View
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900">{file.fileName}</div>
-                      <div className="text-xs text-gray-500">{formatFileSize(file.fileSize)}</div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-blue-600">
-                      View
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-sm text-gray-500 italic">No documents attached</div>
@@ -353,21 +354,19 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                           { task: "Documentation and handover", status: "Pending", date: "Dec 7, 2025" }
                         ].map((item, idx) => (
                           <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-                            <div className={`w-3 h-3 rounded-full shrink-0 ${
-                              item.status === "Completed" ? "bg-green-500" :
+                            <div className={`w-3 h-3 rounded-full shrink-0 ${item.status === "Completed" ? "bg-green-500" :
                               item.status === "In Progress" ? "bg-blue-500 animate-pulse" : "bg-gray-300"
-                            }`} />
+                              }`} />
                             <div className="flex-1">
                               <p className="text-sm font-medium text-[#1C1C1E]">{item.task}</p>
                               <p className="text-xs text-[#68737D] flex items-center gap-1 mt-0.5">
                                 <Calendar className="w-3 h-3" /> {item.date}
                               </p>
                             </div>
-                            <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-                              item.status === "Completed" ? "bg-green-100 text-green-700 border border-green-300" :
+                            <span className={`text-xs font-medium px-3 py-1 rounded-full ${item.status === "Completed" ? "bg-green-100 text-green-700 border border-green-300" :
                               item.status === "In Progress" ? "bg-blue-100 text-blue-700 border border-blue-300" :
-                              "bg-gray-100 text-gray-700 border border-gray-300"
-                            }`}>
+                                "bg-gray-100 text-gray-700 border border-gray-300"
+                              }`}>
                               {item.status}
                             </span>
                           </div>

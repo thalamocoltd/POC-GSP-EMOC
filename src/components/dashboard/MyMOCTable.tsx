@@ -155,7 +155,7 @@ const ProgressTracker = ({ process, status }: { process: ProcessType, status: st
 };
 
 interface MyMOCTableProps {
-  onViewRequest?: (id: string, step?: number) => void;
+  onViewRequest?: (mocNo: string, title: string, step?: number) => void;
 }
 
 export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
@@ -213,7 +213,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100">
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-[#1d3654]">MY MOC</h2>
+            <h2 className="text-xl font-bold text-[#1d3654]">Related MOCs</h2>
             <p className="text-sm text-gray-500">Track and manage your MOC requests</p>
           </div>
           
@@ -332,7 +332,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        onClick={() => onViewRequest?.(moc.mocNo, getStepFromProcess(moc.process))}
+                        onClick={() => onViewRequest?.(moc.mocNo, moc.title, getStepFromProcess(moc.process))}
                         className="font-medium text-[#006699] hover:underline cursor-pointer focus:outline-none text-left"
                       >
                         {moc.mocNo}
@@ -340,7 +340,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                     </td>
                     <td className="px-6 py-4">
                       <button
-                        onClick={() => onViewRequest?.(moc.mocNo, getStepFromProcess(moc.process))}
+                        onClick={() => onViewRequest?.(moc.mocNo, moc.title, getStepFromProcess(moc.process))}
                         className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer text-left focus:outline-none"
                       >
                         {moc.title}

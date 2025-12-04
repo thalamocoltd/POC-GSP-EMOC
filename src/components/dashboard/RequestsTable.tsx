@@ -18,13 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { getStepFromProcess } from "../../lib/emoc-utils";
+import { getStepFromProcess, formatAssignedOnDate } from "../../lib/emoc-utils";
 
 export interface ToDoItem {
   id: string;
   mocNo: string;
   title: string;
-  type: "Permanent" | "Temporary" | "Overriding";
+  type: "Permanent" | "Temporary" | "Override";
+  typeTemp?: string;
   task: string;
   assignedTo: string;
   assignedOn: string;
@@ -34,7 +35,7 @@ export interface ToDoItem {
 // --- Mock Data ---
 const generateMockTodos = (): ToDoItem[] => {
   const processes: ToDoItem["process"][] = ["Review", "Initiation", "Implementation", "Closeout"];
-  const types: ToDoItem["type"][] = ["Permanent", "Temporary", "Overriding"];
+  const types: ToDoItem["type"][] = ["Permanent", "Temporary", "Override"];
   const names = ["John Smith", "Sarah Johnson", "Mike Chen", "Emma Davis", "Robert Brown", "Lisa Anderson"];
 
   return Array.from({ length: 35 }).map((_, i) => ({
@@ -55,7 +56,7 @@ const getTypeColor = (type: string) => {
   switch (type) {
     case "Permanent": return "bg-blue-100 text-blue-700 border-transparent hover:bg-blue-200";
     case "Temporary": return "bg-amber-100 text-amber-700 border-transparent hover:bg-amber-200";
-    case "Overriding": return "bg-red-100 text-red-700 border-transparent hover:bg-red-200";
+    case "Override": return "bg-red-100 text-red-700 border-transparent hover:bg-red-200";
     default: return "bg-gray-100 text-gray-600 border-transparent";
   }
 };
@@ -72,7 +73,7 @@ const getProcessColor = (process: string) => {
 
 interface RequestsTableProps {
   onCreateRequest?: () => void;
-  onViewRequest?: (id: string, step?: number) => void;
+  onViewRequest?: (mocNo: string, title: string, step?: number) => void;
 }
 
 export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableProps) => {
@@ -171,7 +172,7 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
                <SelectItem value="all">All Types</SelectItem>
                <SelectItem value="permanent">Permanent</SelectItem>
                <SelectItem value="temporary">Temporary</SelectItem>
-               <SelectItem value="overriding">Overriding</SelectItem>
+               <SelectItem value="override">Override</SelectItem>
              </SelectContent>
            </Select>
 
@@ -179,11 +180,11 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
              <SelectTrigger className="w-[160px] border-gray-200">
                <div className="flex items-center gap-2">
                  <Filter className="w-4 h-4 text-gray-400" />
-                 <SelectValue placeholder="All Processes" />
+                 <SelectValue placeholder="All Parts" />
                </div>
              </SelectTrigger>
              <SelectContent>
-               <SelectItem value="all">All Processes</SelectItem>
+               <SelectItem value="all">All Parts</SelectItem>
                <SelectItem value="review">Review</SelectItem>
                <SelectItem value="initiation">Initiation</SelectItem>
                <SelectItem value="implementation">Implementation</SelectItem>
@@ -221,18 +222,12 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
                   Type
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Type(temp)
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Task
                 </th>
-                <th 
-                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => handleSort('assignedTo')}
-                >
-                   <div className="flex items-center gap-2">
-                    Assigned To
-                    <ArrowUpDown className="w-3 h-3" />
-                  </div>
-                </th>
-                <th 
+                <th
                   className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
                   onClick={() => handleSort('assignedOn')}
                 >
@@ -242,7 +237,7 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
                   </div>
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Process
+                  Part
                 </th>
               </tr>
             </thead>
@@ -257,7 +252,7 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
-                      onClick={() => onViewRequest?.(item.mocNo, getStepFromProcess(item.process))}
+                      onClick={() => onViewRequest?.(item.mocNo, item.title, getStepFromProcess(item.process))}
                       className="font-medium text-[#006699] hover:underline cursor-pointer focus:outline-none text-left"
                     >
                       {item.mocNo}
@@ -265,7 +260,7 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => onViewRequest?.(item.mocNo, getStepFromProcess(item.process))}
+                      onClick={() => onViewRequest?.(item.mocNo, item.title, getStepFromProcess(item.process))}
                       className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer focus:outline-none text-left"
                     >
                       {item.title}
@@ -276,16 +271,16 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
                       {item.type}
                     </Badge>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-600">{item.typeTemp || ''}</span>
+                  </td>
                   <td className="px-6 py-4">
                      <span className="text-sm text-gray-900 font-medium block truncate max-w-[250px]">
                       {item.task}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-700 font-medium">{item.assignedTo}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-600">{item.assignedOn}</span>
+                    <span className="text-sm text-gray-600">{formatAssignedOnDate(item.assignedOn)}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Badge className={cn("shadow-none font-medium rounded-full px-3", getProcessColor(item.process))}>

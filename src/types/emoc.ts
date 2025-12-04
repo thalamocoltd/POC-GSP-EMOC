@@ -16,16 +16,48 @@ export type ImpactValue = 1 | 2 | 3 | 4;
 export type RiskScore = number;
 export type RiskLevel = "Low" | "Medium" | "High" | "Extreme";
 
+// NEW: Types for industry-standard risk assessment
+export type LikelihoodLetter = "A" | "B" | "C" | "D";
+export type SeverityLevel = "Minor" | "Moderate" | "Major" | "Catastrophic";
+export type RiskCode = string;
+
 export interface RiskAssessment {
   likelihood: LikelihoodValue | null;
   likelihoodLabel: string;
+  likelihoodLetter?: LikelihoodLetter;  // NEW: A, B, C, D
   impact: ImpactValue | null;
   impactLabel: string;
+  severityLevel?: SeverityLevel;  // NEW: Minor, Moderate, Major, Catastrophic
   score: RiskScore;
   level: RiskLevel | null;
+  riskCode?: string;  // NEW: L1, M6, H12, E16
 }
 
-export type FileCategory = "Technical Information" | "Minute of Meeting" | "Other Documents";
+// NEW: Severity/Consequence descriptions
+export interface SeverityDescription {
+  level: SeverityLevel;
+  numericValue: ImpactValue;
+  people: string;
+  assets: string;
+  environmentCommunity: string;
+  security: string;
+}
+
+// NEW: Probability descriptions
+export interface ProbabilityDescription {
+  level: LikelihoodLetter;
+  numericValue: LikelihoodValue;
+  label: string;
+  description: string;
+}
+
+export type FileCategory =
+  | "Technical Information"
+  | "Minute of Meeting"
+  | "Other Documents"
+  | "Temp1"
+  | "Temp2"
+  | "Temp3";
 
 export interface FileAttachment {
   id: string;

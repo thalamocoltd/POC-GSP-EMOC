@@ -2,9 +2,33 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // Mapping of sections to their field IDs
 const SECTION_FIELDS: Record<string, string[]> = {
-  'section-general-info': ['mocTitle', 'lengthOfChange', 'typeOfChange', 'priorityId', 'areaId', 'unitId'],
-  'section-change-details': ['detailOfChange', 'reasonForChange', 'scopeOfWork', 'benefitsValue', 'expectedBenefits', 'costEstimated', 'estimatedValue'],
-  'section-risk': ['riskBeforeChange', 'riskAfterChange'],
+  'section-general-info': [
+    'mocTitle',
+    'areaId',
+    'unitId',
+    'priorityId',
+    'lengthOfChange',
+    'typeOfChange',
+    'estimatedDurationStart',
+    'estimatedDurationEnd',
+    'tpmLossType',
+    'lossEliminateValue'
+  ],
+  'section-change-details': [
+    'detailOfChange',
+    'reasonForChange',
+    'scopeOfWork'
+  ],
+  'section-benefit-cost': [
+    'estimatedBenefit',
+    'estimatedCost',
+    'benefits',
+    'expectedBenefits'
+  ],
+  'section-risk': [
+    'riskBeforeChange',
+    'riskAfterChange'
+  ],
 };
 
 interface ValidationErrorsContextType {
