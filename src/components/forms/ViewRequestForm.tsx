@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Shield, Calendar, Paperclip, FileText } from "lucide-react";
+import { ArrowLeft, Shield, Calendar, Paperclip, FileText, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
-import { AREA_OPTIONS, TPM_LOSS_TYPES, PRIORITY_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
+import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
+import { formatFileSize } from "../../lib/emoc-utils";
 
 interface ViewRequestFormProps {
   id: string | null;
+  step: number;
   onBack: () => void;
+  onStepChange?: (step: number) => void;
 }
 
-export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
+export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestFormProps) => {
   // Mock Data Loading
   const [data, setData] = useState<InitiationFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,20 +23,21 @@ export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
     // Simulate fetching data
     const timer = setTimeout(() => {
       setData({
+        requesterName: "John Doe",
+        requestDate: "03/12/2025 14:30",
         mocTitle: "Upgrade Production Line A Cooling System",
-        areaId: "1", // Rayong
-        unitId: "101", // Unit 1
-        background: "The current cooling system efficiency has dropped by 15% over the last quarter due to aging components.",
-        impact: "Production output is limited during peak hours. Risk of overheating.",
-        tpmLossTypeId: "1", // Breakdown Loss
-        lossEliminateValue: 500000,
+        lengthOfChange: "length-2", // Temporary
+        typeOfChange: "type-1", // Plant Change
+        priorityId: "priority-2", // Emergency
+        areaId: "area-1",
+        unitId: "unit-1-1",
+        costEstimated: 800000,
+        detailOfChange: "The current cooling system efficiency has dropped by 15% over the last quarter due to aging components.",
+        reasonForChange: "Production output is limited during peak hours. Risk of overheating.",
         scopeOfWork: "Replace cooling pumps P-101A/B. Install new heat exchanger. Update control logic.",
-        benefit: "Expected efficiency increase of 20%. Reduced maintenance costs.",
-        benefitValue: 1200000,
-        lengthOfChange: { years: 0, months: 3, days: 0 },
-        priorityId: "2", // High
-        preliminaryReview: "Initial review by engineering team confirms feasibility.",
-        investment: 800000,
+        benefitsValue: ["benefit-1", "benefit-6"], // Safety, Money
+        expectedBenefits: "Expected efficiency increase of 20%. Reduced maintenance costs.",
+        estimatedValue: 1200000,
         riskBeforeChange: {
           likelihood: 3,
           impact: 3,
@@ -50,11 +54,10 @@ export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
           likelihoodLabel: "Rare",
           impactLabel: "Moderate"
         },
-        attachments: {
-          technicalInformation: [{ id: "1", name: "P&ID Diagram.pdf", size: "2.4 MB", type: "application/pdf", url: "#" }],
-          minuteOfMeeting: [],
-          otherDocuments: [{ id: "2", name: "Vendor Quote.pdf", size: "1.1 MB", type: "application/pdf", url: "#" }]
-        }
+        attachments: [
+          { id: "1", category: "Technical Information", fileName: "P&ID Diagram.pdf", fileSize: 2500000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
+          { id: "2", category: "Technical Information", fileName: "Vendor Quote.pdf", fileSize: 1150000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" }
+        ]
       });
       setIsLoading(false);
     }, 500);
@@ -67,8 +70,10 @@ export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
 
   const getAreaName = (id: string) => AREA_OPTIONS.find(a => a.id === id)?.name || id;
   const getUnitName = (areaId: string, unitId: string) => getUnitsByAreaId(areaId).find(u => u.id === unitId)?.name || unitId;
-  const getLossTypeName = (id: string) => TPM_LOSS_TYPES.find(t => t.id === id)?.name || id;
+  const getLengthOfChangeName = (id: string) => LENGTH_OF_CHANGE_OPTIONS.find(l => l.id === id)?.name || id;
+  const getTypeOfChangeName = (id: string) => TYPE_OF_CHANGE_OPTIONS.find(t => t.id === id)?.name || id;
   const getPriorityName = (id: string) => PRIORITY_OPTIONS.find(p => p.id === id)?.name || id;
+  const getBenefitsValueNames = (ids: string[]) => ids.map(id => BENEFITS_VALUE_OPTIONS.find(b => b.id === id)?.name || id).join(", ");
 
   const getRiskLevelConfig = (level: string | null) => {
     if (!level) return { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600", badge: "bg-gray-100 text-gray-700" };
@@ -123,64 +128,85 @@ export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
             </p>
           </div>
 
-          {/* Basic Information */}
-          <section id="section-basic-info" className="space-y-6 scroll-mt-24">
+          {/* Step Title */}
+          <div className="bg-blue-50 border-l-4 border-blue-500 px-4 py-3 mb-6">
+            <p className="text-sm font-medium text-blue-800">
+              {step === 1 && "Step 1: Initiation Request"}
+              {step === 2 && "Step 2: Review & Approval"}
+              {step === 3 && "Step 3: Implementation"}
+              {step === 4 && "Step 4: Closeout"}
+            </p>
+          </div>
+
+          {/* General Information */}
+          <section id="section-general-info" className="space-y-6 scroll-mt-24">
             <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
-              Basic Information
+              General Information
             </h3>
-            
+
             <div className="grid gap-6">
+              <div className="grid sm:grid-cols-2 gap-6">
+                <ReadOnlyField label="Requester Name" value={data.requesterName} />
+                <ReadOnlyField label="Request Date" value={data.requestDate} />
+              </div>
               <ReadOnlyField label="MOC Title" value={data.mocTitle} />
+              <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
+              <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
+              {/* Enhanced Priority Field */}
+              <div className="space-y-1.5">
+                <Label className="text-[13px] font-medium text-[#68737D]">Priority of Change</Label>
+                {(() => {
+                  const priority = PRIORITY_OPTIONS.find(p => p.id === data.priorityId);
+                  if (!priority) return <div className="text-sm text-gray-500">Unknown</div>;
+
+                  const isEmergency = priority.name === "Emergency";
+
+                  return (
+                    <div className={cn(
+                      "inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 font-bold text-base shadow-sm",
+                      isEmergency
+                        ? "bg-red-50 border-red-400 text-red-700 shadow-red-200/50"
+                        : "bg-green-50 border-green-400 text-green-700 shadow-green-200/50"
+                    )}>
+                      {isEmergency ? (
+                        <AlertTriangle className="w-5 h-5 animate-pulse" />
+                      ) : (
+                        <Clock className="w-5 h-5" />
+                      )}
+                      <span>{priority.name}</span>
+                      {isEmergency && (
+                        <span className="ml-2 px-2 py-0.5 bg-red-200 text-red-900 text-xs rounded-full font-bold">
+                          URGENT
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
               <div className="grid sm:grid-cols-2 gap-6">
                 <ReadOnlyField label="Area" value={getAreaName(data.areaId)} />
                 <ReadOnlyField label="Unit" value={getUnitName(data.areaId, data.unitId)} />
               </div>
+              <ReadOnlyField label="Cost Estimated of Change (THB)" value={data.costEstimated.toLocaleString()} />
             </div>
           </section>
 
-          {/* Background & Impact */}
-          <section id="section-background" className="space-y-6 scroll-mt-24">
-             <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
-              Background & Impact
+          {/* Change Details */}
+          <section id="section-change-details" className="space-y-6 scroll-mt-24">
+            <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
+              Change Details
             </h3>
             <div className="space-y-6">
-              <ReadOnlyField label="Background" value={data.background} multiline />
-              <ReadOnlyField label="Impact" value={data.impact} multiline />
+              <ReadOnlyField label="Detail of Change" value={data.detailOfChange} multiline />
+              <ReadOnlyField label="Reason for Change" value={data.reasonForChange} multiline />
               <ReadOnlyField label="Scope of Work" value={data.scopeOfWork} multiline />
+              <ReadOnlyField label="Benefits Value" value={getBenefitsValueNames(data.benefitsValue)} />
+              <ReadOnlyField label="Expected Benefits" value={data.expectedBenefits} multiline />
+              <ReadOnlyField label="Estimated Value (Baht/year)" value={data.estimatedValue.toLocaleString()} />
             </div>
           </section>
 
-          {/* Loss & Benefit Analysis */}
-          <section id="section-analysis" className="space-y-6 scroll-mt-24">
-            <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
-              Loss & Benefit Analysis
-            </h3>
-
-            <div className="grid sm:grid-cols-2 gap-6">
-              <ReadOnlyField label="TPM Loss Type" value={getLossTypeName(data.tpmLossTypeId)} />
-              <ReadOnlyField label="Loss Eliminate Value (THB)" value={data.lossEliminateValue.toLocaleString()} />
-            </div>
-
-            <ReadOnlyField label="Benefit" value={data.benefit} multiline />
-
-            <div className="grid sm:grid-cols-2 gap-6">
-              <ReadOnlyField label="Benefit Value (THB)" value={data.benefitValue.toLocaleString()} />
-              <ReadOnlyField label="Investment (THB)" value={data.investment.toLocaleString()} />
-            </div>
-          </section>
-
-          {/* Additional Details */}
-          <section id="section-additional" className="space-y-6 scroll-mt-24">
-            <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
-              Additional Details
-            </h3>
-
-            <ReadOnlyField label="Length of Change" value={`${data.lengthOfChange.years} Years, ${data.lengthOfChange.months} Months, ${data.lengthOfChange.days} Days`} />
-            <ReadOnlyField label="Priority" value={getPriorityName(data.priorityId)} />
-            <ReadOnlyField label="Preliminary Review" value={data.preliminaryReview} multiline />
-          </section>
-
-          {/* Risk Assessment */}
+          {/* Review of Change */}
           <section id="section-risk" className="space-y-6 scroll-mt-24">
             <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
               <Shield className="w-5 h-5" />
@@ -190,7 +216,7 @@ export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
             <div className="space-y-4">
                {/* Risk Before */}
                <div>
-                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Before Change</Label>
+                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment Before Change</Label>
                   {(() => {
                     const config = getRiskLevelConfig(data.riskBeforeChange.level);
                     return (
@@ -211,7 +237,7 @@ export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
 
                {/* Risk After */}
                <div>
-                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk After Change</Label>
+                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment After Change</Label>
                   {(() => {
                     const config = getRiskLevelConfig(data.riskAfterChange.level);
                     return (
@@ -232,38 +258,30 @@ export const ViewRequestForm = ({ id, onBack }: ViewRequestFormProps) => {
             </div>
           </section>
 
-          {/* File Attachments */}
-          <section id="section-files" className="space-y-6 scroll-mt-24">
+          {/* Attachments */}
+          <section id="section-attachments" className="space-y-6 scroll-mt-24">
             <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
-              File Attachments
+              Attachments
             </h3>
-            
-            {Object.entries(data.attachments).map(([category, files]) => (
-               files.length > 0 && (
-                 <div key={category}>
-                   <h4 className="text-sm font-medium text-[#1C1C1E] mb-3 capitalize">
-                     {category.replace(/([A-Z])/g, ' $1').trim()}
-                   </h4>
-                   <div className="grid gap-3">
-                     {files.map((file: any) => (
-                       <div key={file.id} className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                         <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center mr-3">
-                           <FileText className="w-5 h-5 text-blue-600" />
-                         </div>
-                         <div className="flex-1">
-                           <div className="text-sm font-medium text-gray-900">{file.name}</div>
-                           <div className="text-xs text-gray-500">{file.size}</div>
-                         </div>
-                         <Button variant="ghost" size="sm" className="text-blue-600">
-                           View
-                         </Button>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               )
-            ))}
-            {Object.values(data.attachments).every(arr => arr.length === 0) && (
+
+            {data.attachments.length > 0 ? (
+              <div className="grid gap-3">
+                {data.attachments.map((file) => (
+                  <div key={file.id} className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center mr-3">
+                      <FileText className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">{file.fileName}</div>
+                      <div className="text-xs text-gray-500">{formatFileSize(file.fileSize)}</div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="text-blue-600">
+                      View
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
               <div className="text-sm text-gray-500 italic">No documents attached</div>
             )}
           </section>

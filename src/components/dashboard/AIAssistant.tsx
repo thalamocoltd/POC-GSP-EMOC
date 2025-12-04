@@ -9,97 +9,127 @@ import { useAI } from "../../context/AIContext";
 // Mock data for AI responses - Field labels for better UX
 const FIELD_LABELS: Record<string, string> = {
   mocTitle: "MOC Title",
-  areaId: "Location (Area)",
-  unitId: "Unit",
-  background: "Background",
-  impact: "Impact",
-  scopeOfWork: "Scope of Work",
-  preliminaryReview: "Preliminary Review",
-  tpmLossTypeId: "TPM Loss Type",
-  benefit: "Benefit",
-  benefitValue: "Benefit Value",
-  investment: "Investment",
   lengthOfChange: "Length of Change",
-  priorityId: "Priority",
-  riskBeforeChange: "Risk Before Change",
-  riskAfterChange: "Risk After Change"
+  typeOfChange: "Type of Change",
+  priorityId: "Priority of Change",
+  areaId: "Area",
+  unitId: "Unit",
+  costEstimated: "Cost Estimated of Change",
+  detailOfChange: "Detail of Change",
+  reasonForChange: "Reason for Change",
+  scopeOfWork: "Scope of Work",
+  benefitsValue: "Benefits Value",
+  expectedBenefits: "Expected Benefits",
+  estimatedValue: "Estimated Value",
+  riskBeforeChange: "Risk Assessment Before Change",
+  riskAfterChange: "Risk Assessment After Change"
 };
 
+// Field interaction types
+type FieldInteractionType =
+  | 'advice-only' // Only give advice, no auto-fill
+  | 'choices' // Show choices in chat to select
+  | 'ask-and-fill' // Ask user and auto-fill with mock data
+  | 'auto-fill'; // Direct auto-fill with mock data
+
 // Mock data for AI responses
-const FIELD_HELP_DATA: Record<string, { explanation: string; mockValue: any }> = {
+const FIELD_HELP_DATA: Record<string, {
+  explanation: string;
+  interactionType: FieldInteractionType;
+  mockValue?: any;
+  choices?: Array<{ label: string; value: any }>;
+}> = {
   mocTitle: {
-    explanation: "A clear title helps track the MOC. Include the equipment name and the nature of change.",
-    mockValue: "Pump P-101A Efficiency Upgrade Project"
-  },
-  areaId: {
-    explanation: "Select the plant area where the change will physically occur.",
-    mockValue: "area-1"
-  },
-  unitId: {
-    explanation: "Select the specific process unit. This determines the approvers.",
-    mockValue: "unit-1-1"
-  },
-  background: {
-    explanation: "Explain the current situation and why the change is proposed. Include data if possible.",
-    mockValue: "Current pump P-101A efficiency has dropped below 60%, causing increased energy consumption and vibration issues."
-  },
-  impact: {
-    explanation: "Describe what happens if we do (or don't do) this change. Consider safety, production, and environment.",
-    mockValue: "Production capacity is limited during peak demand; risk of total failure is increasing."
-  },
-  scopeOfWork: {
-    explanation: "List the specific physical works to be performed.",
-    mockValue: "Replace impeller and wear rings; install new mechanical seal; upgrade motor to IE3 standard."
-  },
-  preliminaryReview: {
-    explanation: "Add initial comments or constraints identified during early review.",
-    mockValue: "Reviewed with Maintenance Manager; budget approved in principle. Requires shutdown window."
-  },
-  tpmLossTypeId: {
-    explanation: "TPM Loss Types categorize efficiency losses. For an equipment upgrade request, 'Equipment Failure' is typically the primary loss to address.",
-    mockValue: "loss-1"
-  },
-  benefit: {
-    explanation: "Describe the tangible outcomes. Focus on quantifiable metrics like efficiency gains, cost savings, or safety improvements.",
-    mockValue: "Expected to reduce equipment downtime by 15% annually, saving approximately 40 maintenance hours and preventing unplanned outages."
-  },
-  benefitValue: {
-    explanation: "Estimate the financial value of the benefits over a one-year period. Include maintenance savings and production uptime value.",
-    mockValue: 150000
-  },
-  investment: {
-    explanation: "Total estimated cost for the project, including hardware, software, and labor costs.",
-    mockValue: 45000
+    explanation: "MOC Title should clearly communicate the essence of the change. Recommended format: Equipment/Area + Type of Change + Purpose\n\nExamples:\n- 'Upgrade Pump P-101 Motor to IE3 Standard'\n- 'Replace Heat Exchanger E-205 Tubes'\n- 'Install New Safety Valve on Tank T-301'\n\n✏️ The title helps reviewers quickly understand the scope and importance of your MOC.",
+    interactionType: 'advice-only'
   },
   lengthOfChange: {
-    explanation: "How long will this change be effective? For permanent modifications, you can leave this or specify the expected asset life.",
-    mockValue: { years: 5, months: 0, days: 0 }
+    explanation: "The duration type determines approval workflow and follow-up requirements. Choose the appropriate type:",
+    interactionType: 'choices',
+    choices: [
+      { label: "Permanent - Indefinite change with no expiration date", value: "length-1" },
+      { label: "Temporary - Short-term change (< 1 year) requires end date", value: "length-2" },
+      { label: "Overriding - Emergency change for immediate safety action", value: "length-3" }
+    ]
+  },
+  typeOfChange: {
+    explanation: "The change type determines approvers and review procedures. Select the type that matches your work:",
+    interactionType: 'choices',
+    choices: [
+      { label: "Plant Change - Physical facility or infrastructure modification", value: "type-1" },
+      { label: "Maintenance Change - Equipment repair or replacement activities", value: "type-2" },
+      { label: "Process Change - Production process or operating procedure modification", value: "type-3" }
+    ]
   },
   priorityId: {
-    explanation: "Priority is determined by impact on safety, environment, and production. 'High' is appropriate for changes preventing significant loss.",
-    mockValue: "priority-2"
+    explanation: "Priority level depends on impact to safety, environment, and production:",
+    interactionType: 'choices',
+    choices: [
+      { label: "Normal - No immediate emergency, can be planned and scheduled", value: "priority-1" },
+      { label: "Emergency - Requires immediate action for safety or critical operations", value: "priority-2" }
+    ]
+  },
+
+  costEstimated: {
+    explanation: "Estimated cost for this project including equipment, labor, and installation. This helps with approval decisions and budget allocation.\n\n💰 Do you have a cost estimate? Let me know, or I can fill in an example value (e.g., 500,000 THB).",
+    interactionType: 'ask-and-fill',
+    mockValue: 500000
+  },
+  detailOfChange: {
+    explanation: "Describe what will be changed in detail. Include technical specifications, standards, or relevant equipment information.\n\n📝 Tell me the details you want to change, or I can fill in an example for you.",
+    interactionType: 'ask-and-fill',
+    mockValue: "Replace Pump P-101 motor from IE1 to IE3 efficiency class to improve efficiency and reduce energy consumption. Specifications: 75 kW, 380V, 50Hz"
+  },
+  reasonForChange: {
+    explanation: "Explain the problem or improvement opportunity driving this change. Support with data such as failure records or increased costs.\n\n🤔 Tell me why this change is necessary, or I can fill in an example.",
+    interactionType: 'ask-and-fill',
+    mockValue: "Current motor is over 15 years old with declining efficiency, resulting in 20% higher energy consumption vs. standard. Risk of failure causing production downtime."
+  },
+  scopeOfWork: {
+    explanation: "Define work scope including key steps, required equipment, and estimated duration.\n\n🔧 Tell me the scope of work needed, or I can fill in an example.",
+    interactionType: 'ask-and-fill',
+    mockValue: "1. Remove existing motor 2. Install new motor with coupling 3. Test operation 4. Perform alignment 5. Full load testing (Duration: 8 hours)"
+  },
+  benefitsValue: {
+    explanation: "Select benefit categories from this change (multiple selections allowed):",
+    interactionType: 'choices',
+    choices: [
+      { label: "Safety - Improve safety, reduce personnel risk", value: "benefit-1" },
+      { label: "Environment - Reduce environmental impact, save resources", value: "benefit-2" },
+      { label: "Community - Reduce community impact", value: "benefit-3" },
+      { label: "Reputation - Enhance image and credibility", value: "benefit-4" },
+      { label: "Law - Comply with regulations and requirements", value: "benefit-5" },
+      { label: "Money - Cost savings or revenue increase", value: "benefit-6" }
+    ]
+  },
+  expectedBenefits: {
+    explanation: "Describe expected benefits with measurable metrics such as energy reduction, downtime decrease, etc.\n\n✨ Would you like me to fill in example benefits? (Future: will auto-calculate from form data)",
+    interactionType: 'ask-and-fill',
+    mockValue: "Reduce electrical energy consumption by 15% (~45,000 kWh/year), saving 180,000 THB/year in electricity costs. Improve system reliability, reduce downtime by 95%."
+  },
+  estimatedValue: {
+    explanation: "Annual benefit value calculated from cost savings, efficiency gains, or revenue increase.\n\n💵 Would you like me to fill in an estimated value? (Future: will auto-calculate from form data)",
+    interactionType: 'ask-and-fill',
+    mockValue: 180000
   },
   riskBeforeChange: {
-    explanation: "Assess the current risk level without the change. Consider the likelihood of failure and its impact severity.",
-    mockValue: {
-      level: "High",
-      score: 12,
-      likelihood: 3,
-      impact: 4,
-      likelihoodLabel: "Possible",
-      impactLabel: "Major"
-    }
+    explanation: "Assess risk in current situation (before change). Consider likelihood and severity of impact.\n\nSelect risk level:",
+    interactionType: 'choices',
+    choices: [
+      { label: "Low Risk - Minimal impact (Score 1-4)", value: { level: "Low", score: 3, likelihood: 1, impact: 3, likelihoodLabel: "Rare", impactLabel: "Medium" } },
+      { label: "Medium Risk - Moderate impact (Score 5-8)", value: { level: "Medium", score: 6, likelihood: 2, impact: 3, likelihoodLabel: "Unlikely", impactLabel: "Medium" } },
+      { label: "High Risk - Significant impact (Score 9-16)", value: { level: "High", score: 12, likelihood: 3, impact: 4, likelihoodLabel: "Possible", impactLabel: "Major" } },
+      { label: "Extreme Risk - Severe impact (Score > 16)", value: { level: "Extreme", score: 20, likelihood: 4, impact: 5, likelihoodLabel: "Likely", impactLabel: "Catastrophic" } }
+    ]
   },
   riskAfterChange: {
-    explanation: "Estimate the residual risk after implementation. The change should reduce likelihood or impact to an acceptable level.",
-    mockValue: {
-      level: "Low",
-      score: 4,
-      likelihood: 2,
-      impact: 2,
-      likelihoodLabel: "Unlikely",
-      impactLabel: "Minor"
-    }
+    explanation: "Assess risk after implementing the change. Should be reduced compared to before.\n\nSelect expected residual risk level:",
+    interactionType: 'choices',
+    choices: [
+      { label: "Low Risk - Minimal impact (Score 1-4)", value: { level: "Low", score: 2, likelihood: 1, impact: 2, likelihoodLabel: "Rare", impactLabel: "Minor" } },
+      { label: "Medium Risk - Moderate impact (Score 5-8)", value: { level: "Medium", score: 6, likelihood: 2, impact: 3, likelihoodLabel: "Unlikely", impactLabel: "Medium" } },
+      { label: "High Risk - Significant impact (Score 9-16)", value: { level: "High", score: 9, likelihood: 3, impact: 3, likelihoodLabel: "Possible", impactLabel: "Medium" } }
+    ]
   }
 };
 
@@ -143,11 +173,18 @@ export const AIAssistant = () => {
           ? helpData.explanation
           : "I can help you with this field. Please provide more context on what you need.";
 
+        // Determine what action buttons to show based on interaction type
+        const showAutoFillButton = helpData?.interactionType === 'auto-fill' || helpData?.interactionType === 'ask-and-fill';
+        const showChoices = helpData?.interactionType === 'choices';
+
         addMessage({
           role: 'ai',
           content: responseText,
-          showAction: !!helpData,
-          actionFilled: false
+          showAction: showAutoFillButton,
+          actionFilled: false,
+          fieldId: activeFieldId,
+          interactionType: helpData?.interactionType,
+          choices: helpData?.choices
         });
         setIsTyping(false);
       }, 1500);
@@ -167,7 +204,7 @@ export const AIAssistant = () => {
     if (!activeFieldId) return;
 
     const helpData = FIELD_HELP_DATA[activeFieldId];
-    if (helpData) {
+    if (helpData && helpData.mockValue !== undefined) {
       triggerAutoFill(helpData.mockValue);
 
       // Update message state to show filled
@@ -177,7 +214,7 @@ export const AIAssistant = () => {
 
       // Add success message
       setTimeout(() => {
-        addMessage({ role: 'ai', content: "I've filled that field for you. Let me know if you need anything else!" });
+        addMessage({ role: 'ai', content: "✅ ฉันได้กรอกข้อมูลในฟอร์มให้แล้ว! ต้องการความช่วยเหลืออะไรเพิ่มเติมไหม?" });
       }, 500);
     }
   };
@@ -283,14 +320,51 @@ export const AIAssistant = () => {
                   )}
                 </div>
 
-                {/* Action Button for AI */}
-                {msg.showAction && (
-                  <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                    {msg.actionFilled ? (
-                      <div className="flex items-center gap-2 text-xs text-green-600 font-medium bg-green-50 px-3 py-2 rounded-lg inline-block">
-                        <Check className="w-3 h-3" /> Field filled successfully
+                {/* Action Buttons for AI - Different types */}
+                {msg.role === 'ai' && !msg.actionFilled && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 space-y-2">
+                    {/* Choices buttons */}
+                    {msg.interactionType === 'choices' && msg.choices && (
+                      <div className="flex flex-col gap-2">
+                        {msg.choices.map((choice, choiceIdx) => (
+                          <Button
+                            key={choiceIdx}
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (msg.fieldId) {
+                                triggerAutoFill(choice.value);
+
+                                // For benefitsValue, don't mark as filled (allow multiple selections)
+                                const isMultiSelect = msg.fieldId === 'benefitsValue';
+
+                                if (!isMultiSelect) {
+                                  setMessages(prev => prev.map((m, i) =>
+                                    i === idx ? { ...m, actionFilled: true } : m
+                                  ));
+                                }
+
+                                setTimeout(() => {
+                                  addMessage({
+                                    role: 'ai',
+                                    content: isMultiSelect
+                                      ? `✅ Selected "${choice.label}". You can select more or ask me anything else!`
+                                      : `✅ Selected "${choice.label}" and filled the form!`
+                                  });
+                                }, 300);
+                              }
+                            }}
+                            className="text-left justify-start h-auto py-2 px-3 text-xs hover:bg-blue-50 hover:border-[#006699] hover:text-[#006699]"
+                          >
+                            <ArrowRight className="w-3 h-3 mr-2 shrink-0" />
+                            <span className="whitespace-normal">{choice.label}</span>
+                          </Button>
+                        ))}
                       </div>
-                    ) : (
+                    )}
+
+                    {/* Auto-fill button */}
+                    {msg.showAction && (msg.interactionType === 'auto-fill' || msg.interactionType === 'ask-and-fill') && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -301,6 +375,13 @@ export const AIAssistant = () => {
                         Let AI Fill This For Me
                       </Button>
                     )}
+                  </div>
+                )}
+
+                {/* Success message */}
+                {msg.actionFilled && (
+                  <div className="flex items-center gap-2 text-xs text-green-600 font-medium bg-green-50 px-3 py-2 rounded-lg inline-block animate-in fade-in slide-in-from-top-2">
+                    <Check className="w-3 h-3" /> Field filled successfully
                   </div>
                 )}
 

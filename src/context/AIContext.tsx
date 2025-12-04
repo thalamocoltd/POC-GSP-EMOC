@@ -7,6 +7,9 @@ export interface Message {
   actionFilled?: boolean;
   type?: 'normal' | 'validation-error';
   errors?: Record<string, string>;
+  fieldId?: string;
+  interactionType?: 'advice-only' | 'choices' | 'ask-and-fill' | 'auto-fill';
+  choices?: Array<{ label: string; value: any }>;
 }
 
 interface AIContextType {
@@ -24,6 +27,9 @@ interface AIContextType {
   reportValidationSuccess: () => void;
   scrollToCallback: ((id: string) => void) | null;
   errorAutoFillCallback: ((field: string, value: any) => void) | null;
+  validationErrorsToReport: Record<string, string> | null;
+  shouldAutoSubmitQuestion: boolean;
+  setShouldAutoSubmitQuestion: (should: boolean) => void;
 }
 
 const AIContext = createContext<AIContextType | undefined>(undefined);
@@ -35,6 +41,8 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
   const [autoFillCallback, setAutoFillCallback] = useState<((value: any) => void) | null>(null);
   const [scrollToCallback, setScrollToCallback] = useState<((id: string) => void) | null>(null);
   const [errorAutoFillCallback, setErrorAutoFillCallback] = useState<((field: string, value: any) => void) | null>(null);
+  const [validationErrorsToReport, setValidationErrorsToReport] = useState<Record<string, string> | null>(null);
+  const [shouldAutoSubmitQuestion, setShouldAutoSubmitQuestion] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'ai', content: "Hello! How can I assist you with your MOC requests or plant operations today?" }
   ]);
@@ -47,6 +55,7 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
     setActiveFieldId(fieldId);
     setLastQuestion(question);
     setAutoFillCallback(() => onAutoFill);
+    setShouldAutoSubmitQuestion(true);
     setChatOpen(true);
   };
 
@@ -64,25 +73,8 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
     // Open chat first
     setChatOpen(true);
 
-    // Add message after chat is open
-    const errorMessage = {
-      role: 'ai' as const,
-      content: "I've found some issues with your form submission.",
-      type: 'validation-error' as const,
-      errors: errors
-    };
-
-    console.log("AIContext: Adding message", errorMessage);
-
-    // Use immediate state update
-    setTimeout(() => {
-      setMessages(prev => {
-        console.log("AIContext: Previous messages", prev);
-        const newMessages = [...prev, errorMessage];
-        console.log("AIContext: New messages", newMessages);
-        return newMessages;
-      });
-    }, 200);
+    // Set validation errors to report - ChatPanel will listen to this
+    setValidationErrorsToReport(errors);
   };
 
   const reportValidationSuccess = () => {
@@ -107,7 +99,10 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
       reportValidationErrors,
       reportValidationSuccess,
       scrollToCallback,
-      errorAutoFillCallback
+      errorAutoFillCallback,
+      validationErrorsToReport,
+      shouldAutoSubmitQuestion,
+      setShouldAutoSubmitQuestion
     }}>
       {children}
     </AIContext.Provider>

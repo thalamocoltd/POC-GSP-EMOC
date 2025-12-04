@@ -32,22 +32,30 @@ export const AREA_OPTIONS: AreaOption[] = [
   }
 ];
 
-export const TPM_LOSS_TYPES: TPMLossTypeOption[] = [
-  { id: "loss-1", name: "Equipment Failure" },
-  { id: "loss-2", name: "Setup and Adjustment" },
-  { id: "loss-3", name: "Idling and Minor Stoppages" },
-  { id: "loss-4", name: "Reduced Speed" },
-  { id: "loss-5", name: "Defects in Process" },
-  { id: "loss-6", name: "Reduced Yield" },
-  { id: "loss-7", name: "Startup Loss" },
-  { id: "loss-8", name: "Management Loss" }
+export const LENGTH_OF_CHANGE_OPTIONS = [
+  { id: "length-1", name: "Permanent" },
+  { id: "length-2", name: "Temporary" },
+  { id: "length-3", name: "Overriding" }
+];
+
+export const TYPE_OF_CHANGE_OPTIONS = [
+  { id: "type-1", name: "Plant Change" },
+  { id: "type-2", name: "Maintenance Change" },
+  { id: "type-3", name: "Process Change" }
 ];
 
 export const PRIORITY_OPTIONS: PriorityOption[] = [
-  { id: "priority-1", name: "Critical", level: 1 },
-  { id: "priority-2", name: "High", level: 2 },
-  { id: "priority-3", name: "Medium", level: 3 },
-  { id: "priority-4", name: "Low", level: 4 }
+  { id: "priority-1", name: "Normal", level: 1 },
+  { id: "priority-2", name: "Emergency", level: 2 }
+];
+
+export const BENEFITS_VALUE_OPTIONS = [
+  { id: "benefit-1", name: "Safety" },
+  { id: "benefit-2", name: "Environment" },
+  { id: "benefit-3", name: "Community" },
+  { id: "benefit-4", name: "Reputation" },
+  { id: "benefit-5", name: "Law" },
+  { id: "benefit-6", name: "Money" }
 ];
 
 export function getAreaById(areaId: string): AreaOption | undefined {

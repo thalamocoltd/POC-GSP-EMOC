@@ -1,10 +1,9 @@
-import { 
-  RiskScore, 
-  RiskLevel, 
-  LikelihoodValue, 
+import {
+  RiskScore,
+  RiskLevel,
+  LikelihoodValue,
   ImpactValue,
-  RiskAssessment,
-  LengthOfChange 
+  RiskAssessment
 } from "../types/emoc";
 
 export function calculateRiskScore(likelihood: LikelihoodValue, impact: ImpactValue): RiskScore {
@@ -50,26 +49,15 @@ export function createRiskAssessment(
   };
 }
 
-export function formatLengthOfChange(length: LengthOfChange): string {
-  const parts: string[] = [];
-  if (length.years > 0) parts.push(`${length.years} year${length.years > 1 ? 's' : ''}`);
-  if (length.months > 0) parts.push(`${length.months} month${length.months > 1 ? 's' : ''}`);
-  if (length.days > 0) parts.push(`${length.days} day${length.days > 1 ? 's' : ''}`);
-  return parts.join(' ') || '0 days';
-}
-
-export const ALLOWED_FILE_TYPES = {
-  "Technical Information": [".pdf", ".pfd", ".dwg", ".ppt", ".pptx"],
-  "Minute of Meeting": [".pdf", ".doc", ".docx"],
-  "Other Documents": [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".jpg", ".png"]
-};
+export const ALLOWED_FILE_TYPES = [
+  ".pdf", ".dwg", ".ppt", ".pptx", ".doc", ".docx", ".xls", ".xlsx", ".jpg", ".png"
+];
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-export function validateFileType(fileName: string, category: string): boolean {
+export function validateFileType(fileName: string): boolean {
   const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
-  const allowedTypes = ALLOWED_FILE_TYPES[category as keyof typeof ALLOWED_FILE_TYPES] || [];
-  return allowedTypes.includes(extension);
+  return ALLOWED_FILE_TYPES.includes(extension);
 }
 
 export function validateFileSize(size: number): boolean {

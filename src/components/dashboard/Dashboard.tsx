@@ -52,7 +52,7 @@ export const Dashboard = ({
       )}
 
       {/* 1. Hero Banner - Full Width */}
-      <div className="relative w-[calc(100%+3rem)] md:w-[calc(100%+4rem)] -mx-6 md:-mx-8 mt-16 mb-8 h-48 md:h-64 overflow-hidden shadow-xl group transition-all duration-500">
+      <div className="relative w-[calc(100%+3rem)] md:w-[calc(100%+4rem)] -mx-6 md:-mx-8 mb-8 h-48 md:h-64 overflow-hidden shadow-xl group transition-all duration-500">
         <div className="absolute inset-0 bg-[#1d3654]">
           <img 
             key={currentLocation} // Triggers animation on change

@@ -1,33 +1,30 @@
 import React, { useRef } from "react";
 import { Button } from "../ui/button";
-import { FileAttachment, FileCategory } from "../../types/emoc";
-import { 
-  validateFileType, 
-  validateFileSize, 
+import { FileAttachment } from "../../types/emoc";
+import {
+  validateFileType,
+  validateFileSize,
   formatFileSize,
-  ALLOWED_FILE_TYPES 
+  ALLOWED_FILE_TYPES
 } from "../../lib/emoc-utils";
 import { Upload, X, FileText, AlertCircle } from "lucide-react";
 import { cn } from "../ui/utils";
 
 interface FileUploadSectionProps {
-  category: FileCategory;
   files: FileAttachment[];
   onFilesChange: (files: FileAttachment[]) => void;
   maxFiles?: number;
 }
 
-export const FileUploadSection = ({ 
-  category, 
-  files, 
+export const FileUploadSection = ({
+  files,
   onFilesChange,
-  maxFiles = 10 
+  maxFiles = 10
 }: FileUploadSectionProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  const allowedTypes = ALLOWED_FILE_TYPES[category];
-  const allowedTypesText = allowedTypes.join(", ");
+  const allowedTypesText = ALLOWED_FILE_TYPES.join(", ");
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files;
@@ -38,7 +35,7 @@ export const FileUploadSection = ({
     const errors: string[] = [];
 
     Array.from(selectedFiles).forEach((file) => {
-      if (!validateFileType(file.name, category)) {
+      if (!validateFileType(file.name)) {
         errors.push(`${file.name}: Invalid file type`);
         return;
       }
@@ -55,7 +52,7 @@ export const FileUploadSection = ({
 
       const attachment: FileAttachment = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        category,
+        category: "Technical Information",
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
@@ -91,9 +88,10 @@ export const FileUploadSection = ({
       <div className="flex items-center justify-between">
         <div>
           <label className="text-[13px] font-medium text-[#1C1C1E] block">
-            {category}
+            Attachments
           </label>
           <p className="text-xs text-[#68737D] mt-1">
+            For example, Basic design of change, Relevant document such as photo, drawing. <br />
             Allowed: {allowedTypesText} (Max 10MB per file)
           </p>
         </div>
@@ -114,7 +112,7 @@ export const FileUploadSection = ({
         ref={fileInputRef}
         type="file"
         multiple
-        accept={allowedTypes.join(",")}
+        accept={ALLOWED_FILE_TYPES.join(",")}
         onChange={handleFileSelect}
         className="hidden"
       />

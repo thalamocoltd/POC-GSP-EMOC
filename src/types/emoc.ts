@@ -68,25 +68,22 @@ export interface LengthOfChange {
 }
 
 export interface InitiationFormData {
+  requesterName: string;
+  requestDate: string;
   mocTitle: string;
+  lengthOfChange: string;
+  typeOfChange: string;
+  priorityId: string;
   areaId: string;
   unitId: string;
-  background: string;
-  impact: string;
-  tpmLossTypeId: string;
-  lossEliminateValue: number;
+  costEstimated: number;
+  detailOfChange: string;
+  reasonForChange: string;
   scopeOfWork: string;
-  benefit: string;
-  benefitValue: number;
-  lengthOfChange: LengthOfChange;
-  priorityId: string;
-  preliminaryReview: string;
-  investment: number;
+  benefitsValue: string[];
+  expectedBenefits: string;
+  estimatedValue: number;
   riskBeforeChange: RiskAssessment;
   riskAfterChange: RiskAssessment;
-  attachments: {
-    technicalInformation: FileAttachment[];
-    minuteOfMeeting: FileAttachment[];
-    otherDocuments: FileAttachment[];
-  };
+  attachments: FileAttachment[];
 }
