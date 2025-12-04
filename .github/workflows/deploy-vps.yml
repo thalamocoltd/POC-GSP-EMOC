@@ -1,0 +1,93 @@
+name: Deploy to VPS
+
+# Trigger deployment on push to main branch
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  deploy:
+    name: Deploy to Hostinger VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            # Navigate to deployment directory
+            cd /var/www/poc-gsp-emoc || exit 1
+
+            # Pull latest changes
+            echo "Pulling latest changes from GitHub..."
+            git pull origin main
+
+            # Create logs directory if it doesn't exist
+            mkdir -p logs/nginx
+            chmod -R 755 logs
+
+            # Stop existing containers
+            echo "Stopping existing containers..."
+            docker-compose down
+
+            # Build and start containers
+            echo "Building and starting containers..."
+            docker-compose up -d --build
+
+            # Wait for health check
+            echo "Waiting for application to start..."
+            sleep 10
+
+            # Check container status
+            docker-compose ps
+
+            # Show logs
+            docker-compose logs --tail=50
+
+            # Clean up old images
+            echo "Cleaning up old Docker images..."
+            docker image prune -f
+
+            echo "Deployment completed successfully!"
+
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            # Check if container is running
+            if docker ps | grep -q GSP-EMOC-POC1; then
+              echo "✅ Container is running"
+
+              # Test health endpoint
+              if curl -f http://localhost:3001 > /dev/null 2>&1; then
+                echo "✅ Application is responding"
+              else
+                echo "❌ Application is not responding"
+                exit 1
+              fi
+            else
+              echo "❌ Container is not running"
+              docker-compose logs --tail=100
+              exit 1
+            fi
+
+      - name: Notify on Success
+        if: success()
+        run: echo "🎉 Deployment to VPS successful!"
+
+      - name: Notify on Failure
+        if: failure()
+        run: echo "❌ Deployment to VPS failed. Check logs above."

@@ -1,0 +1,97 @@
+version: '3.9'
+
+# Production docker-compose configuration for Hostinger VPS deployment
+# Usage: docker-compose -f docker-compose.prod.yml up -d --build
+
+services:
+  GSP-EMOC-POC1:
+    container_name: GSP-EMOC-POC1
+    image: gsp-emoc-poc1:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+
+    # Port mapping - modify based on your VPS setup
+    ports:
+      - "${HOST_PORT:-3001}:80"
+
+    restart: always
+
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - TZ=${TZ:-Asia/Bangkok}
+
+    # Volume mounts
+    volumes:
+      # Nginx logs for monitoring
+      - ./logs/nginx:/var/log/nginx:rw
+      # Optional: SSL certificates
+      # - ./certs:/etc/nginx/certs:ro
+      # Optional: Custom nginx config
+      # - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+
+    # Resource limits for production VPS
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPU_LIMIT:-1.0}
+          memory: ${MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: ${CPU_RESERVATION:-0.25}
+          memory: ${MEMORY_RESERVATION:-128M}
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILES:-3}
+
+    networks:
+      - poc-network
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Prevent container from accessing unnecessary capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+
+    # Read-only root filesystem (uncomment if needed)
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    #   - /var/run
+    #   - /var/cache/nginx
+
+    # Labels for easier management
+    labels:
+      - "com.poc1.description=POC-1 GSP EMOC Production Application"
+      - "com.poc1.version=1.0"
+      - "com.poc1.environment=production"
+
+networks:
+  poc-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1

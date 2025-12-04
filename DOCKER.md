@@ -278,9 +278,66 @@ docker inspect poc-1-app-app
 docker stats poc-1-app-app
 ```
 
+## VPS Deployment
+
+For deploying to Hostinger VPS or any production server, see:
+- **[HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md)** - Complete VPS deployment guide
+- **docker-compose.prod.yml** - Production-optimized Docker Compose configuration
+- **deploy.sh** - Automated deployment script
+
+### Quick VPS Deployment
+
+1. **On your VPS:**
+   ```bash
+   # Clone the repository
+   git clone <your-repo> /var/www/poc-gsp-emoc
+   cd /var/www/poc-gsp-emoc
+
+   # Make deploy script executable
+   chmod +x deploy.sh
+
+   # Deploy the application
+   ./deploy.sh -y
+   ```
+
+2. **Access your application:**
+   - Open: `http://your-vps-ip:3001`
+
+3. **For production with custom domain and SSL:**
+   - Follow the complete guide in [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md)
+
+### Key Differences for VPS Deployment
+
+**Standard docker-compose.yml:**
+- Port mapping: `3001:80`
+- Resource limits configured
+- Log volume mounts
+- Timezone support
+- Security hardening
+
+**Production docker-compose.prod.yml:**
+- Environment variable support via .env
+- Enhanced security options
+- Stricter capability controls
+- Production-grade resource limits
+
+### Environment Variables
+
+Copy and configure the environment file:
+```bash
+cp .env.example .env
+nano .env  # Edit as needed
+```
+
+Then deploy with:
+```bash
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
 ## Support
 
 For more information:
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [Nginx Documentation](https://nginx.org/en/docs/)
+- [Hostinger VPS Documentation](https://www.hostinger.com/tutorials/vps)

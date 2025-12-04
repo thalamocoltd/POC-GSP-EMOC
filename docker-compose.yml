@@ -6,20 +6,70 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    # Port mapping for Hostinger VPS deployment
+    # Change the host port (left side) as needed for your VPS setup
     ports:
-      - "3001:3001"
+      - "3001:80"
     restart: unless-stopped
+
+    # Environment variables for VPS deployment
     environment:
       - NODE_ENV=production
+      - TZ=Asia/Bangkok
+      # Add custom environment variables as needed
+      # - VITE_API_URL=${API_URL}
+      # - VITE_APP_NAME=${APP_NAME}
+
+    # Volume mounts for persistent data and logs
+    volumes:
+      # Mount nginx logs to host for monitoring
+      - ./logs/nginx:/var/log/nginx:rw
+      # Optional: Mount SSL certificates if using custom domain
+      # - ./certs:/etc/nginx/certs:ro
+
+    # Resource limits for VPS deployment
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+    # Health check
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/" ]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 10s
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
     networks:
       - poc-network
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Labels for easier management
+    labels:
+      - "com.poc1.description=POC-1 GSP EMOC Application"
+      - "com.poc1.version=1.0"
 
 networks:
   poc-network:
     driver: bridge
+    # Optional: Configure network settings for VPS
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
