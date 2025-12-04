@@ -71,3 +71,13 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
+
+export function getStepFromProcess(process: "Initiation" | "Review" | "Implementation" | "Closeout"): number {
+  const processMap = {
+    "Initiation": 1,
+    "Review": 2,
+    "Implementation": 3,
+    "Closeout": 4
+  };
+  return processMap[process] || 1;
+}

@@ -453,14 +453,20 @@ export const ChatPanel = ({ isOpen, onClose, onCommand }: ChatPanelProps) => {
 
       let aiResponse: Message;
 
-      if (lowerInput.includes("create request") || lowerInput.includes("new request")) {
+      // Enhanced command detection for "Create xxxx" pattern
+      if (
+        lowerInput.includes("create request") ||
+        lowerInput.includes("new request") ||
+        lowerInput.includes("create moc") ||
+        lowerInput.startsWith("create ")
+      ) {
         aiResponse = {
           id: (Date.now() + 1).toString(),
           role: "ai",
-          content: "I've extracted the details from your request. Please review the form before submission.",
+          content: "I've prepared a sample MOC request with pre-filled data. Click the button below to review the form.",
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           action: {
-            label: "Open Request Form",
+            label: "Open Pre-filled Form",
             onClick: () => onCommand("autofill"),
           },
         };

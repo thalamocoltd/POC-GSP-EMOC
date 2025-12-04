@@ -68,22 +68,37 @@ export interface LengthOfChange {
 }
 
 export interface InitiationFormData {
+  // Read-only fields
   requesterName: string;
   requestDate: string;
+
+  // General Information
   mocTitle: string;
-  lengthOfChange: string;
-  typeOfChange: string;
-  priorityId: string;
   areaId: string;
   unitId: string;
-  costEstimated: number;
+  priorityId: string;  // Default: "priority-1" (Normal)
+  lengthOfChange?: string;  // Hidden if Emergency
+  typeOfChange?: string;    // Hidden if Emergency or Overriding
+  estimatedDurationStart: string;
+  estimatedDurationEnd: string;
+  tpmLossType: string;
+  lossEliminateValue: number;
+
+  // Change Details
   detailOfChange: string;
   reasonForChange: string;
   scopeOfWork: string;
-  benefitsValue: string[];
+
+  // Estimated Benefit / Cost
+  estimatedBenefit: number;  // Replaces benefitsValue
+  estimatedCost: number;     // Replaces costEstimated
+  benefits: string[];        // Checkboxes
   expectedBenefits: string;
-  estimatedValue: number;
+
+  // Review of Change
   riskBeforeChange: RiskAssessment;
   riskAfterChange: RiskAssessment;
+
+  // Attachments
   attachments: FileAttachment[];
 }

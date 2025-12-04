@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { Badge } from "../ui/badge";
-import { 
-  CheckCircle2, 
-  Circle, 
+import {
+  CheckCircle2,
+  Circle,
   XCircle,
   Search,
   ArrowUpDown,
@@ -14,6 +14,7 @@ import {
 import { cn } from "../ui/utils";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { getStepFromProcess } from "../../lib/emoc-utils";
 import {
   Select,
   SelectContent,
@@ -154,7 +155,7 @@ const ProgressTracker = ({ process, status }: { process: ProcessType, status: st
 };
 
 interface MyMOCTableProps {
-  onViewRequest?: (id: string) => void;
+  onViewRequest?: (id: string, step?: number) => void;
 }
 
 export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
@@ -330,16 +331,16 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                     )}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button 
-                        onClick={() => onViewRequest?.(moc.mocNo)}
+                      <button
+                        onClick={() => onViewRequest?.(moc.mocNo, getStepFromProcess(moc.process))}
                         className="font-medium text-[#006699] hover:underline cursor-pointer focus:outline-none text-left"
                       >
                         {moc.mocNo}
                       </button>
                     </td>
                     <td className="px-6 py-4">
-                      <button 
-                        onClick={() => onViewRequest?.(moc.mocNo)}
+                      <button
+                        onClick={() => onViewRequest?.(moc.mocNo, getStepFromProcess(moc.process))}
                         className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer text-left focus:outline-none"
                       >
                         {moc.title}

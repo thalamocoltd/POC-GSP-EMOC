@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Badge } from "../ui/badge";
-import { 
-  ChevronLeft, 
+import {
+  ChevronLeft,
   ChevronRight,
   Plus,
   Search,
@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { getStepFromProcess } from "../../lib/emoc-utils";
 
 export interface ToDoItem {
   id: string;
@@ -71,7 +72,7 @@ const getProcessColor = (process: string) => {
 
 interface RequestsTableProps {
   onCreateRequest?: () => void;
-  onViewRequest?: (id: string) => void;
+  onViewRequest?: (id: string, step?: number) => void;
 }
 
 export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableProps) => {
@@ -255,16 +256,16 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
                   )}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button 
-                      onClick={() => onViewRequest?.(item.mocNo)}
+                    <button
+                      onClick={() => onViewRequest?.(item.mocNo, getStepFromProcess(item.process))}
                       className="font-medium text-[#006699] hover:underline cursor-pointer focus:outline-none text-left"
                     >
                       {item.mocNo}
                     </button>
                   </td>
                   <td className="px-6 py-4">
-                    <button 
-                      onClick={() => onViewRequest?.(item.mocNo)}
+                    <button
+                      onClick={() => onViewRequest?.(item.mocNo, getStepFromProcess(item.process))}
                       className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer focus:outline-none text-left"
                     >
                       {item.title}

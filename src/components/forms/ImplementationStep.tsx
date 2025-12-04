@@ -32,7 +32,7 @@ export const ImplementationStep = ({
       <GeneralInfoSection data={data} />
 
       {/* Implementation Details Section */}
-      <section className="space-y-6">
+      <section id="section-implementation-details" className="space-y-6">
         <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
           <Wrench className="w-5 h-5 text-[#006699]" />
           Implementation Details

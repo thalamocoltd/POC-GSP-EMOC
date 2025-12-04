@@ -10,15 +10,22 @@ import { CreateRequestForm } from "./components/forms/CreateRequestForm";
 import { ViewRequestForm } from "./components/forms/ViewRequestForm";
 import { ComingSoon } from "./components/common/ComingSoon";
 import { ProcessingOverlay } from "./components/ui/ProcessingOverlay";
-import { ReviewApprovalStep } from "./components/forms/ReviewApprovalStep";
-import { ImplementationStep } from "./components/forms/ImplementationStep";
-import { CloseoutStep } from "./components/forms/CloseoutStep";
 import { useIsMobile } from "./components/ui/use-mobile";
 import { cn } from "./components/ui/utils";
 import { LocationId } from "./components/dashboard/LocationSelector";
 import { AIProvider, useAI } from "./context/AIContext";
 import { ValidationErrorsProvider, useValidationErrors } from "./context/ValidationErrorsContext";
 import { InitiationFormData } from "./types/emoc";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./components/ui/alert-dialog";
 
 function AppContent() {
   const isMobile = useIsMobile();
@@ -36,6 +43,9 @@ function AppContent() {
   // Location State
   const [currentLocation, setCurrentLocation] = useState<LocationId>("rayong");
   const [isSwitchingLocation, setIsSwitchingLocation] = useState(false);
+  const [isCreateFormDirty, setIsCreateFormDirty] = useState(false);
+  const [pendingLocationChange, setPendingLocationChange] = useState<LocationId | null>(null);
+  const [showLocationChangeDialog, setShowLocationChangeDialog] = useState(false);
 
   // MOC Navigation State
   const [currentMocStep, setCurrentMocStep] = useState<number>(1);
@@ -61,10 +71,10 @@ function AppContent() {
     setCurrentPage("qualification");
   };
 
-  const handleViewRequest = (id: string) => {
+  const handleViewRequest = (id: string, step?: number) => {
     setCurrentViewId(id);
     setMocMode("view");
-    setCurrentMocStep(1);
+    setCurrentMocStep(step || 1);
     setCurrentPage("view-request");
   };
 
@@ -110,14 +120,46 @@ function AppContent() {
   const handleLocationChange = (newLocation: LocationId) => {
     if (newLocation === currentLocation) return;
 
-    // Trigger switch effect
+    if (currentPage === "create-request" && isCreateFormDirty) {
+      setPendingLocationChange(newLocation);
+      setShowLocationChangeDialog(true);
+    } else {
+      executeLocationChange(newLocation);
+    }
+  };
+
+  const executeLocationChange = (newLocation: LocationId) => {
     setIsSwitchingLocation(true);
 
-    // Simulate switching delay
+    const needsNavigation = currentPage !== "dashboard";
+
+    if (needsNavigation) {
+      setCurrentPage("dashboard");
+      clearValidationErrors();
+      setCurrentViewId(null);
+      setCurrentMocStep(1);
+      setMocFormData(null);
+      setMocMode("create");
+      setIsCreateFormDirty(false);
+    }
+
     setTimeout(() => {
       setCurrentLocation(newLocation);
       setIsSwitchingLocation(false);
-    }, 1500);
+    }, needsNavigation ? 1500 : 1000);
+  };
+
+  const handleConfirmLocationChange = () => {
+    if (pendingLocationChange) {
+      executeLocationChange(pendingLocationChange);
+      setPendingLocationChange(null);
+      setShowLocationChangeDialog(false);
+    }
+  };
+
+  const handleCancelLocationChange = () => {
+    setPendingLocationChange(null);
+    setShowLocationChangeDialog(false);
   };
 
   // Determine if showing module menu
@@ -218,42 +260,17 @@ function AppContent() {
 
         {currentPage === "create-request" && (
           <motion.div
-            key={currentMocStep}
             initial={{ opacity: 0, y: 20, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
           >
-            {currentMocStep === 1 && (
-              <CreateRequestForm
-                onBack={handleBackToDashboard}
-                onSubmit={(data) => handleStepComplete(1, data)}
-                isAIAutofilled={isAIAutofilled}
-              />
-            )}
-            {currentMocStep === 2 && (
-              <ReviewApprovalStep
-                data={mocFormData}
-                onPrevious={() => handleStepTransition(1)}
-                onNext={() => handleStepComplete(2)}
-                onBack={handleBackToDashboard}
-              />
-            )}
-            {currentMocStep === 3 && (
-              <ImplementationStep
-                data={mocFormData}
-                onPrevious={() => handleStepTransition(2)}
-                onNext={() => handleStepComplete(3)}
-                onBack={handleBackToDashboard}
-              />
-            )}
-            {currentMocStep === 4 && (
-              <CloseoutStep
-                data={mocFormData}
-                onPrevious={() => handleStepTransition(3)}
-                onBack={handleBackToDashboard}
-              />
-            )}
+            <CreateRequestForm
+              onBack={handleBackToDashboard}
+              onSubmit={(data) => handleStepComplete(1, data)}
+              isAIAutofilled={isAIAutofilled}
+              onFormDirtyChange={setIsCreateFormDirty}
+            />
           </motion.div>
         )}
 
@@ -278,6 +295,29 @@ function AppContent() {
           <ComingSoon onBack={handleBackToDashboard} />
         )}
       </main>
+
+      {/* Location Change Confirmation Dialog */}
+      <AlertDialog open={showLocationChangeDialog} onOpenChange={setShowLocationChangeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes in your MOC request form. Changing location will return you to the dashboard and discard these changes. Do you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelLocationChange}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmLocationChange}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

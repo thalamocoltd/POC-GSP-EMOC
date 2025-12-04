@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "../ui/tooltip";
 import { RiskAssessmentModal } from "../emoc/RiskAssessmentModal";
 import { FileUploadSection } from "../emoc/FileUploadSection";
-import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
+import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
 import { createRiskAssessment } from "../../lib/emoc-utils";
 import { InitiationFormData, RiskAssessment } from "../../types/emoc";
 import { cn } from "../ui/utils";
@@ -20,6 +20,7 @@ interface CreateRequestFormProps {
   onBack: () => void;
   onSubmit: (data: InitiationFormData) => void;
   isAIAutofilled?: boolean;
+  onFormDirtyChange?: (isDirty: boolean) => void;
 }
 
 // Mapping of field IDs to user-friendly labels
@@ -41,7 +42,30 @@ const FIELD_LABELS: Record<string, string> = {
   riskAfterChange: 'Risk Assessment (After)',
 };
 
-export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: CreateRequestFormProps) => {
+// Demo autofill data for AI assistant
+const DEMO_AUTOFILL_DATA: Partial<InitiationFormData> = {
+  mocTitle: "Upgrade Pump P-101 Motor to IE3 Standard for Energy Efficiency",
+  lengthOfChange: "length-1",
+  typeOfChange: "type-2",
+  priorityId: "priority-1",
+  areaId: "area-1",
+  unitId: "unit-1-1",
+  estimatedDurationStart: "06/12/2025",
+  estimatedDurationEnd: "08/12/2025",
+  tpmLossType: "tpm-4",
+  lossEliminateValue: 500000,
+  detailOfChange: "Replace Pump P-101 motor from IE1 to IE3 efficiency class to improve efficiency and reduce energy consumption. Specifications: 75 kW, 380V, 50Hz. Motor brand: Siemens 1LE1 series with premium efficiency rating.",
+  reasonForChange: "Current motor is over 15 years old with declining efficiency, resulting in 20% higher energy consumption vs. standard. Risk of failure causing production downtime. Energy audit recommends replacement to meet corporate sustainability goals.",
+  scopeOfWork: "1. Remove existing motor and store for disposal\n2. Install new IE3 motor with coupling alignment\n3. Electrical connection and wiring verification\n4. Perform alignment check and vibration analysis\n5. Commissioning and full load testing\n6. Update P&ID and maintenance records\n\nEstimated Duration: 8 hours during planned shutdown",
+  estimatedBenefit: 180000,
+  estimatedCost: 500000,
+  benefits: ["benefit-2", "benefit-6"],
+  expectedBenefits: "Reduce electrical energy consumption by 15% (~45,000 kWh/year), saving 180,000 THB/year in electricity costs. Improve system reliability and reduce unplanned downtime by 95%. Reduce carbon emissions by ~22 tons CO2/year, supporting GSP environmental targets.",
+  riskBeforeChange: createRiskAssessment(4, 3),
+  riskAfterChange: createRiskAssessment(2, 2),
+};
+
+export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, onFormDirtyChange }: CreateRequestFormProps) => {
   const { openAssistantForField, reportValidationErrors, reportValidationSuccess } = useAI();
   const { setErrors: setContextErrors } = useValidationErrors();
   const [hasReportedErrors, setHasReportedErrors] = useState(false);
@@ -60,16 +84,20 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
     mocTitle: "",
     lengthOfChange: "",
     typeOfChange: "",
-    priorityId: "",
+    priorityId: "priority-1", // Default to Normal
     areaId: "",
     unitId: "",
-    costEstimated: 0,
+    estimatedDurationStart: "",
+    estimatedDurationEnd: "",
+    tpmLossType: "",
+    lossEliminateValue: 0,
     detailOfChange: "",
     reasonForChange: "",
     scopeOfWork: "",
-    benefitsValue: [],
+    estimatedBenefit: 0,
+    estimatedCost: 0,
+    benefits: [],
     expectedBenefits: "",
-    estimatedValue: 0,
     riskBeforeChange: createRiskAssessment(null, null),
     riskAfterChange: createRiskAssessment(null, null),
     attachments: []
@@ -80,6 +108,9 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
 
   // Validation State
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Form Dirty State
+  const [isFormDirty, setIsFormDirty] = useState(false);
 
   // UI State
   const [selectedAreaId, setSelectedAreaId] = useState("");
@@ -111,6 +142,28 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
   useEffect(() => {
     setContextErrors(errors);
   }, [errors, setContextErrors]);
+
+  // Auto-fill form with demo data when AI autofill is triggered
+  useEffect(() => {
+    if (isAIAutofilled) {
+      setFormData((prev: InitiationFormData) => ({
+        ...prev,
+        ...DEMO_AUTOFILL_DATA
+      }));
+
+      if (DEMO_AUTOFILL_DATA.areaId) {
+        setSelectedAreaId(DEMO_AUTOFILL_DATA.areaId);
+        setAvailableUnits(getUnitsByAreaId(DEMO_AUTOFILL_DATA.areaId));
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isAIAutofilled]);
+
+  // Notify parent when form dirty state changes
+  useEffect(() => {
+    onFormDirtyChange?.(isFormDirty);
+  }, [isFormDirty, onFormDirtyChange]);
 
   const validateField = (field: string, value: any): string => {
     if (!value || (Array.isArray(value) && value.length === 0)) return "This field is required";
@@ -152,6 +205,11 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
   const handleInputChange = (field: keyof InitiationFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
+    // Mark form as dirty (except for read-only fields)
+    if (!isFormDirty && field !== 'requesterName' && field !== 'requestDate') {
+      setIsFormDirty(true);
+    }
+
     // Real-time validation - clear error when user starts fixing
     if (errors[field]) {
       const error = validateField(field, value);
@@ -165,13 +223,13 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
   };
 
   const handleAutoFill = (fieldId: string, value: any) => {
-    // Special handling for benefitsValue (array field)
-    if (fieldId === 'benefitsValue') {
+    // Special handling for benefits (array field)
+    if (fieldId === 'benefits') {
       if (Array.isArray(value)) {
         handleInputChange(fieldId as keyof InitiationFormData, value);
       } else {
         // Toggle single value
-        handleBenefitsValueToggle(value);
+        handleBenefitsToggle(value);
       }
     } else {
       handleInputChange(fieldId as keyof InitiationFormData, value);
@@ -179,12 +237,12 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
     setHighlightedField(fieldId);
   };
 
-  const handleBenefitsValueToggle = (benefitId: string) => {
+  const handleBenefitsToggle = (benefitId: string) => {
     setFormData(prev => {
-      const newBenefitsValue = prev.benefitsValue.includes(benefitId)
-        ? prev.benefitsValue.filter(id => id !== benefitId)
-        : [...prev.benefitsValue, benefitId];
-      return { ...prev, benefitsValue: newBenefitsValue };
+      const newBenefits = prev.benefits.includes(benefitId)
+        ? prev.benefits.filter((id: string) => id !== benefitId)
+        : [...prev.benefits, benefitId];
+      return { ...prev, benefits: newBenefits };
     });
   };
 
@@ -214,21 +272,31 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
     </div>
   );
 
+  const isEmergency = formData.priorityId === "priority-2";
+  const isOverriding = formData.lengthOfChange === "length-3";
+
   const validateAll = (): { isValid: boolean; errors: Record<string, string> } => {
     const newErrors: Record<string, string> = {};
     if (!formData.mocTitle) newErrors.mocTitle = "MOC Title is required";
-    if (!formData.lengthOfChange) newErrors.lengthOfChange = "Length of Change is required";
-    if (!formData.typeOfChange) newErrors.typeOfChange = "Type of Change is required";
+
+    // Conditional validation for lengthOfChange and typeOfChange
+    if (!isEmergency && !formData.lengthOfChange) newErrors.lengthOfChange = "Length of Change is required";
+    if (!isEmergency && !isOverriding && !formData.typeOfChange) newErrors.typeOfChange = "Type of Change is required";
+
     if (!formData.priorityId) newErrors.priorityId = "Priority of Change is required";
     if (!formData.areaId) newErrors.areaId = "Area is required";
     if (!formData.unitId) newErrors.unitId = "Unit is required";
-    if (!formData.costEstimated) newErrors.costEstimated = "Cost Estimated is required";
+    if (!formData.estimatedDurationStart) newErrors.estimatedDurationStart = "Start Date is required";
+    if (!formData.estimatedDurationEnd) newErrors.estimatedDurationEnd = "End Date is required";
+    if (!formData.tpmLossType) newErrors.tpmLossType = "TPM Loss Type is required";
+    if (!formData.lossEliminateValue) newErrors.lossEliminateValue = "Loss Eliminate Value is required";
     if (!formData.detailOfChange) newErrors.detailOfChange = "Detail of Change is required";
     if (!formData.reasonForChange) newErrors.reasonForChange = "Reason for Change is required";
     if (!formData.scopeOfWork) newErrors.scopeOfWork = "Scope of Work is required";
-    if (formData.benefitsValue.length === 0) newErrors.benefitsValue = "Please select at least one benefit value";
+    if (!formData.estimatedBenefit) newErrors.estimatedBenefit = "Estimated Benefit is required";
+    if (!formData.estimatedCost) newErrors.estimatedCost = "Estimated Cost is required";
+    if (formData.benefits.length === 0) newErrors.benefits = "Please select at least one benefit";
     if (!formData.expectedBenefits) newErrors.expectedBenefits = "Expected Benefits is required";
-    if (!formData.estimatedValue) newErrors.estimatedValue = "Estimated Value is required";
     if (!formData.riskBeforeChange.level) newErrors.riskBeforeChange = "Risk Assessment (Before) is required";
     if (!formData.riskAfterChange.level) newErrors.riskAfterChange = "Risk Assessment (After) is required";
 
@@ -240,7 +308,11 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
     const { isValid, errors: validationErrors } = validateAll();
     if (isValid) {
       console.log("Form Valid & Submitted:", formData);
-      onSubmit(formData);
+      // Show success alert
+      alert("✓ MOC Request submitted successfully!\n\nThe request has been submitted for review.");
+      // Reset dirty state and return to dashboard
+      setIsFormDirty(false);
+      onBack();
     } else {
       // Send validation errors to chat panel
       reportValidationErrors(validationErrors, handleScrollToField, handleAutoFill);
@@ -303,10 +375,10 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
                 </div>
                 <div>
                   <h3 className="text-[14px] font-semibold text-[#1C1C1E] flex items-center gap-2">
-                    Form auto-completed by AI
+                    Form Auto-Filled by AI Assistant
                   </h3>
                   <p className="text-[13px] text-[#68737D] mt-1">
-                    Review the details extracted from your request below and submit.
+                    I've pre-filled this form with sample data based on your request. Please review all fields and make any necessary adjustments before submitting.
                   </p>
                 </div>
               </div>
@@ -378,47 +450,51 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
                   {errors.mocTitle && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.mocTitle}</span>}
                 </div>
 
-                <div className="space-y-2" id="field-lengthOfChange">
-                  {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
-                  <Select
-                    value={formData.lengthOfChange}
-                    onValueChange={(value) => handleInputChange('lengthOfChange', value)}
-                  >
-                    <SelectTrigger className={cn(
-                      "h-11 bg-white",
-                      errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                    )}>
-                      <SelectValue placeholder="Select length of change" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LENGTH_OF_CHANGE_OPTIONS.map((option) => (
-                        <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
-                </div>
+                {!isEmergency && (
+                  <div className="space-y-2" id="field-lengthOfChange">
+                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
+                    <Select
+                      value={formData.lengthOfChange || ""}
+                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-white",
+                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select length of change" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LENGTH_OF_CHANGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
+                  </div>
+                )}
 
-                <div className="space-y-2" id="field-typeOfChange">
-                  {renderLabelWithAI("Type of Change", "typeOfChange", true)}
-                  <Select
-                    value={formData.typeOfChange}
-                    onValueChange={(value) => handleInputChange('typeOfChange', value)}
-                  >
-                    <SelectTrigger className={cn(
-                      "h-11 bg-white",
-                      errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                    )}>
-                      <SelectValue placeholder="Select type of change" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TYPE_OF_CHANGE_OPTIONS.map((option) => (
-                        <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
-                </div>
+                {!isEmergency && !isOverriding && (
+                  <div className="space-y-2" id="field-typeOfChange">
+                    {renderLabelWithAI("Type of Change", "typeOfChange", true)}
+                    <Select
+                      value={formData.typeOfChange || ""}
+                      onValueChange={(value) => handleInputChange('typeOfChange', value)}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-white",
+                        errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select type of change" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TYPE_OF_CHANGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
+                  </div>
+                )}
 
                 <div className="space-y-2" id="field-priorityId">
                   {renderLabelWithAI("Priority of Change", "priorityId", true)}
@@ -515,21 +591,110 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
                   </div>
                 </div>
 
-                <div className="space-y-2" id="field-costEstimated">
-                  {renderLabelWithAI("Cost Estimated of Change (THB)", "costEstimated", true)}
-                  <Input
-                    className={cn(
-                      "h-11 border-[#D4D9DE]",
-                      errors.costEstimated && "border-red-300"
-                    )}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={formData.costEstimated || ""}
-                    onChange={(e) => handleInputChange('costEstimated', parseFloat(e.target.value) || 0)}
-                  />
-                  {errors.costEstimated && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.costEstimated}</span>}
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2" id="field-estimatedDurationStart">
+                    {renderLabelWithAI("Start Date", "estimatedDurationStart", true)}
+                    <Input
+                      className={cn(
+                        "h-11 border-[#D4D9DE]",
+                        errors.estimatedDurationStart && "border-red-300"
+                      )}
+                      type="date"
+                      value={formData.estimatedDurationStart}
+                      onChange={(e) => handleInputChange('estimatedDurationStart', e.target.value)}
+                    />
+                    {errors.estimatedDurationStart && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedDurationStart}</span>}
+                  </div>
+
+                  <div className="space-y-2" id="field-estimatedDurationEnd">
+                    {renderLabelWithAI("End Date", "estimatedDurationEnd", true)}
+                    <Input
+                      className={cn(
+                        "h-11 border-[#D4D9DE]",
+                        errors.estimatedDurationEnd && "border-red-300"
+                      )}
+                      type="date"
+                      value={formData.estimatedDurationEnd}
+                      onChange={(e) => handleInputChange('estimatedDurationEnd', e.target.value)}
+                    />
+                    {errors.estimatedDurationEnd && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedDurationEnd}</span>}
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2" id="field-tpmLossType">
+                    {renderLabelWithAI("TPM Loss Type", "tpmLossType", true)}
+                    <Select
+                      value={formData.tpmLossType}
+                      onValueChange={(value: string) => handleInputChange('tpmLossType', value)}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-white",
+                        errors.tpmLossType ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select TPM loss type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TPM_LOSS_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.tpmLossType && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.tpmLossType}</span>}
+                  </div>
+
+                  <div className="space-y-2" id="field-lossEliminateValue">
+                    {renderLabelWithAI("Loss Eliminate Value (THB)", "lossEliminateValue", true)}
+                    <Input
+                      className={cn(
+                        "h-11 border-[#D4D9DE]",
+                        errors.lossEliminateValue && "border-red-300"
+                      )}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={formData.lossEliminateValue || ""}
+                      onChange={(e) => handleInputChange('lossEliminateValue', parseFloat(e.target.value) || 0)}
+                    />
+                    {errors.lossEliminateValue && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lossEliminateValue}</span>}
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2" id="field-estimatedBenefit">
+                    {renderLabelWithAI("Estimated Benefit (THB)", "estimatedBenefit", true)}
+                    <Input
+                      className={cn(
+                        "h-11 border-[#D4D9DE]",
+                        errors.estimatedBenefit && "border-red-300"
+                      )}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={formData.estimatedBenefit || ""}
+                      onChange={(e) => handleInputChange('estimatedBenefit', parseFloat(e.target.value) || 0)}
+                    />
+                    {errors.estimatedBenefit && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedBenefit}</span>}
+                  </div>
+
+                  <div className="space-y-2" id="field-estimatedCost">
+                    {renderLabelWithAI("Estimated Cost (THB)", "estimatedCost", true)}
+                    <Input
+                      className={cn(
+                        "h-11 border-[#D4D9DE]",
+                        errors.estimatedCost && "border-red-300"
+                      )}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={formData.estimatedCost || ""}
+                      onChange={(e) => handleInputChange('estimatedCost', parseFloat(e.target.value) || 0)}
+                    />
+                    {errors.estimatedCost && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedCost}</span>}
+                  </div>
                 </div>
               </div>
             </section>
@@ -587,22 +752,22 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
                   {errors.scopeOfWork && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.scopeOfWork}</span>}
                 </div>
 
-                <div className="space-y-2" id="field-benefitsValue">
-                  {renderLabelWithAI("Benefits Value", "benefitsValue", true)}
+                <div className="space-y-2" id="field-benefits">
+                  {renderLabelWithAI("Benefits", "benefits", true)}
                   <div className="flex flex-wrap gap-2">
                     {BENEFITS_VALUE_OPTIONS.map((benefit) => {
-                      const isSelected = formData.benefitsValue.includes(benefit.id);
+                      const isSelected = formData.benefits.includes(benefit.id);
                       return (
                         <button
                           key={benefit.id}
                           type="button"
-                          onClick={() => handleBenefitsValueToggle(benefit.id)}
+                          onClick={() => handleBenefitsToggle(benefit.id)}
                           className={cn(
                             "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all duration-200 flex items-center gap-1.5 hover:scale-105 active:scale-95 cursor-pointer",
                             isSelected
                               ? "border-[#006699] bg-[#006699] text-white shadow-md"
                               : "border-[#D4D9DE] bg-white text-[#68737D] hover:border-[#006699] hover:text-[#006699] hover:shadow-sm",
-                            errors.benefitsValue && !isSelected && "border-red-300"
+                            errors.benefits && !isSelected && "border-red-300"
                           )}
                         >
                           {isSelected && <Check className="w-4 h-4" />}
@@ -611,7 +776,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false }: 
                       );
                     })}
                   </div>
-                  {errors.benefitsValue && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.benefitsValue}</span>}
+                  {errors.benefits && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.benefits}</span>}
                 </div>
 
                 <div className="space-y-2" id="field-expectedBenefits">

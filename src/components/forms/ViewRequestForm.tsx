@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ArrowLeft, Shield, Calendar, Paperclip, FileText, Clock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Shield, Calendar, Paperclip, FileText, Clock, AlertTriangle, User, CheckCircle2, Wrench, CheckSquare, CheckCircle, Award } from "lucide-react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
@@ -285,6 +285,164 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               <div className="text-sm text-gray-500 italic">No documents attached</div>
             )}
           </section>
+
+          {/* Step 2: Review Status Section */}
+          {step === 2 && (
+            <section id="section-review-status" className="space-y-6 scroll-mt-24">
+              <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-[#006699]" />
+                Review Status
+              </h3>
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                    <Clock className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-[#1C1C1E] mb-2">Awaiting Review</h4>
+                    <p className="text-sm text-[#68737D] mb-4">
+                      This MOC request is currently pending review by the designated approvers.
+                    </p>
+                    <div className="space-y-3">
+                      <Label className="text-[13px] font-medium text-[#68737D]">Assigned Reviewers</Label>
+                      <div className="space-y-2">
+                        {[
+                          { name: "Sarah Johnson", role: "Technical Manager", status: "Pending" },
+                          { name: "Michael Chen", role: "Safety Officer", status: "Pending" },
+                          { name: "David Williams", role: "Operations Lead", status: "Pending" }
+                        ].map((reviewer, idx) => (
+                          <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
+                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <User className="w-5 h-5 text-gray-600" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-[#1C1C1E]">{reviewer.name}</p>
+                              <p className="text-xs text-[#68737D]">{reviewer.role}</p>
+                            </div>
+                            <span className="text-xs font-medium px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300">
+                              {reviewer.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Step 3: Implementation Details Section */}
+          {step === 3 && (
+            <section id="section-implementation-details" className="space-y-6 scroll-mt-24">
+              <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
+                <Wrench className="w-5 h-5 text-[#006699]" />
+                Implementation Details
+              </h3>
+              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                    <CheckSquare className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-[#1C1C1E] mb-2">Implementation in Progress</h4>
+                    <p className="text-sm text-[#68737D] mb-4">
+                      The approved change is now being implemented according to the defined scope of work.
+                    </p>
+                    <div className="space-y-3 mt-4">
+                      <Label className="text-[13px] font-medium text-[#68737D]">Implementation Tasks</Label>
+                      <div className="space-y-2">
+                        {[
+                          { task: "Pre-implementation safety briefing", status: "Completed", date: "Dec 1, 2025" },
+                          { task: "Equipment shutdown and isolation", status: "Completed", date: "Dec 2, 2025" },
+                          { task: "Physical modifications and installation", status: "In Progress", date: "Dec 3-5, 2025" },
+                          { task: "Testing and commissioning", status: "Pending", date: "Dec 6, 2025" },
+                          { task: "Documentation and handover", status: "Pending", date: "Dec 7, 2025" }
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
+                            <div className={`w-3 h-3 rounded-full shrink-0 ${
+                              item.status === "Completed" ? "bg-green-500" :
+                              item.status === "In Progress" ? "bg-blue-500 animate-pulse" : "bg-gray-300"
+                            }`} />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-[#1C1C1E]">{item.task}</p>
+                              <p className="text-xs text-[#68737D] flex items-center gap-1 mt-0.5">
+                                <Calendar className="w-3 h-3" /> {item.date}
+                              </p>
+                            </div>
+                            <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                              item.status === "Completed" ? "bg-green-100 text-green-700 border border-green-300" :
+                              item.status === "In Progress" ? "bg-blue-100 text-blue-700 border border-blue-300" :
+                              "bg-gray-100 text-gray-700 border border-gray-300"
+                            }`}>
+                              {item.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Step 4: Closeout Status Section */}
+          {step === 4 && (
+            <section id="section-closeout-status" className="space-y-6 scroll-mt-24">
+              <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-[#006699]" />
+                Closeout Status
+              </h3>
+              <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                    <Award className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-[#1C1C1E] mb-2">MOC Successfully Closed</h4>
+                    <p className="text-sm text-[#68737D] mb-4">
+                      This Management of Change has been successfully implemented and all closeout activities have been completed.
+                    </p>
+                    <div className="space-y-3 mt-4">
+                      <Label className="text-[13px] font-medium text-[#68737D]">Closeout Checklist</Label>
+                      <div className="space-y-2">
+                        {[
+                          "Post-implementation review completed",
+                          "As-built drawings updated",
+                          "Operating procedures revised",
+                          "Training materials updated",
+                          "Lessons learned documented",
+                          "Change management database updated"
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
+                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                              <CheckCircle className="w-3 h-3 text-white" />
+                            </div>
+                            <p className="text-sm text-[#1C1C1E]">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 mt-6">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
+                        <div className="text-2xl font-bold text-[#006699]">14</div>
+                        <div className="text-xs text-[#68737D] mt-1">Days to Complete</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
+                        <div className="text-2xl font-bold text-green-600">100%</div>
+                        <div className="text-xs text-[#68737D] mt-1">Tasks Completed</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
+                        <div className="text-2xl font-bold text-purple-600">0</div>
+                        <div className="text-xs text-[#68737D] mt-1">Safety Incidents</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>

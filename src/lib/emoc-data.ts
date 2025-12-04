@@ -58,6 +58,13 @@ export const BENEFITS_VALUE_OPTIONS = [
   { id: "benefit-6", name: "Money" }
 ];
 
+export const TPM_LOSS_TYPE_OPTIONS = [
+  { id: "tpm-1", name: "Safety" },
+  { id: "tpm-2", name: "Environment" },
+  { id: "tpm-3", name: "Quality" },
+  { id: "tpm-4", name: "Productivity" }
+];
+
 export function getAreaById(areaId: string): AreaOption | undefined {
   return AREA_OPTIONS.find(area => area.id === areaId);
 }

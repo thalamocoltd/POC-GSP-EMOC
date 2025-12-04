@@ -55,9 +55,33 @@ const menuItems: MenuItem[] = [
       { id: "1.4", label: "Attachments", targetId: "section-attachments" },
     ]
   },
-  { id: "2", label: "Review & Approval", step: 2 },
-  { id: "3", label: "Implementation", step: 3 },
-  { id: "4", label: "Closeout", step: 4 },
+  {
+    id: "2",
+    label: "Review & Approval",
+    step: 2,
+    subItems: [
+      { id: "2.1", label: "General Information", targetId: "section-general-info" },
+      { id: "2.2", label: "Review Status", targetId: "section-review-status" },
+    ]
+  },
+  {
+    id: "3",
+    label: "Implementation",
+    step: 3,
+    subItems: [
+      { id: "3.1", label: "General Information", targetId: "section-general-info" },
+      { id: "3.2", label: "Implementation Details", targetId: "section-implementation-details" },
+    ]
+  },
+  {
+    id: "4",
+    label: "Closeout",
+    step: 4,
+    subItems: [
+      { id: "4.1", label: "General Information", targetId: "section-general-info" },
+      { id: "4.2", label: "Closeout Status", targetId: "section-closeout-status" },
+    ]
+  },
 ];
 
 export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onStepClick }: ModuleMenuProps) => {
@@ -129,8 +153,12 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
                   onClick={() => {
                     if (isActiveStep) {
                       toggleExpand(item.id);
-                    } else if (isReadOnly && onStepClick && status !== "pending") {
-                      onStepClick(item.step);
+                    } else if (isReadOnly && status !== "pending") {
+                      if (item.subItems) {
+                        toggleExpand(item.id);
+                      } else if (onStepClick) {
+                        onStepClick(item.step);
+                      }
                     }
                   }}
                   className={cn(
@@ -140,9 +168,11 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
                       : status === "completed"
                         ? "hover:bg-gray-50 cursor-pointer"
                         : "hover:bg-gray-50 cursor-default opacity-60",
-                    isReadOnly && status !== "pending" && !isActiveStep && "cursor-pointer"
+                    isReadOnly && status !== "pending" && !isActiveStep && "cursor-pointer",
+                    // Disable steps 2-4 in create mode
+                    !isReadOnly && item.step > 1 && "opacity-40 cursor-not-allowed pointer-events-none"
                   )}
-                  disabled={!isReadOnly && status === "pending"}
+                  disabled={(!isReadOnly && item.step > 1) || (!isReadOnly && status === "pending")}
                 >
                   {/* Status Icon */}
                   <div
@@ -175,15 +205,15 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
                   </div>
 
                   {/* Expand Icon */}
-                  {item.subItems && isActiveStep && (
-                    <div className="text-[#006699]">
+                  {item.subItems && (isActiveStep || (isReadOnly && status !== "pending")) && (
+                    <div className={cn(isActiveStep ? "text-[#006699]" : "text-gray-400")}>
                       {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </div>
                   )}
                 </button>
 
                 {/* Sub Items (Accordion) */}
-                {item.subItems && isExpanded && isActiveStep && (
+                {item.subItems && isExpanded && (
                   <div className="ml-[22px] pl-4 border-l-2 border-[#EBF5FF] mt-2 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
                     {item.subItems.map((sub) => {
                       const errorCount = getSectionErrorCount(sub.targetId);

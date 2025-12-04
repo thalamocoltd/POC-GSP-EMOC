@@ -174,6 +174,13 @@ export const MOCQualificationWizard = ({
                 >
                   Next
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={onQualified}
+                  className="border-[#006699] text-[#006699] hover:bg-[#EBF5FF] px-6"
+                >
+                  Skip (Demo)
+                </Button>
               </div>
             </div>
           ) : (

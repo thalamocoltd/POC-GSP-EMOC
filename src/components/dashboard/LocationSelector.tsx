@@ -58,7 +58,7 @@ export const LocationSelector = ({
       {/* Dropdown Menu */}
       {isOpen && (
         <div className={cn(
-          "bg-white rounded-2xl shadow-xl border border-gray-100 p-2 min-w-[220px] absolute z-50 animate-in fade-in duration-200",
+          "bg-white rounded-2xl shadow-xl border border-gray-100 p-2 min-w-[220px] max-w-[280px] absolute z-50 animate-in fade-in duration-200",
           isFloating
             ? "bottom-full right-0 mb-2 origin-bottom-right slide-in-from-bottom-4"
             : "top-full left-0 mt-2 origin-top-left" // Minimal/Header aligns left usually if on left side
@@ -81,8 +81,8 @@ export const LocationSelector = ({
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}
               >
-                <loc.icon className={cn("w-4 h-4", currentLocation === loc.id ? "text-[#006699]" : "text-gray-400")} />
-                {loc.name}
+                <loc.icon className={cn("w-4 h-4 shrink-0", currentLocation === loc.id ? "text-[#006699]" : "text-gray-400")} />
+                <span className="truncate">{loc.name}</span>
               </button>
             ))}
           </div>
@@ -101,7 +101,7 @@ export const LocationSelector = ({
           variant === "header" && "h-auto py-1.5 px-3 rounded-full border border-gray-200 hover:border-gray-300 bg-white shadow-sm hover:bg-gray-50 hover:scale-105",
           // Minimal Style (New) - Matches AI Assistant
           isMinimal && cn(
-            "px-3 py-1.5 h-auto rounded-full transition-all group",
+            "px-3 py-1.5 h-auto rounded-full transition-all group min-w-[160px]",
             "bg-white border border-transparent hover:border-gray-200 hover:bg-gray-50 text-[#1d3654]",
             isOpen && "bg-gray-100"
           )
@@ -119,8 +119,8 @@ export const LocationSelector = ({
 
         {/* Text Content */}
         {isMinimal ? (
-           // Minimal: Just Name
-           <span className="hidden sm:inline text-sm font-semibold">{current.name}</span>
+           // Minimal: Truncate long names for better display
+           <span className="hidden sm:inline text-sm font-semibold truncate max-w-[200px]">{current.name}</span>
         ) : (
            // Standard: Label + Name
            <div className="flex flex-col items-start mr-1">

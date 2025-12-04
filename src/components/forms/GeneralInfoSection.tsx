@@ -80,7 +80,7 @@ export const GeneralInfoSection = ({ data }: GeneralInfoSectionProps) => {
     TYPE_OF_CHANGE_OPTIONS.find((t) => t.id === id)?.name || id;
 
   return (
-    <section className="space-y-6">
+    <section id="section-general-info" className="space-y-6">
       <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
         General Information
       </h3>
