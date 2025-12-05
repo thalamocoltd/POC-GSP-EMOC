@@ -64,52 +64,45 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
         className={cn(
           "border-b border-gray-200",
           isDisabled && "bg-gray-50",
-          task.status === "In Progress" && !isDisabled && "bg-blue-50",
-          task.status === "Completed" && !isDisabled && "bg-green-50",
-          task.status === "Rejected" && !isDisabled && "bg-red-50",
-          task.status === "Not Started" && !isDisabled && "bg-white"
+          task.status === "In Progress" && !isDisabled && "bg-blue-50/30",
+          task.status === "Completed" && !isDisabled && "bg-green-50/30",
+          task.status === "Rejected" && !isDisabled && "bg-red-50/30",
+          task.status === "Not Started" && !isDisabled && "bg-gray-50/30"
         )}
         style={{ padding: "20px 24px" }}
       >
-        {/* Item Number + Title Row */}
-        <div className="flex items-start gap-4 mb-3">
-          <div className="flex items-baseline gap-2.5 flex-1 min-w-0">
-            {itemNumber && (
-              <span className="text-xs font-bold text-[#68737D] flex-shrink-0 leading-6">
-                Item {itemNumber}:
-              </span>
-            )}
-            <h4 className="text-base font-semibold text-[#1C1C1E] break-words leading-6">{task.taskName}</h4>
-          </div>
-          <div className="flex-shrink-0 ml-auto">
+        {/* Title and Status Row */}
+        <div className="flex items-center justify-between gap-4 mb-3">
+          <h4 className="text-base font-semibold text-[#1C1C1E] break-words flex-1">
+            {itemNumber ? `Item ${itemNumber}: ${task.taskName}` : task.taskName}
+          </h4>
+          <div className="flex-shrink-0">
             {getStatusBadge()}
           </div>
         </div>
 
-        {/* Metadata Row */}
-        <div className="flex items-center gap-2.5 text-xs text-[#68737D] flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <User className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium">{task.assignedTo}</span>
-          </div>
+        {/* Assigned To Info - Same style as title */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <User className="w-4 h-4 text-[#68737D] flex-shrink-0" />
+          <span className="text-base font-semibold text-[#1C1C1E]">{task.assignedTo}</span>
           <span className="text-gray-400 select-none">•</span>
-          <span className="font-medium">{task.role}</span>
+          <span className="text-base font-semibold text-[#1C1C1E]">{task.role}</span>
           {!isDisabled && task.assignedOn && (
             <>
               <span className="text-gray-400 select-none">•</span>
-              <span className="text-[#8B95A1]">Assigned {task.assignedOn}</span>
+              <span className="text-base font-semibold text-[#1C1C1E]">Assigned {task.assignedOn}</span>
             </>
           )}
           {isReadOnly && task.completedOn && (
             <>
               <span className="text-gray-400 select-none">•</span>
-              <span className="text-green-600 font-medium">Completed {task.completedOn}</span>
+              <span className="text-base font-semibold text-green-600">Completed {task.completedOn}</span>
             </>
           )}
           {isDisabled && (
             <>
               <span className="text-gray-400 select-none">•</span>
-              <span className="italic text-[#8B95A1]">Pending previous approval</span>
+              <span className="text-base font-semibold italic text-[#8B95A1]">Pending previous approval</span>
             </>
           )}
         </div>
@@ -177,11 +170,11 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
                 <div className="space-y-3">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-2 text-sm font-semibold rounded-md bg-gradient-to-r from-[#1d3654] to-[#006699] text-white hover:brightness-110 transition-all shadow-sm"
-                    style={{ padding: "10px 16px" }}
+                    className="inline-flex items-center gap-2 text-sm font-semibold rounded-md bg-gradient-to-r from-[#1d3654] to-[#006699] text-white hover:brightness-110 transition-all duration-200 shadow-sm"
+                    style={{ padding: "10px 18px" }}
                   >
                     <Upload className="w-4 h-4" />
-                    Upload File {task.attachments.length > 0 && <span className="ml-1">({task.attachments.length})</span>}
+                    Upload File
                   </button>
                   {task.attachments.length > 0 && (
                     <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
@@ -228,36 +221,83 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
 
       {/* FOOTER - Action Buttons */}
       {isEditable && task.actions.length > 0 && (
-        <div className="bg-[#F9FAFB] border-t border-[#E5E7EB] flex items-center gap-2" style={{ padding: "16px 24px" }}>
+        <div className="bg-[#F9FAFB] border-t border-[#E5E7EB] flex items-center gap-3" style={{ padding: "16px 24px" }}>
           {task.actions.map((action) => {
-            let buttonStyle = { backgroundColor: "#4B5563", color: "white" };
-            let icon = null;
-
             if (action === "Approve") {
-              buttonStyle.backgroundColor = "#16a34a";
-              icon = <Check className="w-4 h-4" />;
+              return (
+                <button
+                  key={action}
+                  type="button"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  style={{
+                    padding: "10px 18px",
+                    background: "linear-gradient(to right, #059669, #10b981)",
+                    border: "none"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.1)"}
+                  onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
+                >
+                  <Check className="w-4 h-4" />
+                  {action}
+                </button>
+              );
             } else if (action === "Reject") {
-              buttonStyle.backgroundColor = "#dc2626";
-              icon = <X className="w-4 h-4" />;
+              return (
+                <button
+                  key={action}
+                  type="button"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  style={{
+                    padding: "10px 18px",
+                    background: "linear-gradient(to right, #dc2626, #ef4444)",
+                    border: "none"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.1)"}
+                  onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
+                >
+                  <X className="w-4 h-4" />
+                  {action}
+                </button>
+              );
             } else if (action === "Save Draft") {
-              buttonStyle.backgroundColor = "#2563eb";
-              icon = <Save className="w-4 h-4" />;
+              return (
+                <button
+                  key={action}
+                  type="button"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  style={{
+                    padding: "10px 18px",
+                    background: "linear-gradient(to right, #1d3654, #006699)",
+                    border: "none"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.1)"}
+                  onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
+                >
+                  <Save className="w-4 h-4" />
+                  {action}
+                </button>
+              );
             } else if (action === "Discard") {
-              buttonStyle.backgroundColor = "#4B5563";
-              icon = <RotateCcw className="w-4 h-4" />;
+              return (
+                <button
+                  key={action}
+                  type="button"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  style={{
+                    padding: "10px 18px",
+                    background: "linear-gradient(to right, #6b7280, #9ca3af)",
+                    border: "none"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.filter = "brightness(1.1)"}
+                  onMouseLeave={(e) => e.currentTarget.style.filter = "brightness(1)"}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {action}
+                </button>
+              );
             }
 
-            return (
-              <button
-                key={action}
-                type="button"
-                className="inline-flex items-center justify-center gap-2.5 text-sm font-semibold rounded-md text-white transition-colors shadow-sm hover:brightness-110"
-                style={{ ...buttonStyle, padding: "10px 18px" }}
-              >
-                {icon}
-                {action}
-              </button>
-            );
+            return null;
           })}
         </div>
       )}

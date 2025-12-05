@@ -67,18 +67,18 @@ export const ProcessSafetyInfoChecklistForm = ({
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <label className="text-xs font-bold text-[#68737D] uppercase tracking-wider">
-                                    MOC Title:
-                                </label>
-                                <div className="text-base font-semibold text-[#1C1C1E]">
-                                    {mocTitle}
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <label className="text-xs font-bold text-[#68737D] uppercase tracking-wider">
                                     MOC Number:
                                 </label>
                                 <div className="text-base font-semibold text-[#1C1C1E]">
                                     {mocNumber}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <label className="text-xs font-bold text-[#68737D] uppercase tracking-wider">
+                                    MOC Title:
+                                </label>
+                                <div className="text-base font-semibold text-[#1C1C1E]">
+                                    {mocTitle}
                                 </div>
                             </div>
                         </div>

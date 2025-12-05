@@ -89,7 +89,7 @@ export const REVIEW_TASKS: Task[] = [
 export const IMPLEMENTATION_TASKS: Task[] = [
   {
     id: "task-3-1",
-    taskName: "Item 1: Implementation Execution",
+    taskName: "Implementation Execution",
     role: "Project Manager",
     assignedTo: "David Lee",
     assignedOn: "02/06/2024 08:00",
@@ -101,7 +101,7 @@ export const IMPLEMENTATION_TASKS: Task[] = [
   },
   {
     id: "task-3-2",
-    taskName: "Item 2: Testing & Commissioning",
+    taskName: "Testing & Commissioning",
     role: "Quality Assurance",
     assignedTo: "Emma Davis",
     assignedOn: null,
@@ -116,7 +116,7 @@ export const IMPLEMENTATION_TASKS: Task[] = [
 export const CLOSEOUT_TASKS: Task[] = [
   {
     id: "task-4-1",
-    taskName: "Item 1: Final Documentation Review",
+    taskName: "Final Documentation Review",
     role: "Operations Manager",
     assignedTo: "Robert Chen",
     assignedOn: "10/06/2024 14:00",
@@ -128,7 +128,7 @@ export const CLOSEOUT_TASKS: Task[] = [
   },
   {
     id: "task-4-2",
-    taskName: "Item 2: Handover & Training",
+    taskName: "Handover & Training",
     role: "Training Coordinator",
     assignedTo: "Lisa Martinez",
     assignedOn: null,
