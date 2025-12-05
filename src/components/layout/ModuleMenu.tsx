@@ -1,138 +1,70 @@
-import React, { useState } from "react";
+"use client";
+
+import React from "react";
 import { cn } from "../ui/utils";
-import { Check, ChevronDown, ChevronRight, Circle, FileText, AlertCircle, X } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "../ui/tooltip";
-import { useValidationErrors } from "../../context/ValidationErrorsContext";
+import { Check, Zap, UserCog, Clock, Users, XCircle, ChevronDown } from "lucide-react";
+import { Button } from "../ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import { useActions } from "../../context/ActionsContext";
 
 interface ModuleMenuProps {
   isMobile?: boolean;
   currentStep?: number;
   isReadOnly?: boolean;
   onStepClick?: (step: number) => void;
-}
-
-interface SubItem {
-  id: string;
-  label: string;
-  targetId: string;
+  onChangeMOCChampion?: () => void;
+  onExtendTemporary?: () => void;
+  onChangeTeam?: () => void;
+  onCancelMOC?: () => void;
 }
 
 interface MenuItem {
   id: string;
   label: string;
   step: number;
-  subItems?: SubItem[];
 }
-
-// Mapping of field IDs to user-friendly labels
-const FIELD_LABELS: Record<string, string> = {
-  mocTitle: 'MOC Title',
-  lengthOfChange: 'Length of Change',
-  typeOfChange: 'Type of Change',
-  priorityId: 'Priority of Change',
-  areaId: 'Area',
-  unitId: 'Unit',
-  detailOfChange: 'Detail of Change',
-  reasonForChange: 'Reason for Change',
-  scopeOfWork: 'Scope of Work',
-  benefitsValue: 'Benefits Value',
-  expectedBenefits: 'Expected Benefits',
-  costEstimated: 'Cost Estimated',
-  estimatedValue: 'Estimated Value',
-  riskBeforeChange: 'Risk Assessment (Before)',
-  riskAfterChange: 'Risk Assessment (After)',
-};
 
 const menuItems: MenuItem[] = [
   {
+    id: "0",
+    label: "MOC Prescreening",
+    step: 0,
+  },
+  {
     id: "1",
-    label: "Initiation Request",
+    label: "Initiation",
     step: 1,
-    subItems: [
-      { id: "1.1", label: "General Information", targetId: "section-general-info" },
-      { id: "1.2", label: "Change Details", targetId: "section-change-details" },
-      { id: "1.3", label: "Review of Change", targetId: "section-risk" },
-      { id: "1.4", label: "Attachments", targetId: "section-attachments" },
-      { id: "1.5", label: "Approval Tasks", targetId: "section-initiation-tasks" },
-    ]
   },
   {
     id: "2",
-    label: "Review & Approval",
+    label: "Review",
     step: 2,
-    subItems: [
-      { id: "2.1", label: "General Information", targetId: "section-general-info" },
-      { id: "2.2", label: "Approval Tasks", targetId: "section-review-tasks" },
-    ]
   },
   {
     id: "3",
     label: "Implementation",
     step: 3,
-    subItems: [
-      { id: "3.1", label: "General Information", targetId: "section-general-info" },
-      { id: "3.2", label: "Implementation Details", targetId: "section-implementation-details" },
-      { id: "3.3", label: "Implementation Tasks", targetId: "section-implementation-tasks" },
-    ]
   },
   {
     id: "4",
     label: "Closeout",
     step: 4,
-    subItems: [
-      { id: "4.1", label: "General Information", targetId: "section-general-info" },
-      { id: "4.2", label: "Closeout Status", targetId: "section-closeout-status" },
-      { id: "4.3", label: "Closeout Tasks", targetId: "section-closeout-tasks" },
-    ]
   },
 ];
 
-export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onStepClick }: ModuleMenuProps) => {
-  const [expandedItems, setExpandedItems] = useState<string[]>(["1"]);
-  const [activeSection, setActiveSection] = useState<string>("1.1");
-  const { errors, getSectionErrorCount, getSectionErrors } = useValidationErrors();
-
+export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onStepClick, onChangeMOCChampion, onExtendTemporary, onChangeTeam, onCancelMOC }: ModuleMenuProps) => {
   if (isMobile) return null;
 
-  const toggleExpand = (id: string) => {
-    setExpandedItems(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
-  };
-
-  const scrollToSection = (targetId: string, subId: string) => {
-    setActiveSection(subId);
-    const element = document.getElementById(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  const handleScrollToField = (fieldId: string) => {
-    // Find element by ID or data-field attribute
-    const element = document.getElementById(`field-${fieldId}`) ||
-      document.querySelector(`[data-field="${fieldId}"]`);
-
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      // Add red pulse animation to input element
-      const inputElement = element.querySelector('input, select, textarea, [role="combobox"]');
-      if (inputElement) {
-        inputElement.classList.add('animate-pulse-red-border');
-        setTimeout(() => {
-          inputElement.classList.remove('animate-pulse-red-border');
-        }, 2000);
-      }
-    }
-  };
+  // Use context for dialog state management
+  const { setActiveDialog, setProcessingMessages } = useActions();
 
   const getStepStatus = (step: number): "completed" | "active" | "pending" => {
     if (isReadOnly) {
       // In view mode: all steps accessible, highlight current
       return step === currentStep ? "active" : "completed";
     }
-    // In create mode: normal progression
+    // In create mode: step 0 is completed, then normal progression
+    if (step === 0) return "completed";
     if (step < currentStep) return "completed";
     if (step === currentStep) return "active";
     return "pending";
@@ -147,19 +79,21 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
         <nav className="space-y-1">
           {menuItems.map((item) => {
             const status = getStepStatus(item.step);
-            const isExpanded = expandedItems.includes(item.id);
             const isActiveStep = status === "active";
 
             return (
               <div key={item.id} className="mb-2">
                 <button
                   onClick={() => {
-                    if (isActiveStep) {
-                      toggleExpand(item.id);
-                    } else if (isReadOnly && status !== "pending") {
-                      if (item.subItems) {
-                        toggleExpand(item.id);
-                      } else if (onStepClick) {
+                    // Allow navigation in view mode for completed/active steps
+                    if (isReadOnly && status !== "pending") {
+                      if (onStepClick) {
+                        onStepClick(item.step);
+                      }
+                    }
+                    // Allow navigation in create mode for step 0 (MOC Prescreening)
+                    if (!isReadOnly && item.step === 0) {
+                      if (onStepClick) {
                         onStepClick(item.step);
                       }
                     }
@@ -172,6 +106,7 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
                         ? "hover:bg-gray-50 cursor-pointer"
                         : "hover:bg-gray-50 cursor-default opacity-60",
                     isReadOnly && status !== "pending" && !isActiveStep && "cursor-pointer",
+                    !isReadOnly && item.step === 0 && "cursor-pointer hover:bg-gray-50",
                     // Disable steps 2-4 in create mode
                     !isReadOnly && item.step > 1 && "opacity-40 cursor-not-allowed pointer-events-none"
                   )}
@@ -207,96 +142,82 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
                     </span>
                   </div>
 
-                  {/* Expand Icon */}
-                  {item.subItems && (isActiveStep || (isReadOnly && status !== "pending")) && (
-                    <div className={cn(isActiveStep ? "text-[#006699]" : "text-gray-400")}>
-                      {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </div>
-                  )}
                 </button>
-
-                {/* Sub Items (Accordion) */}
-                {item.subItems && isExpanded && (
-                  <div className="ml-[22px] pl-4 border-l-2 border-[#EBF5FF] mt-2 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
-                    {item.subItems.map((sub) => {
-                      const errorCount = getSectionErrorCount(sub.targetId);
-                      const sectionErrors = getSectionErrors(sub.targetId);
-
-                      return (
-                        <div key={sub.id}>
-                          <button
-                            type="button"
-                            onClick={() => scrollToSection(sub.targetId, sub.id)}
-                            className={cn(
-                              "w-full text-left py-1.5 px-2 rounded-md text-[13px] transition-colors flex items-center gap-2",
-                              activeSection === sub.id
-                                ? "text-[#006699] font-semibold bg-[#F0F9FF]"
-                                : "text-[#68737D] hover:text-[#1C1C1E] hover:bg-gray-50"
-                            )}
-                          >
-                            <div className={cn(
-                              "w-1.5 h-1.5 rounded-full shrink-0",
-                              activeSection === sub.id ? "bg-[#006699]" : "bg-gray-300"
-                            )} />
-                            <span className="flex-1">{sub.label}</span>
-                            {errorCount > 0 && (
-                              <span
-                                className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full shrink-0"
-                                style={{ background: 'red' }}
-                              >
-                                {errorCount}
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Error Items - Always Visible */}
-                          {errorCount > 0 && (
-                            <div className="pl-3 border-l-2 border-red-200 space-y-0" style={{ marginLeft: "28px", marginTop: "5px" }}>
-                              {Object.entries(sectionErrors).map(([fieldId, errorMessage]) => (
-                                <TooltipProvider key={fieldId}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleScrollToField(fieldId)}
-                                        className="w-full text-left py-0.5 px-2 rounded text-[11px] transition-colors flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                      >
-                                        <X className="w-2 h-2 text-red-500 shrink-0 flex-shrink-0" />
-                                        <span className="truncate">
-                                          {FIELD_LABELS[fieldId] || fieldId}
-                                        </span>
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent
-                                      side="bottom"
-                                      className="max-w-xs text-xs z-50 py-2 px-3"
-                                      style={{
-                                        backgroundColor: '#1e293b',
-                                        color: '#ffffff',
-                                        border: 'none',
-                                        borderRadius: '0.375rem',
-                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
-                                      }}
-                                    >
-                                      <div className="space-y-2">
-                                        <p style={{ fontWeight: '600', color: '#ffffff' }}>{FIELD_LABELS[fieldId] || fieldId}</p>
-                                        <p style={{ color: '#f1f5f9' }}>{errorMessage}</p>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             );
           })}
         </nav>
+
+        {/* Actions Section - Only show in view mode (isReadOnly) */}
+        {isReadOnly && (
+          <div className="mt-8 pt-6 border-t border-[#E5E7EB]">
+            <Collapsible defaultOpen={true}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-xs font-semibold text-[#68737D] uppercase tracking-wider">
+                    Actions
+                  </h3>
+                </div>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="p-1 h-6 w-6 hover:bg-gray-100">
+                    <ChevronDown className="w-4 h-4 transition-transform duration-200 data-[state=closed]:rotate-180" />
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+
+              <CollapsibleContent className="space-y-2 mt-3">
+                {/* Change MOC Champion */}
+                <button
+                  type="button"
+                  onClick={() => setActiveDialog('changeMOCChampion')}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg
+                             bg-amber-50 border border-amber-200 hover:border-amber-300 hover:bg-amber-100
+                             text-amber-900 transition-colors"
+                >
+                  <UserCog className="w-4 h-4 shrink-0" />
+                  <span className="truncate font-medium text-xs">Change Champion</span>
+                </button>
+
+                {/* Extend Temporary */}
+                <button
+                  type="button"
+                  onClick={() => setActiveDialog('extendTemporary')}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg
+                             bg-blue-50 border border-blue-200 hover:border-blue-300 hover:bg-blue-100
+                             text-blue-900 transition-colors"
+                >
+                  <Clock className="w-4 h-4 shrink-0" />
+                  <span className="truncate font-medium text-xs">Extend Temporary</span>
+                </button>
+
+                {/* Change Team */}
+                <button
+                  type="button"
+                  onClick={() => setActiveDialog('changeTeam')}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg
+                             bg-purple-50 border border-purple-200 hover:border-purple-300 hover:bg-purple-100
+                             text-purple-900 transition-colors"
+                >
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span className="truncate font-medium text-xs">Change Team</span>
+                </button>
+
+                {/* Cancel MOC */}
+                <button
+                  type="button"
+                  onClick={() => setActiveDialog('cancelMOC')}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg
+                             bg-red-50 border border-red-200 hover:border-red-300 hover:bg-red-100
+                             text-red-900 transition-colors"
+                >
+                  <XCircle className="w-4 h-4 shrink-0" />
+                  <span className="truncate font-medium text-xs">Cancel MOC</span>
+                </button>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        )}
       </div>
     </aside>
   );

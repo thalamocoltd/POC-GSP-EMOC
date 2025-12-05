@@ -4,80 +4,109 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
-import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
-import { formatFileSize } from "../../lib/emoc-utils";
+import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId, MOCK_MOC_REQUESTS } from "../../lib/emoc-data";
+import { formatFileSize, createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { TaskCardList } from "../workflow/TaskCardList";
 import { TaskSection } from "../workflow/TaskSection";
 import { INITIATION_TASKS, REVIEW_TASKS, IMPLEMENTATION_TASKS, CLOSEOUT_TASKS } from "../../lib/workflow-demo-data";
+import { ProcessingOverlay } from "../ui/ProcessingOverlay";
+import { ChangeMOCChampionDialog } from "./action-dialogs/ChangeMOCChampionDialog";
+import { ExtendTemporaryDialog } from "./action-dialogs/ExtendTemporaryDialog";
+import { ChangeTeamDialog } from "./action-dialogs/ChangeTeamDialog";
+import { CancelMOCDialog } from "./action-dialogs/CancelMOCDialog";
+import { useActions } from "../../context/ActionsContext";
 
 interface ViewRequestFormProps {
   id: string | null;
   step: number;
   onBack: () => void;
   onStepChange?: (step: number) => void;
+  onNavigateToForm?: (formType: "psi-checklist" | "preliminary-safety" | "she-assessment") => void;
 }
 
-export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestFormProps) => {
+export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToForm }: ViewRequestFormProps) => {
   // Mock Data Loading
   const [data, setData] = useState<InitiationFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Action dialog states from context
+  const { activeDialog, setActiveDialog, isProcessing, setIsProcessing, processingMessages, setProcessingMessages } = useActions();
+
   useEffect(() => {
-    // Simulate fetching data
     const timer = setTimeout(() => {
-      setData({
-        requesterName: "John Doe",
-        requestDate: "03/12/2025 14:30",
-        mocTitle: "Upgrade Production Line A Cooling System",
-        lengthOfChange: "length-2", // Temporary
-        typeOfChange: "type-1", // Plant Change
-        priorityId: "priority-2", // Emergency
-        areaId: "area-1",
-        unitId: "unit-1-1",
-        estimatedDurationStart: "2025-12-06",
-        estimatedDurationEnd: "2025-12-08",
-        tpmLossType: "tpm-1", // Safety
-        lossEliminateValue: 800000,
-        detailOfChange: "The current cooling system efficiency has dropped by 15% over the last quarter due to aging components.",
-        reasonForChange: "Production output is limited during peak hours. Risk of overheating.",
-        scopeOfWork: "Replace cooling pumps P-101A/B. Install new heat exchanger. Update control logic.",
-        estimatedBenefit: 1200000,
-        estimatedCost: 800000,
-        benefits: ["benefit-1", "benefit-6"], // Safety, Money
-        expectedBenefits: "Expected efficiency increase of 20%. Reduced maintenance costs. Prevent potential production shutdown.",
-        riskBeforeChange: {
-          likelihood: 3,
-          impact: 3,
-          score: 9,
-          level: "Medium",
-          likelihoodLabel: "Possible",
-          impactLabel: "Moderate"
-        },
-        riskAfterChange: {
-          likelihood: 1,
-          impact: 3,
-          score: 3,
-          level: "Low",
-          likelihoodLabel: "Rare",
-          impactLabel: "Moderate"
-        },
-        attachments: [
-          { id: "1", category: "Technical Information", fileName: "P&ID Diagram.pdf", fileSize: 2500000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
-          { id: "2", category: "Technical Information", fileName: "Vendor Quote.pdf", fileSize: 1150000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" }
-        ]
-      });
+      // Find the corresponding mock data from MOCK_MOC_REQUESTS
+      const mockRequest = MOCK_MOC_REQUESTS.find(req => req.mocNo === id);
+
+      if (mockRequest) {
+        const formData: InitiationFormData = {
+          requesterName: mockRequest.requesterName,
+          requestDate: mockRequest.requestDate,
+          mocTitle: mockRequest.title,
+          typeOfChange: mockRequest.typeOfChange,
+          lengthOfChange: mockRequest.lengthOfChange,
+          priorityId: mockRequest.priorityId,
+          areaId: mockRequest.areaId,
+          unitId: mockRequest.unitId,
+          estimatedDurationStart: mockRequest.estimatedDurationStart,
+          estimatedDurationEnd: mockRequest.estimatedDurationEnd,
+          tpmLossType: mockRequest.tpmLossType,
+          lossEliminateValue: mockRequest.lossEliminateValue,
+          detailOfChange: mockRequest.detailOfChange,
+          reasonForChange: mockRequest.reasonForChange,
+          scopeOfWork: mockRequest.scopeOfWork,
+          estimatedBenefit: mockRequest.estimatedBenefit,
+          estimatedCost: mockRequest.estimatedCost,
+          benefits: mockRequest.benefits,
+          expectedBenefits: mockRequest.expectedBenefits,
+          riskBeforeChange: createRiskAssessment(4, 3),
+          riskAfterChange: createRiskAssessment(2, 2),
+          attachments: [
+            { id: "1", category: "Technical Information", fileName: "Technical_Specifications.pdf", fileSize: 2500000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" },
+            { id: "2", category: "Technical Information", fileName: "Analysis_Report.pdf", fileSize: 1800000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" },
+            { id: "3", category: "Minute of Meeting", fileName: "Meeting_Notes.pdf", fileSize: 750000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" },
+            { id: "4", category: "Other Documents", fileName: "Documentation.jpg", fileSize: 3500000, fileType: "image/jpeg", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" }
+          ]
+        };
+        setData(formData);
+      } else {
+        // Fallback to a default structure if MOC not found
+        setData({
+          requesterName: "Unknown",
+          requestDate: new Date().toLocaleDateString(),
+          mocTitle: `MOC Request: ${id}`,
+          typeOfChange: "type-1",
+          lengthOfChange: "length-1",
+          priorityId: "priority-1",
+          areaId: "area-1",
+          unitId: "unit-1-1",
+          estimatedDurationStart: "2025-12-10",
+          estimatedDurationEnd: "2025-12-15",
+          tpmLossType: "tpm-1",
+          lossEliminateValue: 500000,
+          detailOfChange: "Change details not available",
+          reasonForChange: "Reason not available",
+          scopeOfWork: "Scope not available",
+          estimatedBenefit: 0,
+          estimatedCost: 0,
+          benefits: [],
+          expectedBenefits: "Benefits not available",
+          riskBeforeChange: createRiskAssessment(3, 2),
+          riskAfterChange: createRiskAssessment(2, 2),
+          attachments: []
+        });
+      }
       setIsLoading(false);
     }, 500);
     return () => clearTimeout(timer);
   }, [id]);
 
   if (isLoading || !data) {
-    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"/></div>;
+    return <div className="flex justify-center py-20"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" /></div>;
   }
 
   const getAreaName = (id: string) => AREA_OPTIONS.find(a => a.id === id)?.name || id;
   const getUnitName = (areaId: string, unitId: string) => getUnitsByAreaId(areaId).find(u => u.id === unitId)?.name || unitId;
-  const getLengthOfChangeName = (id: string) => LENGTH_OF_CHANGE_OPTIONS.find(l => l.id === id)?.name || id;
+  const getLengthOfChangeName = (id: string) => LENGTH_OF_CHANGE_OPTIONS_ALL.find(l => l.id === id)?.name || id;
   const getTypeOfChangeName = (id: string) => TYPE_OF_CHANGE_OPTIONS.find(t => t.id === id)?.name || id;
   const getPriorityName = (id: string) => PRIORITY_OPTIONS.find(p => p.id === id)?.name || id;
   const getBenefitNames = (ids: string[]) => ids.map(id => BENEFITS_VALUE_OPTIONS.find(b => b.id === id)?.name || id).join(", ");
@@ -89,18 +118,43 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
     return parts[stepNum - 1] || "Unknown";
   };
 
-  const getRiskLevelConfig = (level: string | null) => {
-    if (!level) return { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600", badge: "bg-gray-100 text-gray-700" };
-    const configs: Record<string, any> = {
-      Low: { bg: "bg-green-50", border: "border-green-200", text: "text-green-800", badge: "bg-green-100 text-green-800 border-green-300" },
-      Medium: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-800", badge: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-      High: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800", badge: "bg-orange-100 text-orange-800 border-orange-300" },
-      Extreme: { bg: "bg-red-50", border: "border-red-300", text: "text-red-800", badge: "bg-red-100 text-red-800 border-red-300" }
-    };
-    return configs[level] || configs.Low;
+
+  // Action handlers
+  const handleActionSubmit = (actionType: string) => {
+    setActiveDialog(null);
+    setIsProcessing(true);
   };
 
-  const ReadOnlyField = ({ label, value, multiline = false }: { label: string, value: string | number, multiline?: boolean }) => (
+  const handleProcessingComplete = () => {
+    setIsProcessing(false);
+  };
+
+  const handleTaskClick = (task: any, formType?: string) => {
+    if (!onNavigateToForm) return;
+
+    // If formType is provided (from subtask), use it directly
+    if (formType) {
+      if (formType === "psi-checklist") {
+        onNavigateToForm("psi-checklist");
+      } else if (formType === "preliminary-safety") {
+        onNavigateToForm("preliminary-safety");
+      } else if (formType === "she-assessment") {
+        onNavigateToForm("she-assessment");
+      }
+      return;
+    }
+
+    // Otherwise, check task name
+    const taskName = task.taskName.toLowerCase();
+
+    if (taskName.includes("process safety information") || taskName.includes("psi checklist")) {
+      onNavigateToForm("psi-checklist");
+    } else if (taskName.includes("preliminary safety")) {
+      onNavigateToForm("preliminary-safety");
+    } else if (taskName.includes("she assessment")) {
+      onNavigateToForm("she-assessment");
+    }
+  }; const ReadOnlyField = ({ label, value, multiline = false }: { label: string, value: string | number, multiline?: boolean }) => (
     <div className="space-y-1.5">
       <Label className="text-[13px] font-medium text-[#68737D]">{label}</Label>
       <div className={cn(
@@ -113,28 +167,28 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
   );
 
   return (
-    <div className="max-w-[860px] pb-32 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto pb-32 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header Actions */}
       <div className="flex items-center justify-between mb-6">
-        <button 
+        <button
           onClick={onBack}
           className="text-[#68737D] hover:text-[#1C1C1E] flex items-center gap-2 text-sm font-medium transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </button>
-        <div className="flex items-center gap-2">
-           <span className="text-sm text-gray-500">Status:</span>
-           <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
-             Pending Review
-           </span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">Status:</span>
+          <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
+            Pending Review
+          </span>
         </div>
       </div>
 
       <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm overflow-hidden">
         <div className="p-8 sm:p-10 space-y-10">
           <div>
-            <h2 className="text-[24px] font-semibold text-[#1C1C1E] mb-1">{data.mocTitle}</h2>
+            <h2 className="text-[24px] font-semibold text-[#1C1C1E] mb-1 truncate">{data.mocTitle}</h2>
             <p className="text-[#68737D] text-sm flex items-center gap-2">
               <span>{id}</span>
               <span>•</span>
@@ -164,12 +218,10 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                 <ReadOnlyField label="Request Date" value={data.requestDate} />
               </div>
               <ReadOnlyField label="MOC Title" value={data.mocTitle} />
-              {data.lengthOfChange && (
-                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
-              )}
-              {data.typeOfChange && (
-                <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
-              )}
+              <div className="grid sm:grid-cols-2 gap-6">
+                <ReadOnlyField label="Area" value={getAreaName(data.areaId)} />
+                <ReadOnlyField label="Unit" value={getUnitName(data.areaId, data.unitId)} />
+              </div>
               {/* Enhanced Priority Field */}
               <div className="space-y-1.5">
                 <Label className="text-[13px] font-medium text-[#68737D]">Priority of Change</Label>
@@ -201,10 +253,12 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                   );
                 })()}
               </div>
-              <div className="grid sm:grid-cols-2 gap-6">
-                <ReadOnlyField label="Area" value={getAreaName(data.areaId)} />
-                <ReadOnlyField label="Unit" value={getUnitName(data.areaId, data.unitId)} />
-              </div>
+              {data.typeOfChange && (
+                <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
+              )}
+              {data.lengthOfChange && (
+                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
+              )}
               <div className="grid sm:grid-cols-2 gap-6">
                 <ReadOnlyField label="Start Date" value={data.estimatedDurationStart} />
                 <ReadOnlyField label="End Date" value={data.estimatedDurationEnd} />
@@ -225,6 +279,15 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               <ReadOnlyField label="Detail of Change" value={data.detailOfChange} multiline />
               <ReadOnlyField label="Reason for Change" value={data.reasonForChange} multiline />
               <ReadOnlyField label="Scope of Work" value={data.scopeOfWork} multiline />
+            </div>
+          </section>
+
+          {/* Estimated Benefit / Cost */}
+          <section id="section-benefit-cost" className="space-y-6 scroll-mt-24">
+            <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2">
+              Estimated Benefit / Cost
+            </h3>
+            <div className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <ReadOnlyField label="Estimated Benefit (THB)" value={data.estimatedBenefit.toLocaleString()} />
                 <ReadOnlyField label="Estimated Cost (THB)" value={data.estimatedCost.toLocaleString()} />
@@ -242,47 +305,41 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
             </h3>
 
             <div className="space-y-4">
-               {/* Risk Before */}
-               <div>
-                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment Before Change</Label>
-                  {(() => {
-                    const config = getRiskLevelConfig(data.riskBeforeChange.level);
-                    return (
-                      <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
-                        <div className="flex items-center gap-3">
-                          <span className={cn("px-4 py-2 rounded-lg font-bold text-base border-2", config.badge)}>
-                            {data.riskBeforeChange.level || "N/A"}
-                          </span>
-                          <div>
-                            <div className={cn("text-2xl font-bold", config.text)}>{data.riskBeforeChange.score}</div>
-                            <div className="text-xs text-[#68737D]">Risk Score</div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-               </div>
+              {/* Risk Before */}
+              <div>
+                <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment Before Change</Label>
+                {(() => {
+                  const riskStyle = getRiskCodeStyle(data.riskBeforeChange.riskCode || "");
+                  return (
+                    <div className="p-5 border rounded-xl bg-[#F7F8FA] border-[#E5E7EB]">
+                      <span
+                        style={riskStyle}
+                        className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                      >
+                        {data.riskBeforeChange.riskCode || "N/A"}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
 
-               {/* Risk After */}
-               <div>
-                  <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment After Change</Label>
-                  {(() => {
-                    const config = getRiskLevelConfig(data.riskAfterChange.level);
-                    return (
-                      <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
-                        <div className="flex items-center gap-3">
-                          <span className={cn("px-4 py-2 rounded-lg font-bold text-base border-2", config.badge)}>
-                            {data.riskAfterChange.level || "N/A"}
-                          </span>
-                          <div>
-                            <div className={cn("text-2xl font-bold", config.text)}>{data.riskAfterChange.score}</div>
-                            <div className="text-xs text-[#68737D]">Risk Score</div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-               </div>
+              {/* Risk After */}
+              <div>
+                <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment After Change</Label>
+                {(() => {
+                  const riskStyle = getRiskCodeStyle(data.riskAfterChange.riskCode || "");
+                  return (
+                    <div className="p-5 border rounded-xl bg-[#F7F8FA] border-[#E5E7EB]">
+                      <span
+                        style={riskStyle}
+                        className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                      >
+                        {data.riskAfterChange.riskCode || "N/A"}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           </section>
 
@@ -293,21 +350,36 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
             </h3>
 
             {data.attachments.length > 0 ? (
-              <div className="grid gap-3">
-                {data.attachments.map((file) => (
-                  <div key={file.id} className="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center mr-3">
-                      <FileText className="w-5 h-5 text-blue-600" />
+              <div className="space-y-6">
+                {["Technical Information", "Minute of Meeting", "Other Documents"].map((category: string) => {
+                  const categoryFiles = data.attachments.filter((f: any) => f.category === category);
+                  if (categoryFiles.length === 0) return null;
+
+                  return (
+                    <div key={category} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[13px] font-medium text-[#1C1C1E]">{category}</label>
+                        <span className="text-xs text-[#68737D] bg-gray-100 px-2 py-1 rounded">
+                          {categoryFiles.length} file{categoryFiles.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
+                        {categoryFiles.map((file: any) => (
+                          <div key={file.id} className="flex items-center p-3 hover:bg-[#F7F8FA] transition-colors">
+                            <FileText className="w-5 h-5 text-[#68737D] mr-3" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#1C1C1E] truncate">{file.fileName}</p>
+                              <p className="text-xs text-[#68737D]">{formatFileSize(file.fileSize)}</p>
+                            </div>
+                            <Button variant="ghost" size="sm" className="text-[#006699] shrink-0 ml-2">
+                              View
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900">{file.fileName}</div>
-                      <div className="text-xs text-gray-500">{formatFileSize(file.fileSize)}</div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-blue-600">
-                      View
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-sm text-gray-500 italic">No documents attached</div>
@@ -318,10 +390,14 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
           {step === 2 && (
             <TaskSection
               sectionId="section-review-tasks"
-              title="Approval Tasks"
+              title="Review Tasks"
               description="Review and approval tasks assigned to the relevant stakeholders"
             >
-              <TaskCardList tasks={REVIEW_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={REVIEW_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
 
@@ -353,21 +429,19 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                           { task: "Documentation and handover", status: "Pending", date: "Dec 7, 2025" }
                         ].map((item, idx) => (
                           <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-                            <div className={`w-3 h-3 rounded-full shrink-0 ${
-                              item.status === "Completed" ? "bg-green-500" :
+                            <div className={`w-3 h-3 rounded-full shrink-0 ${item.status === "Completed" ? "bg-green-500" :
                               item.status === "In Progress" ? "bg-blue-500 animate-pulse" : "bg-gray-300"
-                            }`} />
+                              }`} />
                             <div className="flex-1">
                               <p className="text-sm font-medium text-[#1C1C1E]">{item.task}</p>
                               <p className="text-xs text-[#68737D] flex items-center gap-1 mt-0.5">
                                 <Calendar className="w-3 h-3" /> {item.date}
                               </p>
                             </div>
-                            <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-                              item.status === "Completed" ? "bg-green-100 text-green-700 border border-green-300" :
+                            <span className={`text-xs font-medium px-3 py-1 rounded-full ${item.status === "Completed" ? "bg-green-100 text-green-700 border border-green-300" :
                               item.status === "In Progress" ? "bg-blue-100 text-blue-700 border border-blue-300" :
-                              "bg-gray-100 text-gray-700 border border-gray-300"
-                            }`}>
+                                "bg-gray-100 text-gray-700 border border-gray-300"
+                              }`}>
                               {item.status}
                             </span>
                           </div>
@@ -444,7 +518,11 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               title="Approval Tasks"
               description="Initial review and approval tasks in the MOC approval chain"
             >
-              <TaskCardList tasks={INITIATION_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={INITIATION_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
 
@@ -454,7 +532,11 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               title="Implementation Tasks"
               description="Tasks assigned to the implementation team"
             >
-              <TaskCardList tasks={IMPLEMENTATION_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={IMPLEMENTATION_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
 
@@ -464,11 +546,91 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               title="Closeout Tasks"
               description="Final verification and handover tasks"
             >
-              <TaskCardList tasks={CLOSEOUT_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={CLOSEOUT_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
         </div>
       </div>
+
+      {/* Change MOC Champion Dialog */}
+      <ChangeMOCChampionDialog
+        isOpen={activeDialog === 'changeMOCChampion'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={(data) => {
+          setProcessingMessages([
+            "Processing change request...",
+            "Notifying current champion...",
+            "Updating responsibilities...",
+            "Sending notification to new champion...",
+            "Updating MOC records..."
+          ]);
+          handleActionSubmit('changeMOCChampion');
+        }}
+        currentChampion={data?.requesterName || "Current Champion"}
+      />
+
+      {/* Extend Temporary Dialog */}
+      <ExtendTemporaryDialog
+        isOpen={activeDialog === 'extendTemporary'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={() => {
+          setProcessingMessages([
+            "Processing extension request...",
+            "Validating new timeline...",
+            "Updating MOC schedule...",
+            "Notifying stakeholders...",
+            "Finalizing extension..."
+          ]);
+          handleActionSubmit('extendTemporary');
+        }}
+      />
+
+      {/* Change Team Dialog */}
+      <ChangeTeamDialog
+        isOpen={activeDialog === 'changeTeam'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={(data) => {
+          setProcessingMessages([
+            "Processing team change...",
+            "Transferring documentation...",
+            "Updating area assignments...",
+            "Notifying new team...",
+            "Finalizing team transfer..."
+          ]);
+          handleActionSubmit('changeTeam');
+        }}
+        currentArea={getAreaName(data?.areaId || 'area-1')}
+        currentUnit={getUnitName(data?.areaId || 'area-1', data?.unitId || 'unit-1-1')}
+      />
+
+      {/* Cancel MOC Dialog */}
+      <CancelMOCDialog
+        isOpen={activeDialog === 'cancelMOC'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={(data) => {
+          setProcessingMessages([
+            "Processing cancellation...",
+            "Notifying all stakeholders...",
+            "Archiving MOC documentation...",
+            "Updating MOC status...",
+            "Finalizing cancellation..."
+          ]);
+          handleActionSubmit('cancelMOC');
+        }}
+        mocNo={id || 'MOC-Unknown'}
+        mocTitle={data?.mocTitle || 'Unknown MOC'}
+      />
+
+      {/* Processing Overlay */}
+      <ProcessingOverlay
+        isVisible={isProcessing}
+        onComplete={handleProcessingComplete}
+        messages={processingMessages}
+      />
     </div>
   );
 };

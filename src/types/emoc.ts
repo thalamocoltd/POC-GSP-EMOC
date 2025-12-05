@@ -1,12 +1,12 @@
 // eMoC System Data Types
 
-export type WorkflowState = 
-  | "Draft" 
-  | "Submitted" 
-  | "In Review" 
-  | "Approved" 
-  | "Rejected" 
-  | "In Implementation" 
+export type WorkflowState =
+  | "Draft"
+  | "Submitted"
+  | "In Review"
+  | "Approved"
+  | "Rejected"
+  | "In Implementation"
   | "Closed";
 
 export type WorkflowStage = "Initiation" | "Review" | "Implementation" | "Closeout";
@@ -16,16 +16,45 @@ export type ImpactValue = 1 | 2 | 3 | 4;
 export type RiskScore = number;
 export type RiskLevel = "Low" | "Medium" | "High" | "Extreme";
 
+// NEW: Types for industry-standard risk assessment
+export type LikelihoodLetter = "A" | "B" | "C" | "D";
+export type SeverityLevel = "Minor" | "Moderate" | "Major" | "Catastrophic";
+export type RiskCode = string;
+
 export interface RiskAssessment {
   likelihood: LikelihoodValue | null;
   likelihoodLabel: string;
+  likelihoodLetter?: LikelihoodLetter;  // NEW: A, B, C, D
   impact: ImpactValue | null;
   impactLabel: string;
+  severityLevel?: SeverityLevel;  // NEW: Minor, Moderate, Major, Catastrophic
   score: RiskScore;
   level: RiskLevel | null;
+  riskCode?: string;  // NEW: L1, M6, H12, E16
 }
 
-export type FileCategory = "Technical Information" | "Minute of Meeting" | "Other Documents";
+// NEW: Severity/Consequence descriptions
+export interface SeverityDescription {
+  level: SeverityLevel;
+  numericValue: ImpactValue;
+  people: string;
+  assets: string;
+  environmentCommunity: string;
+  security: string;
+}
+
+// NEW: Probability descriptions
+export interface ProbabilityDescription {
+  level: LikelihoodLetter;
+  numericValue: LikelihoodValue;
+  label: string;
+  description: string;
+}
+
+export type FileCategory =
+  | "Technical Information"
+  | "Minute of Meeting"
+  | "Other Documents";
 
 export interface FileAttachment {
   id: string;
@@ -77,8 +106,8 @@ export interface InitiationFormData {
   areaId: string;
   unitId: string;
   priorityId: string;  // Default: "priority-1" (Normal)
-  lengthOfChange?: string;  // Hidden if Emergency
-  typeOfChange?: string;    // Hidden if Emergency or Overriding
+  typeOfChange?: string;    // Hidden if Emergency; Options: type-1, type-2, type-3, type-4
+  lengthOfChange?: string;  // Hidden if Emergency; Options depend on typeOfChange (length-1/2 for standard, length-3/4 for Override)
   estimatedDurationStart: string;
   estimatedDurationEnd: string;
   tpmLossType: string;
@@ -101,4 +130,38 @@ export interface InitiationFormData {
 
   // Attachments
   attachments: FileAttachment[];
+}
+
+// Process Safety Information Checklist Types
+export type PSIUpdateStatus = "yes" | "no" | null;
+export type PSICompletionStatus = "Completed" | "In Progress" | "Cancel" | "";
+
+export interface PSIChecklistItem {
+  id: string;
+  label: string;
+  requiredUpdate: PSIUpdateStatus;
+  actionBy: string;
+  status: PSICompletionStatus;
+  remark: string;
+  isCategory?: boolean;
+  level?: number; // 0 = main item, 1 = sub-item, 2 = sub-sub-item, etc.
+}
+
+export interface PSIApprovalRow {
+  unit: string;
+  name?: string;
+  position?: string;
+  signature?: string;
+  dateField?: string;
+  isDateMerged?: boolean;
+}
+
+export interface PSIChecklistData {
+  mocNumber: string;
+  mocTitle: string;
+  items: PSIChecklistItem[];
+  approvals: PSIApprovalRow[];
+  createdAt: Date;
+  updatedAt: Date;
+  status: "draft" | "submitted" | "approved";
 }

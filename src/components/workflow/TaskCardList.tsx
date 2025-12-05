@@ -7,9 +7,10 @@ interface TaskCardListProps {
   partName?: string;
   stage?: TaskCardStage;
   showItemNumbers?: boolean;
+  onTaskClick?: (task: Task, formType?: string) => void;
 }
 
-export const TaskCardList = ({ tasks, partName, stage, showItemNumbers = true }: TaskCardListProps) => {
+export const TaskCardList = ({ tasks, partName, stage, showItemNumbers = true, onTaskClick }: TaskCardListProps) => {
   const getStage = (task: Task): TaskCardStage => {
     // If stage is explicitly provided, use it for all tasks
     if (stage) return stage;
@@ -18,6 +19,12 @@ export const TaskCardList = ({ tasks, partName, stage, showItemNumbers = true }:
     if (task.status === "In Progress") return "editable";
     if (task.status === "Completed" || task.status === "Rejected") return "readonly";
     return "disabled";
+  };
+
+  const handleTaskClick = (task: Task, formType?: string) => {
+    if (onTaskClick) {
+      onTaskClick(task, formType);
+    }
   };
 
   return (
@@ -35,6 +42,7 @@ export const TaskCardList = ({ tasks, partName, stage, showItemNumbers = true }:
             task={task}
             stage={getStage(task)}
             itemNumber={showItemNumbers ? idx + 1 : undefined}
+            onClick={handleTaskClick}
           />
         ))}
       </div>

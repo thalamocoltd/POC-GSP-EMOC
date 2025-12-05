@@ -8,13 +8,19 @@ import { Dashboard } from "./components/dashboard/Dashboard";
 import { MOCQualificationWizard } from "./components/emoc/MOCQualificationWizard";
 import { CreateRequestForm } from "./components/forms/CreateRequestForm";
 import { ViewRequestForm } from "./components/forms/ViewRequestForm";
+import { ProcessSafetyInfoChecklistForm } from "./components/forms/ProcessSafetyInfoChecklistForm";
 import { ComingSoon } from "./components/common/ComingSoon";
+import { SearchPage } from "./components/pages/SearchPage";
+import { ReportPage } from "./components/pages/ReportPage";
+import { AdminPage } from "./components/pages/AdminPage";
+import { WorkflowConfigPage } from "./components/admin/WorkflowConfigPage";
 import { ProcessingOverlay } from "./components/ui/ProcessingOverlay";
 import { useIsMobile } from "./components/ui/use-mobile";
 import { cn } from "./components/ui/utils";
 import { LocationId } from "./components/dashboard/LocationSelector";
 import { AIProvider, useAI } from "./context/AIContext";
 import { ValidationErrorsProvider, useValidationErrors } from "./context/ValidationErrorsContext";
+import { ActionsProvider } from "./context/ActionsContext";
 import { InitiationFormData } from "./types/emoc";
 import {
   AlertDialog,
@@ -27,6 +33,12 @@ import {
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
 
+interface RequestData {
+  mocNo: string;
+  title: string;
+}
+
+
 function AppContent() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -34,11 +46,19 @@ function AppContent() {
   const { clearErrors: clearValidationErrors } = useValidationErrors();
 
   // Navigation State
-  type PageType = "dashboard" | "qualification" | "create-request" | "view-request" | "coming-soon";
+  type PageType = "dashboard" | "qualification" | "create-request" | "view-request" | "search" | "report" | "admin" | "coming-soon";
   const [currentPage, setCurrentPage] = useState<PageType>("dashboard");
   const [currentViewId, setCurrentViewId] = useState<string | null>(null);
+  const [currentRequestData, setCurrentRequestData] = useState<RequestData | null>(null);
   const [isAIAutofilled, setIsAIAutofilled] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Form overlay state (for inline form display without navigation)
+  const [activeFormOverlay, setActiveFormOverlay] = useState<"psi-checklist" | "preliminary-safety" | "she-assessment" | null>(null);
+  const [scrollPosition, setScrollPosition] = useState<number>(0);
+
+  // Admin sub-page state
+  const [adminSubPage, setAdminSubPage] = useState<string | null>(null);
 
   // Location State
   const [currentLocation, setCurrentLocation] = useState<LocationId>("rayong");
@@ -48,7 +68,7 @@ function AppContent() {
   const [showLocationChangeDialog, setShowLocationChangeDialog] = useState(false);
 
   // MOC Navigation State
-  const [currentMocStep, setCurrentMocStep] = useState<number>(1);
+  const [currentMocStep, setCurrentMocStep] = useState<number>(0);
   const [mocFormData, setMocFormData] = useState<InitiationFormData | null>(null);
   const [mocMode, setMocMode] = useState<"create" | "view">("create");
   const [pendingAutofillPriority, setPendingAutofillPriority] = useState<"normal" | "emergency" | "">();
@@ -82,19 +102,21 @@ function AppContent() {
   const handleCreateRequest = () => {
     setIsAIAutofilled(false);
     setMocMode("create");
-    setCurrentMocStep(1);
+    setCurrentMocStep(0); // Start at step 0 (prescreening)
     setMocFormData(null);
     setCurrentPage("qualification");
   };
 
-  const handleViewRequest = (id: string, step?: number) => {
-    setCurrentViewId(id);
+  const handleViewRequest = (mocNo: string, title: string, step?: number) => {
+    setCurrentRequestData({ mocNo, title });
+    setCurrentViewId(mocNo);
     setMocMode("view");
     setCurrentMocStep(step || 1);
     setCurrentPage("view-request");
   };
 
   const handleQualificationQualified = () => {
+    setCurrentMocStep(1); // Move to step 1 after prescreening
     setCurrentPage("create-request");
   };
 
@@ -106,15 +128,37 @@ function AppContent() {
     clearValidationErrors();
     setCurrentPage("dashboard");
     setCurrentViewId(null);
+    setCurrentRequestData(null);
     setCurrentMocStep(1);
     setMocFormData(null);
     setMocMode("create");
     setIsAIAutofilled(false);
     setPendingAutofillPriority("");
+    setActiveFormOverlay(null);
+  };
+
+  const handleNavigateToAssessmentForm = (formType: "psi-checklist" | "preliminary-safety" | "she-assessment") => {
+    // Save current scroll position
+    setScrollPosition(window.scrollY);
+    // Show form overlay instead of changing page
+    setActiveFormOverlay(formType);
+    // Scroll to top when opening form
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
+  };
+
+  const handleBackToViewRequest = () => {
+    // Close form overlay
+    setActiveFormOverlay(null);
+    // Restore scroll position after a short delay to allow render
+    setTimeout(() => {
+      window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleStepTransition = (targetStep: number) => {
-    if (targetStep < 1 || targetStep > 4) return;
+    if (targetStep < 0 || targetStep > 4) return; // Allow step 0
     // Scroll to top for clear visual feedback
     window.scrollTo({ top: 0, behavior: "smooth" });
     setCurrentMocStep(targetStep);
@@ -130,8 +174,14 @@ function AppContent() {
   };
 
   const handleStepNavigation = (targetStep: number) => {
-    if (mocMode === "view" && targetStep >= 1 && targetStep <= 4) {
+    // In view mode: allow navigation to any step
+    if (mocMode === "view" && targetStep >= 0 && targetStep <= 4) {
       handleStepTransition(targetStep);
+    }
+    // In create mode: allow navigation to step 0 (MOC Prescreening)
+    if (mocMode === "create" && targetStep === 0) {
+      handleStepTransition(targetStep);
+      setCurrentPage("qualification");
     }
   };
 
@@ -180,9 +230,34 @@ function AppContent() {
     setShowLocationChangeDialog(false);
   };
 
+  // Enhanced navigation for admin sub-pages
+  const handleNavigate = (page: string, subPage?: string) => {
+    if (page === "admin") {
+      setCurrentPage("admin");
+      setAdminSubPage(subPage || null);
+      return;
+    }
+    setAdminSubPage(null);
+    switch (page) {
+      case "dashboard":
+        handleBackToDashboard();
+        break;
+      case "qualification":
+        handleCreateRequest();
+        break;
+      case "search":
+      case "report":
+        setCurrentPage(page as PageType);
+        break;
+      default:
+        // Stay on current page
+        break;
+    }
+  };
+
   // Determine if showing module menu
-  // Show menu for create and view pages
-  const showModuleMenu = currentPage === "create-request" || currentPage === "view-request";
+  // Show menu for qualification, create and view pages
+  const showModuleMenu = currentPage === "qualification" || currentPage === "create-request" || currentPage === "view-request";
 
   return (
     <div className="min-h-screen bg-[#F2F2F2] font-sans text-[#1C1C1E]">
@@ -194,6 +269,9 @@ function AppContent() {
         onNavigate={(page) => {
           if (page === "dashboard") setCurrentPage("dashboard");
           else if (page === "qualification") handleCreateRequest();
+          else if (page === "search") setCurrentPage("search");
+          else if (page === "report") setCurrentPage("report");
+          else if (page === "admin") setCurrentPage("admin");
           else setCurrentPage("coming-soon");
         }}
         currentPage={currentPage}
@@ -208,7 +286,18 @@ function AppContent() {
         isMobile={isMobile}
         currentLocation={currentLocation}
         onLocationChange={handleLocationChange}
-        viewingId={currentViewId}
+        requestData={currentRequestData}
+        onNavigate={handleNavigate}
+        breadcrumbPath={
+          currentPage === "admin" && adminSubPage === "workflow-config"
+            ? [
+              { label: "Admin", page: "admin" },
+              { label: "Workflow Configuration", page: "admin", subPage: "workflow-config" }
+            ]
+            : currentPage === "admin"
+              ? [{ label: "Admin", page: "admin" }]
+              : undefined
+        }
       />
 
       {/* Module Menu */}
@@ -217,7 +306,7 @@ function AppContent() {
           isMobile={isMobile}
           currentStep={currentMocStep}
           isReadOnly={mocMode === "view"}
-          onStepClick={mocMode === "view" ? handleStepNavigation : undefined}
+          onStepClick={handleStepNavigation}
         />
       )}
 
@@ -238,7 +327,7 @@ function AppContent() {
       <main
         className={cn(
           "transition-all duration-300 ease-in-out min-h-screen",
-          "pb-8",
+          "pt-6 pb-8",
           // Horizontal padding
           "px-6 md:px-8",
           // Z-index to stay above sidebar
@@ -273,6 +362,7 @@ function AppContent() {
             onBack={handleBackToDashboard}
             onQualified={handleQualificationQualified}
             onNotQualified={handleQualificationNotQualified}
+            isMobile={isMobile}
           />
         )}
 
@@ -294,20 +384,78 @@ function AppContent() {
         )}
 
         {currentPage === "view-request" && (
-          <motion.div
-            key={currentMocStep}
-            initial={{ opacity: 0, y: 20, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-          >
-            <ViewRequestForm
-              id={currentViewId}
-              step={currentMocStep}
-              onBack={handleBackToDashboard}
-              onStepChange={handleStepNavigation}
-            />
-          </motion.div>
+          <>
+            {/* Show form overlay if active, otherwise show ViewRequestForm */}
+            {activeFormOverlay === "psi-checklist" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ProcessSafetyInfoChecklistForm
+                  onBack={handleBackToViewRequest}
+                  mocNumber={currentRequestData?.mocNo}
+                  mocTitle={currentRequestData?.title}
+                />
+              </motion.div>
+            ) : activeFormOverlay === "preliminary-safety" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ComingSoon
+                  onBack={handleBackToViewRequest}
+                  title="Preliminary Safety Assessment Form"
+                  message="This form is currently under development"
+                />
+              </motion.div>
+            ) : activeFormOverlay === "she-assessment" ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ComingSoon
+                  onBack={handleBackToViewRequest}
+                  title="SHE Assessment Check List Form"
+                  message="This form is currently under development"
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={currentMocStep}
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.98 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <ViewRequestForm
+                  id={currentViewId}
+                  step={currentMocStep}
+                  onBack={handleBackToDashboard}
+                  onStepChange={handleStepNavigation}
+                  onNavigateToForm={handleNavigateToAssessmentForm}
+                />
+              </motion.div>
+            )}
+          </>
+        )}
+
+        {currentPage === "search" && (
+          <SearchPage onBack={handleBackToDashboard} />
+        )}
+
+        {currentPage === "report" && (
+          <ReportPage onBack={handleBackToDashboard} />
+        )}
+
+        {currentPage === "admin" && (
+          adminSubPage === "workflow-config" ? (
+            <WorkflowConfigPage onBack={() => setAdminSubPage(null)} />
+          ) : (
+            <AdminPage onBack={handleBackToDashboard} setSubPage={setAdminSubPage} />
+          )
         )}
 
         {currentPage === "coming-soon" && (
@@ -345,7 +493,9 @@ export default function App() {
   return (
     <AIProvider>
       <ValidationErrorsProvider>
-        <AppContent />
+        <ActionsProvider>
+          <AppContent />
+        </ActionsProvider>
       </ValidationErrorsProvider>
     </AIProvider>
   );

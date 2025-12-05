@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { ArrowLeft, Sparkles, X, Shield, AlertCircle, CheckCircle2, MapPin, Factory, Building2, Warehouse, Clock, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, Sparkles, X, Shield, AlertCircle, CheckCircle2, MapPin, Factory, Building2, Warehouse, Clock, AlertTriangle, Check, Edit3 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -10,8 +10,9 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "../ui/
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { RiskAssessmentModal } from "../emoc/RiskAssessmentModal";
 import { FileUploadSection } from "../emoc/FileUploadSection";
-import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
-import { createRiskAssessment } from "../../lib/emoc-utils";
+import { ValidationErrorPanel } from "./ValidationErrorPanel";
+import { AREA_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
+import { createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { InitiationFormData, RiskAssessment } from "../../types/emoc";
 import { cn } from "../ui/utils";
 import { useAI } from "../../context/AIContext";
@@ -28,18 +29,22 @@ interface CreateRequestFormProps {
 // Mapping of field IDs to user-friendly labels
 const FIELD_LABELS: Record<string, string> = {
   mocTitle: 'MOC Title',
-  lengthOfChange: 'Length of Change',
-  typeOfChange: 'Type of Change',
-  priorityId: 'Priority of Change',
   areaId: 'Area',
   unitId: 'Unit',
+  priorityId: 'Priority of Change',
+  lengthOfChange: 'Length of Change',
+  typeOfChange: 'Type of Change',
+  estimatedDurationStart: 'Estimated Duration - Start Date',
+  estimatedDurationEnd: 'Estimated Duration - End Date',
+  tpmLossType: 'TPM Loss Type',
+  lossEliminateValue: 'Loss Eliminate Value',
   detailOfChange: 'Detail of Change',
   reasonForChange: 'Reason for Change',
   scopeOfWork: 'Scope of Work',
-  benefitsValue: 'Benefits Value',
+  estimatedBenefit: 'Estimated Benefit',
+  estimatedCost: 'Estimated Cost',
+  benefits: 'Benefits',
   expectedBenefits: 'Expected Benefits',
-  costEstimated: 'Cost Estimated',
-  estimatedValue: 'Estimated Value',
   riskBeforeChange: 'Risk Assessment (Before)',
   riskAfterChange: 'Risk Assessment (After)',
 };
@@ -65,13 +70,41 @@ const DEMO_AUTOFILL_DATA_NORMAL: Partial<InitiationFormData> = {
   expectedBenefits: "Reduce electrical energy consumption by 15% (~45,000 kWh/year), saving 180,000 THB/year in electricity costs. Improve system reliability and reduce unplanned downtime by 95%. Reduce carbon emissions by ~22 tons CO2/year, supporting GSP environmental targets.",
   riskBeforeChange: createRiskAssessment(4, 3),
   riskAfterChange: createRiskAssessment(2, 2),
+  attachments: [
+    {
+      id: "att-1",
+      category: "Technical Information",
+      fileName: "P101_Motor_Specifications.pdf",
+      fileSize: 2500000,
+      fileType: "application/pdf",
+      uploadedAt: new Date(),
+      uploadedBy: "Current User"
+    },
+    {
+      id: "att-2",
+      category: "Minute of Meeting",
+      fileName: "Energy_Audit_Report_2025.pdf",
+      fileSize: 1800000,
+      fileType: "application/pdf",
+      uploadedAt: new Date(),
+      uploadedBy: "Current User"
+    },
+    {
+      id: "att-3",
+      category: "Other Documents",
+      fileName: "Equipment_Photo.jpg",
+      fileSize: 3500000,
+      fileType: "image/jpeg",
+      uploadedAt: new Date(),
+      uploadedBy: "Current User"
+    }
+  ],
 };
 
 // Demo autofill data - Emergency Priority
 const DEMO_AUTOFILL_DATA_EMERGENCY: Partial<InitiationFormData> = {
   mocTitle: "Emergency: Compressor C-205 Seal Replacement - Production Critical",
-  lengthOfChange: "length-2",
-  typeOfChange: "type-1",
+  // Note: typeOfChange and lengthOfChange are NOT set for Emergency priority (hidden in UI)
   priorityId: "priority-2",
   areaId: "area-2",
   unitId: "unit-2-2",
@@ -88,6 +121,26 @@ const DEMO_AUTOFILL_DATA_EMERGENCY: Partial<InitiationFormData> = {
   expectedBenefits: "Prevent equipment failure (value 1.2M THB). Maintain production continuity for Line 3 and downstream operations. Avoid safety hazard from oil spillage. Ensure regulatory compliance for equipment maintenance records.",
   riskBeforeChange: createRiskAssessment(4, 4),
   riskAfterChange: createRiskAssessment(1, 1),
+  attachments: [
+    {
+      id: "att-e1",
+      category: "Technical Information",
+      fileName: "C205_Compressor_Manual.pdf",
+      fileSize: 4200000,
+      fileType: "application/pdf",
+      uploadedAt: new Date(),
+      uploadedBy: "Current User"
+    },
+    {
+      id: "att-e2",
+      category: "Other Documents",
+      fileName: "Seal_Failure_Inspection_Report.xlsx",
+      fileSize: 950000,
+      fileType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      uploadedAt: new Date(),
+      uploadedBy: "Current User"
+    }
+  ],
 };
 
 // Helper to get correct demo data based on priority
@@ -159,6 +212,17 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
       }
     }
   }, [formData.areaId, selectedAreaId]);
+
+  // Clear Type and Length of Change when switching to Emergency priority
+  useEffect(() => {
+    if (formData.priorityId === "priority-2") {
+      setFormData((prev: InitiationFormData) => ({
+        ...prev,
+        typeOfChange: undefined,
+        lengthOfChange: undefined
+      }));
+    }
+  }, [formData.priorityId]);
 
   // Clear highlight after delay
   useEffect(() => {
@@ -305,15 +369,29 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
   );
 
   const isEmergency = formData.priorityId === "priority-2";
-  const isOverriding = formData.lengthOfChange === "length-3";
+  const isOverride = formData.typeOfChange === "type-4";
 
   const validateAll = (): { isValid: boolean; errors: Record<string, string> } => {
     const newErrors: Record<string, string> = {};
     if (!formData.mocTitle) newErrors.mocTitle = "MOC Title is required";
 
-    // Conditional validation for lengthOfChange and typeOfChange
+    // Conditional validation for typeOfChange and lengthOfChange
+    if (!isEmergency && !formData.typeOfChange) newErrors.typeOfChange = "Type of Change is required";
     if (!isEmergency && !formData.lengthOfChange) newErrors.lengthOfChange = "Length of Change is required";
-    if (!isEmergency && !isOverriding && !formData.typeOfChange) newErrors.typeOfChange = "Type of Change is required";
+
+    // Validate Length matches Type (business rule)
+    if (!isEmergency && formData.typeOfChange && formData.lengthOfChange) {
+      const isOverrideType = formData.typeOfChange === "type-4";
+      const isOverrideLength = formData.lengthOfChange === "length-3" || formData.lengthOfChange === "length-4";
+      const isStandardLength = formData.lengthOfChange === "length-1" || formData.lengthOfChange === "length-2";
+
+      if (isOverrideType && !isOverrideLength) {
+        newErrors.lengthOfChange = "Override type must use duration options (More/Less than 3 days)";
+      }
+      if (!isOverrideType && !isStandardLength) {
+        newErrors.lengthOfChange = "Non-override types must use Permanent or Temporary";
+      }
+    }
 
     if (!formData.priorityId) newErrors.priorityId = "Priority of Change is required";
     if (!formData.areaId) newErrors.areaId = "Area is required";
@@ -343,8 +421,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
       // Show success dialog instead of alert
       setShowSubmitDialog(true);
     } else {
-      // Send validation errors to chat panel
-      reportValidationErrors(validationErrors, handleScrollToField, handleAutoFill);
+      // Validation errors are displayed in ValidationErrorPanel via state
       setHasReportedErrors(true);
     }
   };
@@ -355,21 +432,6 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
     onBack();
   };
 
-  const getRiskLevelConfig = (level: string | null) => {
-    if (!level) return {
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      text: "text-gray-600",
-      badge: "bg-gray-100 text-gray-700"
-    };
-    const configs: Record<string, any> = {
-      Low: { bg: "bg-green-50", border: "border-green-200", text: "text-green-800", badge: "bg-green-100 text-green-800 border-green-300" },
-      Medium: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-800", badge: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-      High: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800", badge: "bg-orange-100 text-orange-800 border-orange-300" },
-      Extreme: { bg: "bg-red-50", border: "border-red-300", text: "text-red-800", badge: "bg-red-100 text-red-800 border-red-300" }
-    };
-    return configs[level] || configs.Low;
-  };
 
   const getAreaIcon = (id: string) => {
     switch (id) {
@@ -383,7 +445,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="max-w-[860px] pb-32 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+      <div className="max-w-4xl mx-auto pb-32 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
 
         {/* Header Actions */}
         <div className="flex items-center justify-between mb-6">
@@ -430,7 +492,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
           <div className="p-8 sm:p-10 space-y-10">
 
             <div>
-              <h2 className="text-[24px] font-semibold text-[#1C1C1E] mb-1">Initiation Request Form</h2>
+              <h2 className="text-[24px] font-semibold text-[#1C1C1E] mb-1">Initiation</h2>
               <p className="text-[#68737D] text-sm">Electronic Management of Change - Initiation Stage</p>
             </div>
 
@@ -484,87 +546,6 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                   />
                   {errors.mocTitle && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.mocTitle}</span>}
                 </div>
-
-                <div className="space-y-2" id="field-priorityId">
-                  {renderLabelWithAI("Priority of Change", "priorityId", true)}
-                  <div className="flex gap-3">
-                    {PRIORITY_OPTIONS.map((priority) => {
-                      const isNormal = priority.name === "Normal";
-                      const isSelected = formData.priorityId === priority.id;
-
-                      return (
-                        <button
-                          key={priority.id}
-                          type="button"
-                          onClick={() => handleInputChange('priorityId', priority.id)}
-                          style={{
-                            backgroundColor: isSelected ? (isNormal ? '#16a34a' : '#dc2626') : '#ffffff',
-                            borderColor: isSelected ? (isNormal ? '#16a34a' : '#dc2626') : '#D4D9DE',
-                            color: isSelected ? '#ffffff' : '#1C1C1E'
-                          }}
-                          className={cn(
-                            "flex-1 px-6 py-3 rounded-lg border-2 font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm",
-                            errors.priorityId && !isSelected && "border-red-300"
-                          )}
-                        >
-                          {isNormal ? (
-                            <Clock className="w-5 h-5" />
-                          ) : (
-                            <AlertTriangle className="w-5 h-5" />
-                          )}
-                          <span>{priority.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {errors.priorityId && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.priorityId}</span>}
-                </div>
-
-                {!isEmergency && (
-                  <div className="space-y-2" id="field-lengthOfChange">
-                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
-                    <Select
-                      value={formData.lengthOfChange || ""}
-                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-11 bg-gray-50",
-                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                      )}>
-                        <SelectValue placeholder="Select length of change" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LENGTH_OF_CHANGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
-                  </div>
-                )}
-
-                {!isEmergency && !isOverriding && (
-                  <div className="space-y-2" id="field-typeOfChange">
-                    {renderLabelWithAI("Type of Change", "typeOfChange", true)}
-                    <Select
-                      value={formData.typeOfChange || ""}
-                      onValueChange={(value) => handleInputChange('typeOfChange', value)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-11 bg-gray-50",
-                        errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                      )}>
-                        <SelectValue placeholder="Select type of change" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TYPE_OF_CHANGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
-                  </div>
-                )}
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2" id="field-areaId">
@@ -625,6 +606,115 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                     {errors.unitId && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.unitId}</span>}
                   </div>
                 </div>
+
+                <div className="space-y-2" id="field-priorityId">
+                  {renderLabelWithAI("Priority of Change", "priorityId", true)}
+                  <div className="flex gap-3">
+                    {PRIORITY_OPTIONS.map((priority) => {
+                      const isNormal = priority.name === "Normal";
+                      const isSelected = formData.priorityId === priority.id;
+
+                      return (
+                        <button
+                          key={priority.id}
+                          type="button"
+                          onClick={() => handleInputChange('priorityId', priority.id)}
+                          style={{
+                            backgroundColor: isSelected ? (isNormal ? '#16a34a' : '#dc2626') : '#ffffff',
+                            borderColor: isSelected ? (isNormal ? '#16a34a' : '#dc2626') : '#D4D9DE',
+                            color: isSelected ? '#ffffff' : '#1C1C1E'
+                          }}
+                          className={cn(
+                            "flex-1 px-6 py-3 rounded-lg border-2 font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm",
+                            errors.priorityId && !isSelected && "border-red-300"
+                          )}
+                        >
+                          {isNormal ? (
+                            <Clock className="w-5 h-5" />
+                          ) : (
+                            <AlertTriangle className="w-5 h-5" />
+                          )}
+                          <span>{priority.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {errors.priorityId && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.priorityId}</span>}
+                </div>
+
+                {!isEmergency && (
+                  <div className="space-y-2" id="field-typeOfChange">
+                    {renderLabelWithAI("Type of Change", "typeOfChange", true)}
+                    <Select
+                      value={formData.typeOfChange || ""}
+                      onValueChange={(value) => {
+                        handleInputChange('typeOfChange', value);
+
+                        // Clear lengthOfChange if switching between Override and non-Override
+                        const isNewTypeOverride = value === "type-4";
+                        const currentLength = formData.lengthOfChange;
+
+                        if (isNewTypeOverride) {
+                          // Switching TO Override: clear if current length is Permanent/Temporary
+                          if (currentLength === "length-1" || currentLength === "length-2") {
+                            handleInputChange('lengthOfChange', '');
+                          }
+                        } else {
+                          // Switching FROM Override: clear if current length is More/Less than 3 days
+                          if (currentLength === "length-3" || currentLength === "length-4") {
+                            handleInputChange('lengthOfChange', '');
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-gray-50",
+                        errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select type of change" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TYPE_OF_CHANGE_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
+                  </div>
+                )}
+
+                {!isEmergency && (
+                  <div className="space-y-2" id="field-lengthOfChange">
+                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
+                    <Select
+                      value={formData.lengthOfChange || ""}
+                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-gray-50",
+                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select length of change" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {formData.typeOfChange === 'type-4' ? (
+                          // Override type: show duration options
+                          <>
+                            <SelectItem value="length-3">More than 3 days</SelectItem>
+                            <SelectItem value="length-4">Less than 3 days</SelectItem>
+                          </>
+                        ) : (
+                          // Non-Override types: show permanent/temporary
+                          <>
+                            <SelectItem value="length-1">Permanent</SelectItem>
+                            <SelectItem value="length-2">Temporary</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
+                  </div>
+                )}
 
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2" id="field-estimatedDurationStart">
@@ -696,48 +786,13 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                   </div>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-6">
-                  <div className="space-y-2" id="field-estimatedBenefit">
-                    {renderLabelWithAI("Estimated Benefit (THB)", "estimatedBenefit", true)}
-                    <Input
-                      className={cn(
-                        "h-11 border-[#D4D9DE]",
-                        errors.estimatedBenefit && "border-red-300"
-                      )}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.estimatedBenefit || ""}
-                      onChange={(e) => handleInputChange('estimatedBenefit', parseFloat(e.target.value) || 0)}
-                    />
-                    {errors.estimatedBenefit && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedBenefit}</span>}
-                  </div>
-
-                  <div className="space-y-2" id="field-estimatedCost">
-                    {renderLabelWithAI("Estimated Cost (THB)", "estimatedCost", true)}
-                    <Input
-                      className={cn(
-                        "h-11 border-[#D4D9DE]",
-                        errors.estimatedCost && "border-red-300"
-                      )}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.estimatedCost || ""}
-                      onChange={(e) => handleInputChange('estimatedCost', parseFloat(e.target.value) || 0)}
-                    />
-                    {errors.estimatedCost && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedCost}</span>}
-                  </div>
-                </div>
               </div>
             </section>
 
             {/* Change Details */}
             <section id="section-change-details" className="space-y-6 scroll-mt-24">
               <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#006699]" />
+                <Edit3 className="w-5 h-5 text-[#006699]" />
                 Change Details
               </h3>
 
@@ -787,6 +842,55 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                   {errors.scopeOfWork && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.scopeOfWork}</span>}
                 </div>
 
+              </div>
+            </section>
+
+            {/* Estimated Benefit / Cost */}
+            <section id="section-benefit-cost" className="space-y-6 scroll-mt-24">
+              <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
+                <svg className="w-5 h-5 text-[#006699]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Estimated Benefit / Cost
+              </h3>
+
+              <div className="space-y-6">
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-2" id="field-estimatedBenefit">
+                    {renderLabelWithAI("Estimated Benefit (THB)", "estimatedBenefit", true)}
+                    <Input
+                      className={cn(
+                        "h-11 border-[#D4D9DE]",
+                        errors.estimatedBenefit && "border-red-300"
+                      )}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={formData.estimatedBenefit || ""}
+                      onChange={(e) => handleInputChange('estimatedBenefit', parseFloat(e.target.value) || 0)}
+                    />
+                    {errors.estimatedBenefit && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedBenefit}</span>}
+                  </div>
+
+                  <div className="space-y-2" id="field-estimatedCost">
+                    {renderLabelWithAI("Estimated Cost (THB)", "estimatedCost", true)}
+                    <Input
+                      className={cn(
+                        "h-11 border-[#D4D9DE]",
+                        errors.estimatedCost && "border-red-300"
+                      )}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      value={formData.estimatedCost || ""}
+                      onChange={(e) => handleInputChange('estimatedCost', parseFloat(e.target.value) || 0)}
+                    />
+                    {errors.estimatedCost && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedCost}</span>}
+                  </div>
+                </div>
+
                 <div className="space-y-2" id="field-benefits">
                   {renderLabelWithAI("Benefits", "benefits", true)}
                   <div className="flex flex-wrap gap-2">
@@ -805,7 +909,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                             errors.benefits && !isSelected && "border-red-300"
                           )}
                         >
-                          {isSelected && <Check className="w-4 h-4" />}
+                          <Check className="w-4 h-4" />
                           <span>{benefit.name}</span>
                         </button>
                       );
@@ -828,24 +932,6 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                   />
                   {errors.expectedBenefits && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.expectedBenefits}</span>}
                 </div>
-
-                <div className="space-y-2" id="field-estimatedValue">
-                  {renderLabelWithAI("Estimated Value (Baht/year)", "estimatedValue", true)}
-                  <Input
-                    className={cn(
-                      "h-11 border-[#D4D9DE] transition-all duration-500",
-                      errors.estimatedValue && "border-red-300",
-                      highlightedField === 'estimatedValue' && "ring-2 ring-[#006699] bg-blue-50 border-[#006699]"
-                    )}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={formData.estimatedValue || ""}
-                    onChange={(e) => handleInputChange('estimatedValue', parseFloat(e.target.value) || 0)}
-                  />
-                  {errors.estimatedValue && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedValue}</span>}
-                </div>
               </div>
             </section>
 
@@ -856,7 +942,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                 Review of Change
               </h3>
 
-              <div className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-6">
                 <div id="field-riskBeforeChange" className="group">
                   <div className="flex items-center gap-2 mb-2">
                     <Label className="text-[13px] font-medium text-[#1C1C1E]">
@@ -882,37 +968,23 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                     </Tooltip>
                   </div>
                   {(() => {
-                    const config = getRiskLevelConfig(formData.riskBeforeChange.level);
+                    const riskStyle = getRiskCodeStyle(formData.riskBeforeChange.riskCode || "");
                     return (
                       <div className={cn(
                         "p-5 border-2 rounded-xl transition-all duration-500",
                         errors.riskBeforeChange ? "border-red-300 bg-red-50" :
-                          formData.riskBeforeChange.level ? config.bg : "bg-white",
-                        !errors.riskBeforeChange && (formData.riskBeforeChange.level ? config.border : "border-[#E5E7EB]"),
+                          formData.riskBeforeChange.riskCode ? "bg-[#F7F8FA] border-[#E5E7EB]" : "bg-white border-[#E5E7EB]",
                         highlightedField === 'riskBeforeChange' && "ring-4 ring-[#006699]/20"
                       )}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            {formData.riskBeforeChange.level ? (
-                              <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                  <span className={cn(
-                                    "px-4 py-2 rounded-lg font-bold text-base border-2",
-                                    config.badge
-                                  )}>
-                                    {formData.riskBeforeChange.level}
-                                  </span>
-                                  <div>
-                                    <div className={cn("text-2xl font-bold", config.text)}>
-                                      {formData.riskBeforeChange.score}
-                                    </div>
-                                    <div className="text-xs text-[#68737D]">Risk Score</div>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-[#68737D]">
-                                  {formData.riskBeforeChange.likelihoodLabel} likelihood × {formData.riskBeforeChange.impactLabel} impact
-                                </p>
-                              </div>
+                            {formData.riskBeforeChange.riskCode ? (
+                              <span
+                                style={riskStyle}
+                                className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                              >
+                                {formData.riskBeforeChange.riskCode}
+                              </span>
                             ) : (
                               <p className={cn("text-sm", errors.riskBeforeChange ? "text-red-500 font-medium" : "text-[#68737D]")}>
                                 {errors.riskBeforeChange || "No assessment completed"}
@@ -926,7 +998,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                             onClick={() => setIsRiskBeforeModalOpen(true)}
                             className="border-[#D4D9DE] shrink-0"
                           >
-                            {formData.riskBeforeChange.level ? "Edit" : "Assess Risk"}
+                            {formData.riskBeforeChange.riskCode ? "Edit" : "Assess Risk"}
                           </Button>
                         </div>
                       </div>
@@ -959,37 +1031,23 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                     </Tooltip>
                   </div>
                   {(() => {
-                    const config = getRiskLevelConfig(formData.riskAfterChange.level);
+                    const riskStyle = getRiskCodeStyle(formData.riskAfterChange.riskCode || "");
                     return (
                       <div className={cn(
                         "p-5 border-2 rounded-xl transition-all duration-500",
                         errors.riskAfterChange ? "border-red-300 bg-red-50" :
-                          formData.riskAfterChange.level ? config.bg : "bg-white",
-                        !errors.riskAfterChange && (formData.riskAfterChange.level ? config.border : "border-[#E5E7EB]"),
+                          formData.riskAfterChange.riskCode ? "bg-[#F7F8FA] border-[#E5E7EB]" : "bg-white border-[#E5E7EB]",
                         highlightedField === 'riskAfterChange' && "ring-4 ring-[#006699]/20"
                       )}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            {formData.riskAfterChange.level ? (
-                              <div className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                  <span className={cn(
-                                    "px-4 py-2 rounded-lg font-bold text-base border-2",
-                                    config.badge
-                                  )}>
-                                    {formData.riskAfterChange.level}
-                                  </span>
-                                  <div>
-                                    <div className={cn("text-2xl font-bold", config.text)}>
-                                      {formData.riskAfterChange.score}
-                                    </div>
-                                    <div className="text-xs text-[#68737D]">Risk Score</div>
-                                  </div>
-                                </div>
-                                <p className="text-sm text-[#68737D]">
-                                  {formData.riskAfterChange.likelihoodLabel} likelihood × {formData.riskAfterChange.impactLabel} impact
-                                </p>
-                              </div>
+                            {formData.riskAfterChange.riskCode ? (
+                              <span
+                                style={riskStyle}
+                                className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                              >
+                                {formData.riskAfterChange.riskCode}
+                              </span>
                             ) : (
                               <p className={cn("text-sm", errors.riskAfterChange ? "text-red-500 font-medium" : "text-[#68737D]")}>
                                 {errors.riskAfterChange || "No assessment completed"}
@@ -1003,7 +1061,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                             onClick={() => setIsRiskAfterModalOpen(true)}
                             className="border-[#D4D9DE] shrink-0"
                           >
-                            {formData.riskAfterChange.level ? "Edit" : "Assess Risk"}
+                            {formData.riskAfterChange.riskCode ? "Edit" : "Assess Risk"}
                           </Button>
                         </div>
                       </div>
@@ -1074,27 +1132,35 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
           }}
         />
 
-      {/* Submit Success Dialog */}
-      <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <AlertDialogContent className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <AlertDialogHeader>
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+        {/* Submit Success Dialog */}
+        <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+          <AlertDialogContent className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <AlertDialogHeader>
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <AlertDialogTitle className="text-center text-lg">
+                MOC Request Submitted Successfully
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center">
+                Your request has been submitted for review and will be assigned to appropriate reviewers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex justify-center gap-3">
+              <AlertDialogAction onClick={handleSubmitConfirm} className="bg-green-600 hover:bg-green-700 text-white">
+                Back to Dashboard
+              </AlertDialogAction>
             </div>
-            <AlertDialogTitle className="text-center text-lg">
-              MOC Request Submitted Successfully
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center">
-              Your request has been submitted for review and will be assigned to appropriate reviewers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex justify-center gap-3">
-            <AlertDialogAction onClick={handleSubmitConfirm} className="bg-green-600 hover:bg-green-700 text-white">
-              Back to Dashboard
-            </AlertDialogAction>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Validation Error Panel - Right Side */}
+        <ValidationErrorPanel
+          errors={errors}
+          fieldLabels={FIELD_LABELS}
+          onErrorClick={handleScrollToField}
+          isVisible={Object.keys(errors).length > 0}
+        />
       </div>
     </TooltipProvider>
   );

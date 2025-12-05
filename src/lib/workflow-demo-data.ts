@@ -42,7 +42,7 @@ export const INITIATION_TASKS: Task[] = [
 export const REVIEW_TASKS: Task[] = [
   {
     id: "task-2-1",
-    taskName: "Item 1: Technical Review",
+    taskName: "Technical Review",
     role: "Technical Manager",
     assignedTo: "Mike Wilson",
     assignedOn: "30/05/2024 09:00",
@@ -54,22 +54,42 @@ export const REVIEW_TASKS: Task[] = [
   },
   {
     id: "task-2-2",
-    taskName: "Item 2: Safety Review",
-    role: "Safety Officer",
-    assignedTo: "Sarah Johnson",
-    assignedOn: null,
+    taskName: "Perform Technical Review",
+    role: "MoC Champion",
+    assignedTo: "First Champion",
+    assignedOn: "22/7/2017 22:05",
     completedOn: null,
-    status: "Not Started",
+    status: "In Progress",
     comments: "",
     attachments: [],
-    actions: []
+    actions: [],
+    subTasks: [
+      {
+        id: "subtask-2-2-1",
+        label: "Click to fill in Preliminary Safety Assessment Form",
+        formType: "preliminary-safety",
+        status: "Not Started"
+      },
+      {
+        id: "subtask-2-2-2",
+        label: "Click to fill in Process Safety Information Checklist",
+        formType: "psi-checklist",
+        status: "Completed"
+      },
+      {
+        id: "subtask-2-2-3",
+        label: "Click to fill in SHE Assessment Check List Form",
+        formType: "she-assessment",
+        status: "Completed"
+      }
+    ]
   }
 ];
 
 export const IMPLEMENTATION_TASKS: Task[] = [
   {
     id: "task-3-1",
-    taskName: "Item 1: Implementation Execution",
+    taskName: "Implementation Execution",
     role: "Project Manager",
     assignedTo: "David Lee",
     assignedOn: "02/06/2024 08:00",
@@ -81,7 +101,7 @@ export const IMPLEMENTATION_TASKS: Task[] = [
   },
   {
     id: "task-3-2",
-    taskName: "Item 2: Testing & Commissioning",
+    taskName: "Testing & Commissioning",
     role: "Quality Assurance",
     assignedTo: "Emma Davis",
     assignedOn: null,
@@ -96,7 +116,7 @@ export const IMPLEMENTATION_TASKS: Task[] = [
 export const CLOSEOUT_TASKS: Task[] = [
   {
     id: "task-4-1",
-    taskName: "Item 1: Final Documentation Review",
+    taskName: "Final Documentation Review",
     role: "Operations Manager",
     assignedTo: "Robert Chen",
     assignedOn: "10/06/2024 14:00",
@@ -108,7 +128,7 @@ export const CLOSEOUT_TASKS: Task[] = [
   },
   {
     id: "task-4-2",
-    taskName: "Item 2: Handover & Training",
+    taskName: "Handover & Training",
     role: "Training Coordinator",
     assignedTo: "Lisa Martinez",
     assignedOn: null,

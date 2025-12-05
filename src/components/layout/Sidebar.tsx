@@ -4,8 +4,8 @@ import {
   Home,
   Plus,
   Search,
-  Settings,
   ShieldCheck,
+  BarChart,
 } from "lucide-react";
 import { cn } from "../ui/utils";
 
@@ -14,7 +14,7 @@ interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
   currentPage?: string;
-  onNavigate?: (page: "dashboard" | "qualification" | "create-request" | "coming-soon") => void;
+  onNavigate?: (page: "dashboard" | "qualification" | "create-request" | "search" | "report" | "admin" | "coming-soon") => void;
 }
 
 export const Sidebar = ({ isMobile, isOpen, onClose, currentPage, onNavigate }: SidebarProps) => {
@@ -39,7 +39,7 @@ export const Sidebar = ({ isMobile, isOpen, onClose, currentPage, onNavigate }: 
     setIsExpanded(false);
   };
 
-  const handleNavClick = (page: "dashboard" | "qualification" | "coming-soon") => {
+  const handleNavClick = (page: "dashboard" | "qualification" | "create-request" | "search" | "report" | "admin" | "coming-soon") => {
     if (onNavigate) onNavigate(page);
     if (isMobile && onClose) onClose();
   };
@@ -105,23 +105,23 @@ export const Sidebar = ({ isMobile, isOpen, onClose, currentPage, onNavigate }: 
             isExpanded={isExpanded} 
             onClick={() => handleNavClick("qualification")}
           />
-          <NavItem 
-            icon={Search} 
-            label="Search" 
-            isExpanded={isExpanded} 
-            onClick={() => handleNavClick("coming-soon")}
+          <NavItem
+            icon={Search}
+            label="Search"
+            isExpanded={isExpanded}
+            onClick={() => handleNavClick("search")}
           />
-          <NavItem 
-            icon={ShieldCheck} 
-            label="Admin" 
-            isExpanded={isExpanded} 
-            onClick={() => handleNavClick("coming-soon")}
+          <NavItem
+            icon={BarChart}
+            label="Report / Dashboard"
+            isExpanded={isExpanded}
+            onClick={() => handleNavClick("report")}
           />
-          <NavItem 
-            icon={Settings} 
-            label="Settings" 
-            isExpanded={isExpanded} 
-            onClick={() => handleNavClick("coming-soon")}
+          <NavItem
+            icon={ShieldCheck}
+            label="Admin"
+            isExpanded={isExpanded}
+            onClick={() => handleNavClick("admin")}
           />
         </nav>
       </motion.aside>
