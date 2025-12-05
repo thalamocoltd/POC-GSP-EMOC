@@ -20,10 +20,10 @@ export const AdminMenuSection = ({ title, items }: AdminMenuSectionProps) => (
             {items.map((item, idx) => (
                 <Button
                     key={item.label}
-                    variant={item.enabled ? "default" : "outline"}
+                    variant="outline"
                     disabled={!item.enabled}
                     onClick={item.onClick}
-                    className="justify-start"
+                    className={item.enabled ? "justify-start bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800" : "justify-start"}
                 >
                     {item.label}
                 </Button>

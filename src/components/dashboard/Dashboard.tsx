@@ -74,7 +74,7 @@ export const Dashboard = ({
         </div>
       </div>
 
-      <div className="space-y-8 max-w-[1600px] mx-auto">
+      <div className="space-y-8">
         {/* 3. TO DO LIST Section */}
         <section>
           <RequestsTable 

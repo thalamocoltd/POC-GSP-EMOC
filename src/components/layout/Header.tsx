@@ -167,7 +167,7 @@ export const Header = ({
                 </AvatarFallback>
               </Avatar>
               <div className="hidden md:flex flex-col items-start max-w-[200px]">
-                <span className="text-sm font-bold text-[#1C1C1E] leading-none truncate max-w-full">Chatree Dechabumphen (พอญ.)</span>
+                <span className="text-sm font-bold text-[#1C1C1E] leading-none truncate max-w-full">Chatree Dechabumphen (บค.วบก.)</span>
                 <span className="text-[11px] text-[#68737D] mt-1 truncate max-w-full">chatree.d@pttplc.com</span>
               </div>
               <ChevronDown className="w-4 h-4 text-[#68737D] hidden md:block group-hover:text-[#1C1C1E] transition-colors" />
@@ -176,7 +176,7 @@ export const Header = ({
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuLabel>
               <div className="flex flex-col gap-1">
-                <span className="font-semibold">Chatree Dechabumphen (พอญ.)</span>
+                <span className="font-semibold">Chatree Dechabumphen (บค.วบก.)</span>
                 <span className="text-xs text-[#68737D] font-normal">chatree.d@pttplc.com</span>
               </div>
             </DropdownMenuLabel>

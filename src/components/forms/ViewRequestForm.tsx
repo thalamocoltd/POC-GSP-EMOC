@@ -6,15 +6,19 @@ import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId, MOCK_MOC_REQUESTS } from "../../lib/emoc-data";
 import { formatFileSize, createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
-import { TaskCardList } from "../workflow/TaskCardList";
-import { TaskSection } from "../workflow/TaskSection";
-import { INITIATION_TASKS, REVIEW_TASKS, IMPLEMENTATION_TASKS, CLOSEOUT_TASKS } from "../../lib/workflow-demo-data";
 import { ProcessingOverlay } from "../ui/ProcessingOverlay";
 import { ChangeMOCChampionDialog } from "./action-dialogs/ChangeMOCChampionDialog";
 import { ExtendTemporaryDialog } from "./action-dialogs/ExtendTemporaryDialog";
 import { ChangeTeamDialog } from "./action-dialogs/ChangeTeamDialog";
 import { CancelMOCDialog } from "./action-dialogs/CancelMOCDialog";
 import { useActions } from "../../context/ActionsContext";
+import { InitiationApprovalCard } from "../workflow/task-cards/InitiationApprovalCard";
+import { AssignProjectEngineerCard } from "../workflow/task-cards/AssignProjectEngineerCard";
+import { ApproveWithPECard } from "../workflow/task-cards/ApproveWithPECard";
+import { AssignTechReviewTeamCard } from "../workflow/task-cards/AssignTechReviewTeamCard";
+import { ApproveTechReviewTeamCard } from "../workflow/task-cards/ApproveTechReviewTeamCard";
+import { PerformTechReviewCard } from "../workflow/task-cards/PerformTechReviewCard";
+import { AVAILABLE_PEOPLE, INITIATION_TASK_CARDS, REVIEW_TASK_CARDS, TECHNICAL_DISCIPLINES, TECHNICAL_REVIEW_APPROVALS, DOCUMENT_REVIEW_ITEMS } from "../../lib/task-card-data";
 
 interface ViewRequestFormProps {
   id: string | null;
@@ -31,6 +35,20 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
 
   // Action dialog states from context
   const { activeDialog, setActiveDialog, isProcessing, setIsProcessing, processingMessages, setProcessingMessages } = useActions();
+
+  // Task Card States - Initiation
+  const [initiationTask1Comments, setInitiationTask1Comments] = useState("");
+  const [initiationTask2SelectedEngineer, setInitiationTask2SelectedEngineer] = useState<string | null>(null);
+  const [initiationTask2Comments, setInitiationTask2Comments] = useState("");
+  const [initiationTask3Comments, setInitiationTask3Comments] = useState("");
+
+  // Task Card States - Review
+  const [reviewDisciplines, setReviewDisciplines] = useState(TECHNICAL_DISCIPLINES);
+  const [reviewTask1Comments, setReviewTask1Comments] = useState("");
+  const [reviewApprovalRows, setReviewApprovalRows] = useState(TECHNICAL_REVIEW_APPROVALS);
+  const [reviewTask2Comments, setReviewTask2Comments] = useState("");
+  const [reviewDocuments, setReviewDocuments] = useState(DOCUMENT_REVIEW_ITEMS);
+  const [reviewTask3Comments, setReviewTask3Comments] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -222,43 +240,47 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
                 <ReadOnlyField label="Area" value={getAreaName(data.areaId)} />
                 <ReadOnlyField label="Unit" value={getUnitName(data.areaId, data.unitId)} />
               </div>
-              {/* Enhanced Priority Field */}
-              <div className="space-y-1.5">
-                <Label className="text-[13px] font-medium text-[#68737D]">Priority of Change</Label>
-                {(() => {
-                  const priority = PRIORITY_OPTIONS.find(p => p.id === data.priorityId);
-                  if (!priority) return <div className="text-sm text-gray-500">Unknown</div>;
+              {(() => {
+                const priority = PRIORITY_OPTIONS.find(p => p.id === data.priorityId);
+                const isEmergency = priority?.name === "Emergency" || false;
 
-                  const isEmergency = priority.name === "Emergency";
-
-                  return (
-                    <div className={cn(
-                      "inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 font-bold text-base shadow-sm",
-                      isEmergency
-                        ? "bg-red-50 border-red-400 text-red-700 shadow-red-200/50"
-                        : "bg-green-50 border-green-400 text-green-700 shadow-green-200/50"
-                    )}>
-                      {isEmergency ? (
-                        <AlertTriangle className="w-5 h-5 animate-pulse" />
+                return (
+                  <>
+                    {/* Enhanced Priority Field */}
+                    <div className="space-y-1.5">
+                      <Label className="text-[13px] font-medium text-[#68737D]">Priority of Change</Label>
+                      {!priority ? (
+                        <div className="text-sm text-gray-500">Unknown</div>
                       ) : (
-                        <Clock className="w-5 h-5" />
-                      )}
-                      <span>{priority.name}</span>
-                      {isEmergency && (
-                        <span className="ml-2 px-2 py-0.5 bg-red-200 text-red-900 text-xs rounded-full font-bold">
-                          URGENT
-                        </span>
+                        <div className={cn(
+                          "inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 font-bold text-base shadow-sm",
+                          isEmergency
+                            ? "bg-red-50 border-red-400 text-red-700 shadow-red-200/50"
+                            : "bg-green-50 border-green-400 text-green-700 shadow-green-200/50"
+                        )}>
+                          {isEmergency ? (
+                            <AlertTriangle className="w-5 h-5 animate-pulse" />
+                          ) : (
+                            <Clock className="w-5 h-5" />
+                          )}
+                          <span>{priority.name}</span>
+                          {isEmergency && (
+                            <span className="ml-2 px-2 py-0.5 bg-red-200 text-red-900 text-xs rounded-full font-bold">
+                              URGENT
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  );
-                })()}
-              </div>
-              {data.typeOfChange && (
-                <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
-              )}
-              {data.lengthOfChange && (
-                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
-              )}
+                    {!isEmergency && data.typeOfChange && data.lengthOfChange && (
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
+                        <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               <div className="grid sm:grid-cols-2 gap-6">
                 <ReadOnlyField label="Start Date" value={data.estimatedDurationStart} />
                 <ReadOnlyField label="End Date" value={data.estimatedDurationEnd} />
@@ -304,7 +326,7 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
               Risk Assessment
             </h3>
 
-            <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-6">
               {/* Risk Before */}
               <div>
                 <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment Before Change</Label>
@@ -386,175 +408,174 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
             )}
           </section>
 
-          {/* Step 2: Review Tasks Section */}
-          {step === 2 && (
-            <TaskSection
-              sectionId="section-review-tasks"
-              title="Review Tasks"
-              description="Review and approval tasks assigned to the relevant stakeholders"
-            >
-              <TaskCardList
-                tasks={REVIEW_TASKS}
-                showItemNumbers={true}
-                onTaskClick={handleTaskClick}
-              />
-            </TaskSection>
-          )}
 
-          {/* Step 3: Implementation Details Section */}
-          {step === 3 && (
-            <section id="section-implementation-details" className="space-y-6 scroll-mt-24">
-              <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
-                <Wrench className="w-5 h-5 text-[#006699]" />
-                Implementation Details
-              </h3>
-              <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                    <CheckSquare className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-[#1C1C1E] mb-2">Implementation in Progress</h4>
-                    <p className="text-sm text-[#68737D] mb-4">
-                      The approved change is now being implemented according to the defined scope of work.
-                    </p>
-                    <div className="space-y-3 mt-4">
-                      <Label className="text-[13px] font-medium text-[#68737D]">Implementation Tasks</Label>
-                      <div className="space-y-2">
-                        {[
-                          { task: "Pre-implementation safety briefing", status: "Completed", date: "Dec 1, 2025" },
-                          { task: "Equipment shutdown and isolation", status: "Completed", date: "Dec 2, 2025" },
-                          { task: "Physical modifications and installation", status: "In Progress", date: "Dec 3-5, 2025" },
-                          { task: "Testing and commissioning", status: "Pending", date: "Dec 6, 2025" },
-                          { task: "Documentation and handover", status: "Pending", date: "Dec 7, 2025" }
-                        ].map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-                            <div className={`w-3 h-3 rounded-full shrink-0 ${item.status === "Completed" ? "bg-green-500" :
-                              item.status === "In Progress" ? "bg-blue-500 animate-pulse" : "bg-gray-300"
-                              }`} />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-[#1C1C1E]">{item.task}</p>
-                              <p className="text-xs text-[#68737D] flex items-center gap-1 mt-0.5">
-                                <Calendar className="w-3 h-3" /> {item.date}
-                              </p>
-                            </div>
-                            <span className={`text-xs font-medium px-3 py-1 rounded-full ${item.status === "Completed" ? "bg-green-100 text-green-700 border border-green-300" :
-                              item.status === "In Progress" ? "bg-blue-100 text-blue-700 border border-blue-300" :
-                                "bg-gray-100 text-gray-700 border border-gray-300"
-                              }`}>
-                              {item.status}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Step 4: Closeout Status Section */}
-          {step === 4 && (
-            <section id="section-closeout-status" className="space-y-6 scroll-mt-24">
-              <h3 className="text-[17px] font-semibold text-[#1C1C1E] border-b border-[#F0F2F5] pb-2 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-[#006699]" />
-                Closeout Status
-              </h3>
-              <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                    <Award className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-[#1C1C1E] mb-2">MOC Successfully Closed</h4>
-                    <p className="text-sm text-[#68737D] mb-4">
-                      This Management of Change has been successfully implemented and all closeout activities have been completed.
-                    </p>
-                    <div className="space-y-3 mt-4">
-                      <Label className="text-[13px] font-medium text-[#68737D]">Closeout Checklist</Label>
-                      <div className="space-y-2">
-                        {[
-                          "Post-implementation review completed",
-                          "As-built drawings updated",
-                          "Operating procedures revised",
-                          "Training materials updated",
-                          "Lessons learned documented",
-                          "Change management database updated"
-                        ].map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
-                              <CheckCircle className="w-3 h-3 text-white" />
-                            </div>
-                            <p className="text-sm text-[#1C1C1E]">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 mt-6">
-                      <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
-                        <div className="text-2xl font-bold text-[#006699]">14</div>
-                        <div className="text-xs text-[#68737D] mt-1">Days to Complete</div>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
-                        <div className="text-2xl font-bold text-green-600">100%</div>
-                        <div className="text-xs text-[#68737D] mt-1">Tasks Completed</div>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-200 text-center">
-                        <div className="text-2xl font-bold text-purple-600">0</div>
-                        <div className="text-xs text-[#68737D] mt-1">Safety Incidents</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Step 1: Approval Tasks Section */}
-          {step === 1 && (
-            <TaskSection
-              sectionId="section-initiation-tasks"
-              title="Approval Tasks"
-              description="Initial review and approval tasks in the MOC approval chain"
-            >
-              <TaskCardList
-                tasks={INITIATION_TASKS}
-                showItemNumbers={true}
-                onTaskClick={handleTaskClick}
-              />
-            </TaskSection>
-          )}
-
-          {step === 3 && (
-            <TaskSection
-              sectionId="section-implementation-tasks"
-              title="Implementation Tasks"
-              description="Tasks assigned to the implementation team"
-            >
-              <TaskCardList
-                tasks={IMPLEMENTATION_TASKS}
-                showItemNumbers={true}
-                onTaskClick={handleTaskClick}
-              />
-            </TaskSection>
-          )}
-
-          {step === 4 && (
-            <TaskSection
-              sectionId="section-closeout-tasks"
-              title="Closeout Tasks"
-              description="Final verification and handover tasks"
-            >
-              <TaskCardList
-                tasks={CLOSEOUT_TASKS}
-                showItemNumbers={true}
-                onTaskClick={handleTaskClick}
-              />
-            </TaskSection>
-          )}
         </div>
       </div>
+
+      {/* Step 1: Initiation Approval Section */}
+      {step === 1 && (
+        <div className="overflow-hidden" margintop="30x" style={{ marginTop: '20px' }}>
+          <div className="p-8 sm:p-10 space-y-10">
+            {/* PartTasks Section */}
+            <section id="part-tasks-step1" className="mt-8 space-y-6">
+              <h2 className="text-lg font-semibold text-[#1C1C1E]">Initiation Tasks</h2>
+
+              {/* Task 1: Initial Review and approve MOC Request */}
+              <InitiationApprovalCard
+                itemNumber={1}
+                taskName="Initial Review and approve MOC Request"
+                role="Direct Manager of Requester"
+                assignedTo="Robert Chen"
+                assignedOn="15/01/2024 10:00"
+                status="In Progress"
+                comments={initiationTask1Comments}
+                attachments={[]}
+                onCommentsChange={setInitiationTask1Comments}
+                onApprove={() => console.log("Task 1 Approved")}
+                onReject={() => console.log("Task 1 Rejected")}
+                onSaveDraft={() => console.log("Task 1 Draft Saved")}
+                onDiscard={() => console.log("Task 1 Discarded")}
+                onRevise={() => console.log("Task 1 Revised")}
+              />
+
+              {/* Task 2: Assign Project Engineer */}
+              <AssignProjectEngineerCard
+                itemNumber={2}
+                taskName="Assign Project Engineer"
+                role="Division Manager"
+                assignedTo="Sarah Williams"
+                assignedOn="15/01/2024 11:00"
+                status="In Progress"
+                selectedEngineer={initiationTask2SelectedEngineer}
+                availableEngineers={AVAILABLE_PEOPLE}
+                comments={initiationTask2Comments}
+                attachments={[]}
+                onEngineerChange={setInitiationTask2SelectedEngineer}
+                onCommentsChange={setInitiationTask2Comments}
+                onApprove={() => console.log("Task 2 Approved")}
+                onReject={() => console.log("Task 2 Rejected")}
+                onSaveDraft={() => console.log("Task 2 Draft Saved")}
+                onDiscard={() => console.log("Task 2 Discarded")}
+                onRevise={() => console.log("Task 2 Revised")}
+              />
+
+              {/* Task 3: Review and Approve MOC Request */}
+              <ApproveWithPECard
+                itemNumber={3}
+                taskName="Review and Approve MOC Request"
+                role="VP Operation"
+                assignedTo="David Thompson"
+                assignedOn="15/01/2024 12:00"
+                status="In Progress"
+                selectedEngineer={initiationTask2SelectedEngineer ? AVAILABLE_PEOPLE.find(p => p.id === initiationTask2SelectedEngineer)?.name || "Michael Anderson" : "Michael Anderson"}
+                comments={initiationTask3Comments}
+                attachments={[]}
+                onCommentsChange={setInitiationTask3Comments}
+                onApprove={() => console.log("Task 3 Approved")}
+                onReject={() => console.log("Task 3 Rejected")}
+                onSaveDraft={() => console.log("Task 3 Draft Saved")}
+                onDiscard={() => console.log("Task 3 Discarded")}
+                onRevise={() => console.log("Task 3 Revised")}
+              />
+            </section>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Review & Approval Section */}
+      {step === 2 && (
+        <div className="overflow-hidden" margintop="30x" style={{ marginTop: '20px' }}>
+          <div className="p-8 sm:p-10 space-y-10">
+            {/* PartTasks Section */}
+            <section id="part-tasks-step2" className="mt-8 space-y-6">
+              <h2 className="text-lg font-semibold text-[#1C1C1E]">Review Tasks</h2>
+
+              {/* Task 1: Assign Technical Review Team */}
+              <AssignTechReviewTeamCard
+                itemNumber={1}
+                taskName="Assign Technical Review Team"
+                role="Project Engineer"
+                assignedTo="Michael Anderson"
+                assignedOn="16/01/2024 09:30"
+                status="In Progress"
+                disciplines={reviewDisciplines}
+                availableTeamMembers={AVAILABLE_PEOPLE}
+                comments={reviewTask1Comments}
+                attachments={[]}
+                onDisciplineChange={(disciplineId, teamMemberId) => {
+                  setReviewDisciplines(prev =>
+                    prev.map(d => d.id === disciplineId ? { ...d, teamMember: teamMemberId } : d)
+                  );
+                }}
+                onNotApplicableChange={(disciplineId, notApplicable) => {
+                  setReviewDisciplines(prev =>
+                    prev.map(d => d.id === disciplineId ? { ...d, notApplicable } : d)
+                  );
+                }}
+                onCommentsChange={setReviewTask1Comments}
+                onSubmit={() => console.log("Task 1 Submitted")}
+                onSaveDraft={() => console.log("Task 1 Draft Saved")}
+                onDiscard={() => console.log("Task 1 Discarded")}
+              />
+
+              {/* Task 2: Approve Technical Review Team */}
+              <ApproveTechReviewTeamCard
+                itemNumber={2}
+                taskName="Approve Technical Review Team"
+                role="Relevant Managers"
+                assignedTo="Multiple Managers"
+                assignedOn="16/01/2024 16:00"
+                status="In Progress"
+                approvalRows={reviewApprovalRows}
+                availableTeamMembers={AVAILABLE_PEOPLE}
+                comments={reviewTask2Comments}
+                attachments={[]}
+                onTeamMemberChange={(rowId, teamMemberId) => {
+                  setReviewApprovalRows(prev =>
+                    prev.map(r => r.id === rowId ? { ...r, taTeam: AVAILABLE_PEOPLE.find(p => p.id === teamMemberId)?.name || r.taTeam } : r)
+                  );
+                }}
+                onStatusChange={(rowId, status) => {
+                  setReviewApprovalRows(prev =>
+                    prev.map(r => r.id === rowId ? { ...r, status } : r)
+                  );
+                }}
+                onRemarkChange={(rowId, remark) => {
+                  setReviewApprovalRows(prev =>
+                    prev.map(r => r.id === rowId ? { ...r, remark } : r)
+                  );
+                }}
+                onCommentsChange={setReviewTask2Comments}
+              />
+
+              {/* Task 3: Perform Technical Review */}
+              <PerformTechReviewCard
+                itemNumber={3}
+                taskName="Perform Technical Review"
+                role="Project Engineer"
+                assignedTo="Michael Anderson"
+                assignedOn="16/01/2024 11:30"
+                status="In Progress"
+                documents={reviewDocuments}
+                comments={reviewTask3Comments}
+                attachments={[]}
+                onDocumentClick={(documentId) => {
+                  const doc = reviewDocuments.find(d => d.id === documentId);
+                  if (doc && doc.formType) {
+                    if (onNavigateToForm) {
+                      onNavigateToForm(doc.formType);
+                    }
+                  }
+                }}
+                onCommentsChange={setReviewTask3Comments}
+                onSubmit={() => console.log("Task 3 Submitted")}
+                onSaveDraft={() => console.log("Task 3 Draft Saved")}
+                onDiscard={() => console.log("Task 3 Discarded")}
+              />
+            </section>
+          </div>
+        </div>
+      )}
 
       {/* Change MOC Champion Dialog */}
       <ChangeMOCChampionDialog

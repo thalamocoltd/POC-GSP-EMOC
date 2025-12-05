@@ -217,8 +217,8 @@ export const RequestsTable = ({ onCreateRequest, onViewRequest }: RequestsTableP
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Parts</SelectItem>
-              <SelectItem value="review">Review</SelectItem>
               <SelectItem value="initiation">Initiation</SelectItem>
+              <SelectItem value="review">Review</SelectItem>
               <SelectItem value="implementation">Implementation</SelectItem>
               <SelectItem value="closeout">Closeout</SelectItem>
             </SelectContent>

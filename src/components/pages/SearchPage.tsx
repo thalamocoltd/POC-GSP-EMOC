@@ -7,8 +7,15 @@ import {
   ArrowUpDown,
   CheckCircle2,
   Circle,
-  XCircle
+  XCircle,
+  FileSpreadsheet
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "../ui/tooltip";
 import { cn } from "../ui/utils";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -20,7 +27,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { getStepFromProcess, formatAssignedOnDate } from "../../lib/emoc-utils";
-import { MOCK_MOC_REQUESTS, TYPE_OF_CHANGE_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL } from "../../lib/emoc-data";
+import { MOCK_MOC_REQUESTS, TYPE_OF_CHANGE_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, AREA_OPTIONS, PRIORITY_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
 
 interface SearchPageProps {
   onBack?: () => void;
@@ -106,16 +113,81 @@ const getStatusIcon = (status: string) => {
   }
 };
 
+// Process tracking for MOCs
+type ProcessType = "Review" | "Initiation" | "Implementation" | "Closeout";
+const PROCESS_ORDER: ProcessType[] = ["Initiation", "Review", "Implementation", "Closeout"];
+
+const getProcessTextColor = (process: string) => {
+  switch (process) {
+    case "Review": return "text-blue-600";
+    case "Initiation": return "text-purple-600";
+    case "Implementation": return "text-orange-600";
+    case "Closeout": return "text-green-600";
+    default: return "text-gray-600";
+  }
+};
+
+// Helper to render the 4-part progress icons
+const ProgressTracker = ({ process, status }: { process: ProcessType, status: string }) => {
+  const currentIndex = PROCESS_ORDER.indexOf(process);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {/* Description on top */}
+      <span className={cn("text-xs font-bold uppercase tracking-wider", getProcessTextColor(process))}>
+        {process}
+      </span>
+
+      {/* Progress Icons */}
+      <div className="flex items-center gap-2">
+        {PROCESS_ORDER.map((step, index) => {
+          let colorClass = "text-gray-200 fill-gray-100"; // Default/Pending
+          let Icon = Circle;
+
+          if (index < currentIndex) {
+            // Completed steps
+            colorClass = "text-green-500 fill-green-500";
+            Icon = CheckCircle2;
+          } else if (index === currentIndex) {
+            // Current step
+            if (status === "Rejected") {
+              colorClass = "text-red-500 fill-red-500";
+               Icon = XCircle;
+            } else if (status === "Completed") {
+              colorClass = "text-green-500 fill-green-500";
+               Icon = CheckCircle2;
+            } else {
+              colorClass = "text-amber-500 fill-amber-500"; // In Progress
+              Icon = Circle;
+            }
+          }
+
+          return (
+            <div key={step} className="relative group">
+               <Icon className={cn("w-4 h-4", colorClass)} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const SearchPage = ({ onBack }: SearchPageProps) => {
   const [showResults, setShowResults] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
   const [criteriaValues, setCriteriaValues] = useState({
     mocNumber: "",
     mocTitle: "",
     typeOfChange: "all",
     lengthOfChange: "all",
-    process: "all",
-    assignedTo: ""
+    priority: "all",
+    part: "all",
+    area: "all",
+    unit: "all",
+    currentTask: "",
+    projectEngineer: ""
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -131,6 +203,29 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
   const handleSearch = () => {
     setCurrentPage(1);
     setShowResults(true);
+  };
+
+  const handleClear = () => {
+    setCriteriaValues({
+      mocNumber: "",
+      mocTitle: "",
+      typeOfChange: "all",
+      lengthOfChange: "all",
+      priority: "all",
+      part: "all",
+      area: "all",
+      unit: "all",
+      currentTask: "",
+      projectEngineer: ""
+    });
+    setShowResults(false);
+  };
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    // Simulate processing like Chat Panel
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setIsExporting(false);
   };
 
   // Filter & Sort Logic
@@ -157,13 +252,23 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
       data = data.filter(item => item.lengthOfChange.toLowerCase() === criteriaValues.lengthOfChange.toLowerCase());
     }
 
-    if (criteriaValues.process !== "all") {
-      data = data.filter(item => item.process.toLowerCase() === criteriaValues.process);
+    if (criteriaValues.priority !== "all") {
+      data = data.filter(item => item.priority?.toLowerCase() === criteriaValues.priority.toLowerCase());
     }
 
-    if (criteriaValues.assignedTo) {
+    if (criteriaValues.part !== "all") {
+      data = data.filter(item => item.process.toLowerCase() === criteriaValues.part.toLowerCase());
+    }
+
+    if (criteriaValues.currentTask) {
       data = data.filter(item =>
-        item.assignedTo.toLowerCase().includes(criteriaValues.assignedTo.toLowerCase())
+        item.task.toLowerCase().includes(criteriaValues.currentTask.toLowerCase())
+      );
+    }
+
+    if (criteriaValues.projectEngineer) {
+      data = data.filter(item =>
+        item.champion.toLowerCase().includes(criteriaValues.projectEngineer.toLowerCase())
       );
     }
 
@@ -199,7 +304,7 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
         <h2 className="text-lg font-semibold text-[#1d3654] mb-4">Search Criteria</h2>
 
         <div className="space-y-3">
-          {/* All in 3 Columns */}
+          {/* Row 1 - MOC No, MOC Title, Type of Change */}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">MOC Number</label>
@@ -236,7 +341,7 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
             </div>
           </div>
 
-          {/* Second Row - 3 Columns */}
+          {/* Row 2 - Length of Change, Priority, Part */}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Length of Change</label>
@@ -254,38 +359,107 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Process/Part</label>
-              <Select value={criteriaValues.process} onValueChange={(value) => handleCriteriaChange("process", value)}>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Priority</label>
+              <Select value={criteriaValues.priority} onValueChange={(value) => handleCriteriaChange("priority", value)}>
+                <SelectTrigger className="border-gray-200 h-9">
+                  <SelectValue placeholder="All Priorities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Priorities</SelectItem>
+                  <SelectItem value="Normal">Normal</SelectItem>
+                  <SelectItem value="Emergency">Emergency</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Part</label>
+              <Select value={criteriaValues.part} onValueChange={(value) => handleCriteriaChange("part", value)}>
                 <SelectTrigger className="border-gray-200 h-9">
                   <SelectValue placeholder="All Parts" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Parts</SelectItem>
-                  <SelectItem value="review">Review</SelectItem>
-                  <SelectItem value="initiation">Initiation</SelectItem>
-                  <SelectItem value="implementation">Implementation</SelectItem>
-                  <SelectItem value="closeout">Closeout</SelectItem>
+                  <SelectItem value="Initiation">Initiation</SelectItem>
+                  <SelectItem value="Review">Review</SelectItem>
+                  <SelectItem value="Implementation">Implementation</SelectItem>
+                  <SelectItem value="Closeout">Closeout</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Row 3 - Area, Unit, Current Task */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Area</label>
+              <Select value={criteriaValues.area} onValueChange={(value) => handleCriteriaChange("area", value)}>
+                <SelectTrigger className="border-gray-200 h-9">
+                  <SelectValue placeholder="All Areas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Areas</SelectItem>
+                  {AREA_OPTIONS.map((area) => (
+                    <SelectItem key={area.id} value={area.name}>
+                      {area.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Assigned To</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Unit</label>
+              <Select value={criteriaValues.unit} onValueChange={(value) => handleCriteriaChange("unit", value)} disabled={criteriaValues.area === "all"}>
+                <SelectTrigger className="border-gray-200 h-9">
+                  <SelectValue placeholder="All Units" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Units</SelectItem>
+                  {criteriaValues.area !== "all" && getUnitsByAreaId(AREA_OPTIONS.find(a => a.name === criteriaValues.area)?.id || "").map((unit) => (
+                    <SelectItem key={unit.id} value={unit.name}>
+                      {unit.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Current Task</label>
               <Input
-                placeholder="Enter assigned person..."
+                placeholder="Enter task..."
                 className="border-gray-200 h-9"
-                value={criteriaValues.assignedTo}
-                onChange={(e) => handleCriteriaChange("assignedTo", e.target.value)}
+                value={criteriaValues.currentTask}
+                onChange={(e) => handleCriteriaChange("currentTask", e.target.value)}
               />
             </div>
           </div>
 
-          {/* OK Button */}
-          <div className="flex justify-end pt-2">
+          {/* Row 4 - Project Engineer */}
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Project Engineer</label>
+              <Input
+                placeholder="Enter project engineer name..."
+                className="border-gray-200 h-9"
+                value={criteriaValues.projectEngineer}
+                onChange={(e) => handleCriteriaChange("projectEngineer", e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Search and Clear Buttons */}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={handleClear}
+              className="border-gray-200 h-9"
+            >
+              Clear
+            </Button>
             <Button
               onClick={handleSearch}
               className="bg-[#006699] hover:bg-[#005c8a] text-white h-9"
             >
-              OK
+              Search
             </Button>
           </div>
         </div>
@@ -293,13 +467,25 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
 
       {/* Search Results Section */}
       {showResults && (
-        <div className="space-y-6 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-          <h2 className="text-lg font-semibold text-[#1d3654]">Search Results</h2>
+        <TooltipProvider>
+          <div className="space-y-6 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-[#1d3654]">Search Results</h2>
+              <Button
+                variant="outline"
+                onClick={handleExportExcel}
+                disabled={isExporting}
+                className="border-gray-200"
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                {isExporting ? "Exporting..." : "Export Excel"}
+              </Button>
+            </div>
 
-          {/* Results Table */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            {/* Results Table */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
                 <thead className="bg-[#F8FAFC] border-b border-gray-200">
                   <tr>
                     <th
@@ -330,14 +516,14 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
                       Task
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Status
+                      Part
                     </th>
                     <th
                       className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
                       onClick={() => handleSort('champion')}
                     >
                       <div className="flex items-center gap-2">
-                        MOC Champion
+                        Project Engineer
                         <ArrowUpDown className="w-3 h-3" />
                       </div>
                     </th>
@@ -394,18 +580,19 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-600">{formatAssignedOnDate(item.assignedOn)}</span>
+                          <ProgressTracker process={item.process as ProcessType} status={item.status} />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={cn("shadow-none font-medium rounded-full px-3", getProcessColor(item.process))}>
-                            {item.process}
-                          </Badge>
+                          <span className="text-sm text-gray-700 font-medium">{item.champion}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-gray-600">{item.lastUpdate}</span>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                         No results found
                       </td>
                     </tr>
@@ -464,7 +651,8 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
               </div>
             </div>
           )}
-        </div>
+          </div>
+        </TooltipProvider>
       )}
     </div>
   );

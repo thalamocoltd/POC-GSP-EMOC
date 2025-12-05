@@ -643,76 +643,76 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                 </div>
 
                 {!isEmergency && (
-                  <div className="space-y-2" id="field-typeOfChange">
-                    {renderLabelWithAI("Type of Change", "typeOfChange", true)}
-                    <Select
-                      value={formData.typeOfChange || ""}
-                      onValueChange={(value) => {
-                        handleInputChange('typeOfChange', value);
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="space-y-2" id="field-typeOfChange">
+                      {renderLabelWithAI("Type of Change", "typeOfChange", true)}
+                      <Select
+                        value={formData.typeOfChange || ""}
+                        onValueChange={(value) => {
+                          handleInputChange('typeOfChange', value);
 
-                        // Clear lengthOfChange if switching between Override and non-Override
-                        const isNewTypeOverride = value === "type-4";
-                        const currentLength = formData.lengthOfChange;
+                          // Clear lengthOfChange if switching between Override and non-Override
+                          const isNewTypeOverride = value === "type-4";
+                          const currentLength = formData.lengthOfChange;
 
-                        if (isNewTypeOverride) {
-                          // Switching TO Override: clear if current length is Permanent/Temporary
-                          if (currentLength === "length-1" || currentLength === "length-2") {
-                            handleInputChange('lengthOfChange', '');
+                          if (isNewTypeOverride) {
+                            // Switching TO Override: clear if current length is Permanent/Temporary
+                            if (currentLength === "length-1" || currentLength === "length-2") {
+                              handleInputChange('lengthOfChange', '');
+                            }
+                          } else {
+                            // Switching FROM Override: clear if current length is More/Less than 3 days
+                            if (currentLength === "length-3" || currentLength === "length-4") {
+                              handleInputChange('lengthOfChange', '');
+                            }
                           }
-                        } else {
-                          // Switching FROM Override: clear if current length is More/Less than 3 days
-                          if (currentLength === "length-3" || currentLength === "length-4") {
-                            handleInputChange('lengthOfChange', '');
-                          }
-                        }
-                      }}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-11 bg-gray-50",
-                        errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                      )}>
-                        <SelectValue placeholder="Select type of change" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TYPE_OF_CHANGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
-                  </div>
-                )}
+                        }}
+                      >
+                        <SelectTrigger className={cn(
+                          "h-11 bg-gray-50",
+                          errors.typeOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                        )}>
+                          <SelectValue placeholder="Select type of change" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TYPE_OF_CHANGE_OPTIONS.map((option) => (
+                            <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
+                    </div>
 
-                {!isEmergency && (
-                  <div className="space-y-2" id="field-lengthOfChange">
-                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
-                    <Select
-                      value={formData.lengthOfChange || ""}
-                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-11 bg-gray-50",
-                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                      )}>
-                        <SelectValue placeholder="Select length of change" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData.typeOfChange === 'type-4' ? (
-                          // Override type: show duration options
-                          <>
-                            <SelectItem value="length-3">More than 3 days</SelectItem>
-                            <SelectItem value="length-4">Less than 3 days</SelectItem>
-                          </>
-                        ) : (
-                          // Non-Override types: show permanent/temporary
-                          <>
-                            <SelectItem value="length-1">Permanent</SelectItem>
-                            <SelectItem value="length-2">Temporary</SelectItem>
-                          </>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
+                    <div className="space-y-2" id="field-lengthOfChange">
+                      {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
+                      <Select
+                        value={formData.lengthOfChange || ""}
+                        onValueChange={(value) => handleInputChange('lengthOfChange', value)}
+                      >
+                        <SelectTrigger className={cn(
+                          "h-11 bg-gray-50",
+                          errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                        )}>
+                          <SelectValue placeholder="Select length of change" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formData.typeOfChange === 'type-4' ? (
+                            // Override type: show duration options
+                            <>
+                              <SelectItem value="length-3">More than 3 days</SelectItem>
+                              <SelectItem value="length-4">Less than 3 days</SelectItem>
+                            </>
+                          ) : (
+                            // Non-Override types: show permanent/temporary
+                            <>
+                              <SelectItem value="length-1">Permanent</SelectItem>
+                              <SelectItem value="length-2">Temporary</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
+                    </div>
                   </div>
                 )}
 

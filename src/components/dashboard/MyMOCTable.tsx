@@ -43,7 +43,7 @@ interface MOCRecord {
   typeOfChange: "Plant Change (Impact PSI Cat 1,2,3)" | "Maintenance Change" | "Process Change (No Impact PSI Cat 1,2,3)" | "Override";
   lengthOfChange: "Permanent" | "Temporary" | "More than 3 days" | "Less than 3 days";
   task: string;
-  champion: string;
+  projectEngineer: string;
   lastUpdate: string;
   process: ProcessType;
   status: "In Progress" | "Completed" | "Rejected" | "Pending";
@@ -62,7 +62,7 @@ const generateMockData = (): MOCRecord[] => {
   const overrideLengths = ["More than 3 days", "Less than 3 days"];
 
   const processes: ProcessType[] = ["Review", "Initiation", "Implementation", "Closeout"];
-  const champions = ["John Smith", "Jane Doe", "Mike Ross", "Sarah Chen", "Paul Smith"];
+  const projectEngineers = ["John Smith", "Jane Doe", "Mike Ross", "Sarah Chen", "Paul Smith"];
   const tasks = [
     "Asset owner review and approve initiation",
     "Assign Project Manager",
@@ -117,11 +117,11 @@ const generateMockData = (): MOCRecord[] => {
       typeOfChange,
       lengthOfChange,
       task: tasks[i % tasks.length],
-      champion: champions[i % champions.length],
-      lastUpdate: `0${(i % 9) + 1}/12/2024 10:30`,
+      projectEngineer: projectEngineers[i % projectEngineers.length],
+      lastUpdate: `${String((i % 9) + 1).padStart(2, '0')}/12/2024 10:30`,
       process: processes[procIndex],
       status: status,
-      description: `Current stage: ${processes[procIndex]} - Waiting for approval from ${champions[i % champions.length]}`
+      description: `Current stage: ${processes[procIndex]} - Waiting for approval from ${projectEngineers[i % projectEngineers.length]}`
     };
   });
 };
@@ -133,7 +133,7 @@ const getTypeOfChangeColor = (typeOfChange: string) => {
   switch (typeOfChange) {
     case "Plant Change (Impact PSI Cat 1,2,3)": return "bg-blue-100 text-blue-700 border-transparent hover:bg-blue-200";
     case "Maintenance Change": return "bg-purple-100 text-purple-700 border-transparent hover:bg-purple-200";
-    case "Process Change (No Impact PSI Cat 1,2,3)": return "bg-cyan-100 text-cyan-700 border-transparent hover:bg-cyan-200";
+    case "Process Change (No Impact PSI Cat 1,2,3)": return "bg-green-100 text-green-700 border-transparent hover:bg-green-200";
     case "Override": return "bg-red-100 text-red-700 border-transparent hover:bg-red-200";
     default: return "bg-gray-100 text-gray-600 border-transparent";
   }
@@ -217,6 +217,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: keyof MOCRecord; direction: 'asc' | 'desc' } | null>(null);
   const [filterTypeOfChange, setFilterTypeOfChange] = useState("all");
   const [filterLengthOfChange, setFilterLengthOfChange] = useState("all");
+  const [filterPart, setFilterPart] = useState("all");
 
   // Filter & Sort
   const filteredData = useMemo(() => {
@@ -227,7 +228,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
       data = data.filter(item =>
         item.mocNo.toLowerCase().includes(lowerTerm) ||
         item.title.toLowerCase().includes(lowerTerm) ||
-        item.champion.toLowerCase().includes(lowerTerm) ||
+        item.projectEngineer.toLowerCase().includes(lowerTerm) ||
         item.task.toLowerCase().includes(lowerTerm)
       );
     }
@@ -240,6 +241,10 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
       data = data.filter(item => item.lengthOfChange.toLowerCase() === filterLengthOfChange.toLowerCase());
     }
 
+    if (filterPart !== "all") {
+      data = data.filter(item => item.process.toLowerCase() === filterPart.toLowerCase());
+    }
+
     if (sortConfig) {
       data.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
@@ -249,7 +254,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
     }
 
     return data;
-  }, [searchTerm, sortConfig, filterTypeOfChange, filterLengthOfChange]);
+  }, [searchTerm, sortConfig, filterTypeOfChange, filterLengthOfChange, filterPart]);
 
   // Pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -316,9 +321,9 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Plant Change (Impact PSI Cat 1,2,3)">Plant Change</SelectItem>
+                <SelectItem value="Plant Change (Impact PSI Cat 1,2,3)">Plant Change (Impact PSI Cat 1,2,3)</SelectItem>
                 <SelectItem value="Maintenance Change">Maintenance Change</SelectItem>
-                <SelectItem value="Process Change (No Impact PSI Cat 1,2,3)">Process Change</SelectItem>
+                <SelectItem value="Process Change (No Impact PSI Cat 1,2,3)">Process Change (No Impact PSI Cat 1,2,3)</SelectItem>
                 <SelectItem value="Override">Override</SelectItem>
               </SelectContent>
             </Select>
@@ -336,6 +341,22 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                 <SelectItem value="Temporary">Temporary</SelectItem>
                 <SelectItem value="More than 3 days">More than 3 days</SelectItem>
                 <SelectItem value="Less than 3 days">Less than 3 days</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterPart} onValueChange={setFilterPart}>
+              <SelectTrigger className="w-[160px] border-gray-200">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-400" />
+                  <SelectValue placeholder="All Parts" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Parts</SelectItem>
+                <SelectItem value="initiation">Initiation</SelectItem>
+                <SelectItem value="review">Review</SelectItem>
+                <SelectItem value="implementation">Implementation</SelectItem>
+                <SelectItem value="closeout">Closeout</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -377,12 +398,12 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     PART
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
-                    onClick={() => handleSort('champion')}
+                    onClick={() => handleSort('projectEngineer')}
                   >
                     <div className="flex items-center gap-2">
-                      MOC Champion
+                      Project Engineer
                       <ArrowUpDown className="w-3 h-3" />
                     </div>
                   </th>
@@ -441,7 +462,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                        <ProgressTracker process={moc.process} status={moc.status} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-700 font-medium">{moc.champion}</span>
+                      <span className="text-sm text-gray-700 font-medium">{moc.projectEngineer}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-600">{moc.lastUpdate}</span>

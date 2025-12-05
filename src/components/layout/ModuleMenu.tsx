@@ -10,6 +10,7 @@ import { useActions } from "../../context/ActionsContext";
 interface ModuleMenuProps {
   isMobile?: boolean;
   currentStep?: number;
+  maxReachedStep?: number;
   isReadOnly?: boolean;
   onStepClick?: (step: number) => void;
   onChangeMOCChampion?: () => void;
@@ -52,7 +53,7 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onStepClick, onChangeMOCChampion, onExtendTemporary, onChangeTeam, onCancelMOC }: ModuleMenuProps) => {
+export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isReadOnly = false, onStepClick, onChangeMOCChampion, onExtendTemporary, onChangeTeam, onCancelMOC }: ModuleMenuProps) => {
   if (isMobile) return null;
 
   // Use context for dialog state management
@@ -60,8 +61,10 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
 
   const getStepStatus = (step: number): "completed" | "active" | "pending" => {
     if (isReadOnly) {
-      // In view mode: all steps accessible, highlight current
-      return step === currentStep ? "active" : "completed";
+      // In view mode: allow steps at or below current
+      if (step === currentStep) return "active";
+      if (step < currentStep) return "completed";
+      return "pending";
     }
     // In create mode: step 0 is completed, then normal progression
     if (step === 0) return "completed";
@@ -85,32 +88,21 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, isReadOnly = false, onSt
               <div key={item.id} className="mb-2">
                 <button
                   onClick={() => {
-                    // Allow navigation in view mode for completed/active steps
-                    if (isReadOnly && status !== "pending") {
-                      if (onStepClick) {
-                        onStepClick(item.step);
-                      }
-                    }
-                    // Allow navigation in create mode for step 0 (MOC Prescreening)
-                    if (!isReadOnly && item.step === 0) {
-                      if (onStepClick) {
-                        onStepClick(item.step);
-                      }
+                    // In view mode: allow steps at or below current; In create mode: allow step 0 or steps <= maxReachedStep
+                    const canClickStep = isReadOnly ? (item.step <= currentStep) : (item.step <= maxReachedStep || item.step === 0);
+                    if (canClickStep && onStepClick) {
+                      onStepClick(item.step);
                     }
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-left relative",
                     status === "active"
                       ? "bg-[#EBF5FF] border-2 border-[#006699]"
-                      : status === "completed"
+                      : (isReadOnly ? (item.step <= currentStep) : (item.step <= maxReachedStep || item.step === 0))
                         ? "hover:bg-gray-50 cursor-pointer"
-                        : "hover:bg-gray-50 cursor-default opacity-60",
-                    isReadOnly && status !== "pending" && !isActiveStep && "cursor-pointer",
-                    !isReadOnly && item.step === 0 && "cursor-pointer hover:bg-gray-50",
-                    // Disable steps 2-4 in create mode
-                    !isReadOnly && item.step > 1 && "opacity-40 cursor-not-allowed pointer-events-none"
+                        : "opacity-40 cursor-not-allowed"
                   )}
-                  disabled={(!isReadOnly && item.step > 1) || (!isReadOnly && status === "pending")}
+                  disabled={isReadOnly ? (item.step > currentStep) : (item.step > maxReachedStep && item.step !== 0)}
                 >
                   {/* Status Icon */}
                   <div

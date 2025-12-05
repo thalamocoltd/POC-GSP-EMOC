@@ -69,6 +69,7 @@ function AppContent() {
 
   // MOC Navigation State
   const [currentMocStep, setCurrentMocStep] = useState<number>(0);
+  const [maxReachedStep, setMaxReachedStep] = useState<number>(0);
   const [mocFormData, setMocFormData] = useState<InitiationFormData | null>(null);
   const [mocMode, setMocMode] = useState<"create" | "view">("create");
   const [pendingAutofillPriority, setPendingAutofillPriority] = useState<"normal" | "emergency" | "">();
@@ -103,6 +104,7 @@ function AppContent() {
     setIsAIAutofilled(false);
     setMocMode("create");
     setCurrentMocStep(0); // Start at step 0 (prescreening)
+    setMaxReachedStep(0); // Reset max reached step
     setMocFormData(null);
     setCurrentPage("qualification");
   };
@@ -112,11 +114,13 @@ function AppContent() {
     setCurrentViewId(mocNo);
     setMocMode("view");
     setCurrentMocStep(step || 1);
+    setMaxReachedStep(step || 1); // In view mode, allow navigation to all steps
     setCurrentPage("view-request");
   };
 
   const handleQualificationQualified = () => {
     setCurrentMocStep(1); // Move to step 1 after prescreening
+    setMaxReachedStep(1); // Mark step 1 as reached
     setCurrentPage("create-request");
   };
 
@@ -130,6 +134,7 @@ function AppContent() {
     setCurrentViewId(null);
     setCurrentRequestData(null);
     setCurrentMocStep(1);
+    setMaxReachedStep(0); // Reset max reached step
     setMocFormData(null);
     setMocMode("create");
     setIsAIAutofilled(false);
@@ -162,6 +167,10 @@ function AppContent() {
     // Scroll to top for clear visual feedback
     window.scrollTo({ top: 0, behavior: "smooth" });
     setCurrentMocStep(targetStep);
+    // Update max reached step if we're moving forward
+    if (targetStep > maxReachedStep) {
+      setMaxReachedStep(targetStep);
+    }
   };
 
   const handleStepComplete = (stepNumber: number, data?: InitiationFormData) => {
@@ -178,10 +187,15 @@ function AppContent() {
     if (mocMode === "view" && targetStep >= 0 && targetStep <= 4) {
       handleStepTransition(targetStep);
     }
-    // In create mode: allow navigation to step 0 (MOC Prescreening)
-    if (mocMode === "create" && targetStep === 0) {
-      handleStepTransition(targetStep);
-      setCurrentPage("qualification");
+    // In create mode: allow navigation to step 0 or any step <= maxReachedStep
+    if (mocMode === "create") {
+      if (targetStep === 0) {
+        handleStepTransition(targetStep);
+        setCurrentPage("qualification");
+      } else if (targetStep <= maxReachedStep && targetStep > 0) {
+        // Allow back/forth navigation between visited steps (1-4)
+        handleStepTransition(targetStep);
+      }
     }
   };
 
@@ -206,6 +220,7 @@ function AppContent() {
       clearValidationErrors();
       setCurrentViewId(null);
       setCurrentMocStep(1);
+      setMaxReachedStep(0); // Reset max reached step
       setMocFormData(null);
       setMocMode("create");
       setIsCreateFormDirty(false);
@@ -305,6 +320,7 @@ function AppContent() {
         <ModuleMenu
           isMobile={isMobile}
           currentStep={currentMocStep}
+          maxReachedStep={maxReachedStep}
           isReadOnly={mocMode === "view"}
           onStepClick={handleStepNavigation}
         />

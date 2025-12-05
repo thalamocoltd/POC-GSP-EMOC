@@ -142,14 +142,14 @@ export function formatAssignedOnDate(dateString: string): string {
   }
 }
 
-// Risk code to color mapping - Professional minimal colors
+// Risk code to color mapping - Primary green/yellow/red colors
 export const getRiskCodeStyle = (riskCode: string): React.CSSProperties => {
   if (riskCode.startsWith("L")) {
-    return { backgroundColor: '#D1FAE5', color: '#065F46' }; // Green for L14-L16
+    return { backgroundColor: '#16a34a', color: '#ffffff' }; // Primary green for L14-L16
   } else if (riskCode.startsWith("M")) {
-    return { backgroundColor: '#FED7AA', color: '#9A3412' }; // Orange for M7-M13
+    return { backgroundColor: '#fcd34d', color: '#000000' }; // Brighter yellow for M7-M13
   } else if (riskCode.startsWith("H")) {
-    return { backgroundColor: '#FEE2E2', color: '#991B1B' }; // Red for H1-H6
+    return { backgroundColor: '#dc2626', color: '#ffffff' }; // Primary red for H1-H6
   }
   return { backgroundColor: '#F3F4F6', color: '#374151' };
 };

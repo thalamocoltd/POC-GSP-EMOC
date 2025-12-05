@@ -54,7 +54,7 @@ export const ProcessSafetyInfoChecklistForm = ({
                     <div className="bg-gradient-to-r from-[#1d3654] to-[#006699] px-8 py-6">
                         <div className="mb-2">
                             <h1 className="text-2xl font-bold text-white">
-                                Process Safety Information Checklist (PSI Checklist)
+                                Process Safety Information (PSI) Checklist
                             </h1>
                             <p className="text-white text-sm mt-1">
                                 Document all process safety information requirements
@@ -62,27 +62,6 @@ export const ProcessSafetyInfoChecklistForm = ({
                         </div>
                     </div>
 
-                    {/* MOC Information Header */}
-                    <div className="border-b border-gray-200 bg-gray-50 px-8 py-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <label className="text-xs font-bold text-[#68737D] uppercase tracking-wider">
-                                    MOC Number:
-                                </label>
-                                <div className="text-base font-semibold text-[#1C1C1E]">
-                                    {mocNumber}
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <label className="text-xs font-bold text-[#68737D] uppercase tracking-wider">
-                                    MOC Title:
-                                </label>
-                                <div className="text-base font-semibold text-[#1C1C1E]">
-                                    {mocTitle}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Action Detail Section */}
                     <div className="p-8">
