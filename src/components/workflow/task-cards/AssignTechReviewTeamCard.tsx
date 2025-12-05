@@ -61,53 +61,73 @@ export const AssignTechReviewTeamCard = ({
 
       {/* BODY */}
       <div className="space-y-4 bg-white p-6">
-        {/* Disciplines List */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider block mb-4">
+        {/* Technical Review Team Table */}
+        <div className="space-y-3">
+          <label className="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider block">
             Please specify Technical Review Team
           </label>
 
-          {disciplines.map((discipline) => (
-            <div
-              key={discipline.id}
-              className="flex items-end gap-4 p-3 border border-gray-200 rounded-lg bg-white hover:bg-gray-50 transition-colors"
-            >
-              {/* Discipline Name */}
-              <div className="flex-none w-48">
-                <p className="text-sm font-medium text-[#1C1C1E]">
-                  {discipline.name}
-                </p>
-              </div>
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100 border-b-2 border-gray-300">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-[#1C1C1E] uppercase tracking-wider border-r border-gray-300 w-48">
+                    Discipline
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-[#1C1C1E] uppercase tracking-wider border-r border-gray-300 flex-1">
+                    Team Member
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-[#1C1C1E] uppercase tracking-wider text-center w-32">
+                    Not Applicable
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {disciplines.map((discipline, idx) => (
+                  <tr
+                    key={discipline.id}
+                    className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
+                      idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                    }`}
+                  >
+                    {/* Discipline Name */}
+                    <td className="px-4 py-3 border-r border-gray-200">
+                      <p className="text-sm font-medium text-[#1C1C1E]">
+                        {discipline.name}
+                      </p>
+                    </td>
 
-              {/* People Picker */}
-              <div className="flex-1 min-w-0">
-                <PeoplePicker
-                  value={discipline.teamMember}
-                  onChange={(personId) =>
-                    onDisciplineChange(discipline.id, personId)
-                  }
-                  options={availableTeamMembers}
-                  placeholder="Select a team member"
-                  disabled={discipline.notApplicable}
-                  className="mb-0"
-                />
-              </div>
+                    {/* People Picker */}
+                    <td className="px-4 py-3 border-r border-gray-200">
+                      <PeoplePicker
+                        value={discipline.teamMember}
+                        onChange={(personId) =>
+                          onDisciplineChange(discipline.id, personId)
+                        }
+                        options={availableTeamMembers}
+                        placeholder="Select a team member"
+                        disabled={discipline.notApplicable}
+                        className="mb-0"
+                      />
+                    </td>
 
-              {/* Not Applicable Checkbox */}
-              <div className="flex-none flex items-center gap-2">
-                <Checkbox
-                  checked={discipline.notApplicable}
-                  onCheckedChange={(checked) =>
-                    onNotApplicableChange(discipline.id, checked as boolean)
-                  }
-                  className="w-5 h-5"
-                />
-                <label className="text-xs font-medium text-[#68737D] cursor-pointer select-none">
-                  Not Applicable
-                </label>
-              </div>
-            </div>
-          ))}
+                    {/* Not Applicable Checkbox */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <Checkbox
+                          checked={discipline.notApplicable}
+                          onCheckedChange={(checked) =>
+                            onNotApplicableChange(discipline.id, checked as boolean)
+                          }
+                          className="w-5 h-5"
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Comments */}

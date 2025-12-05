@@ -53,12 +53,7 @@ export const PeoplePicker = ({
         <SelectContent>
           {options.map((person) => (
             <SelectItem key={person.id} value={person.id}>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{person.name}</span>
-                {person.role && (
-                  <span className="text-xs text-gray-500">({person.role})</span>
-                )}
-              </div>
+              <span className="font-medium">{person.name}</span>
             </SelectItem>
           ))}
         </SelectContent>

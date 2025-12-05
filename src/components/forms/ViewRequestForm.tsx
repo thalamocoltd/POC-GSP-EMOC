@@ -415,10 +415,10 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
       {/* Step 1: Initiation Approval Section */}
       {step === 1 && (
         <div className="overflow-hidden" margintop="30x" style={{ marginTop: '20px' }}>
-          <div className="p-8 sm:p-10 space-y-10">
+          <div className="">
             {/* PartTasks Section */}
             <section id="part-tasks-step1" className="mt-8 space-y-6">
-              <h2 className="text-lg font-semibold text-[#1C1C1E]">Initiation Tasks</h2>
+
 
               {/* Task 1: Initial Review and approve MOC Request */}
               <InitiationApprovalCard
@@ -485,10 +485,10 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
       {/* Step 2: Review & Approval Section */}
       {step === 2 && (
         <div className="overflow-hidden" margintop="30x" style={{ marginTop: '20px' }}>
-          <div className="p-8 sm:p-10 space-y-10">
+          <div className="">
             {/* PartTasks Section */}
             <section id="part-tasks-step2" className="mt-8 space-y-6">
-              <h2 className="text-lg font-semibold text-[#1C1C1E]">Review Tasks</h2>
+
 
               {/* Task 1: Assign Technical Review Team */}
               <AssignTechReviewTeamCard
