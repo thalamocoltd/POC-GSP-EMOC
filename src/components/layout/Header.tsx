@@ -26,7 +26,8 @@ interface HeaderProps {
   currentLocation?: LocationId;
   onLocationChange?: (id: LocationId) => void;
   requestData?: RequestData | null;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, subPage?: string) => void;
+  breadcrumbPath?: Array<{ label: string; page: string; subPage?: string }>;
 }
 
 export const Header = ({
@@ -38,15 +39,16 @@ export const Header = ({
   currentLocation = "rayong",
   onLocationChange,
   requestData,
-  onNavigate
+  onNavigate,
+  breadcrumbPath
 }: HeaderProps) => {
+
   // Don't show breadcrumb on dashboard
   const showBreadcrumb = currentPage !== "dashboard";
-  
   // Calculate left offset for breadcrumb
-  // Fixed: Always align with main content (72px) regardless of module menu
   const breadcrumbOffset = isMobile ? "ml-0" : "ml-[72px]";
-  
+
+  // Default single-level breadcrumb fallback
   const getBreadcrumbTitle = () => {
     switch (currentPage) {
       case "create-request": return "Create New MoC";
@@ -71,11 +73,11 @@ export const Header = ({
     <header className="h-16 bg-[#F7F8FA] border-b border-[#D4D9DE] flex items-center sticky top-0 z-30 fixed left-0 right-0 transition-all duration-300">
       {/* Left: Location & Breadcrumbs - with proper spacing from sidebar */}
       <div className={cn("flex-1 flex items-center px-6", breadcrumbOffset)}>
-        
+
         {/* Location Selector (Moved to Left) */}
         {onLocationChange && (
           <div className="mr-4 animate-in fade-in slide-in-from-left-2">
-            <LocationSelector 
+            <LocationSelector
               variant="minimal"
               currentLocation={currentLocation}
               onLocationChange={onLocationChange}
@@ -95,15 +97,35 @@ export const Header = ({
                 <span className="font-medium">Home</span>
               </button>
 
-              <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
-
-              <button
-                onClick={() => onNavigate(currentPage)}
-                className="font-semibold text-[#1d3654] px-2 py-1 rounded transition-colors hover:bg-gray-100 cursor-pointer max-w-[500px] truncate"
-                title={getBreadcrumbTitle()}
-              >
-                {getBreadcrumbTitle()}
-              </button>
+              {breadcrumbPath && breadcrumbPath.length > 0 ? (
+                breadcrumbPath.map((item, idx) => (
+                  <React.Fragment key={item.label}>
+                    <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
+                    <button
+                      onClick={() => onNavigate(item.page, item.subPage)}
+                      className={
+                        "font-semibold text-[#1d3654] px-2 py-1 rounded transition-colors hover:bg-gray-100 cursor-pointer max-w-[500px] truncate" +
+                        (idx === breadcrumbPath.length - 1 ? " font-bold" : "")
+                      }
+                      title={item.label}
+                      disabled={idx === breadcrumbPath.length - 1}
+                    >
+                      {item.label}
+                    </button>
+                  </React.Fragment>
+                ))
+              ) : (
+                <>
+                  <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />
+                  <button
+                    onClick={() => onNavigate(currentPage)}
+                    className="font-semibold text-[#1d3654] px-2 py-1 rounded transition-colors hover:bg-gray-100 cursor-pointer max-w-[500px] truncate"
+                    title={getBreadcrumbTitle()}
+                  >
+                    {getBreadcrumbTitle()}
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}
@@ -111,21 +133,21 @@ export const Header = ({
 
       {/* Right: Actions & Profile */}
       <div className="flex items-center gap-4 px-6">
-        
+
         {/* AI Assistant Button */}
         <button
           onClick={onChatToggle}
           className={cn(
             "flex items-center gap-3 px-3 py-1.5 rounded-full transition-all group",
             // Subtle button style: Gray background, no shadow (less prominent than Location)
-            isChatOpen 
-              ? "bg-[#1d3654] text-white shadow-sm" 
+            isChatOpen
+              ? "bg-[#1d3654] text-white shadow-sm"
               : "bg-white border border-transparent hover:border-gray-200 hover:bg-gray-50 text-[#1d3654]"
           )}
         >
           <div className={cn(
-             "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
-             isChatOpen ? "bg-white/20" : "bg-[#E6F4FF]"
+            "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-105",
+            isChatOpen ? "bg-white/20" : "bg-[#E6F4FF]"
           )}>
             <Sparkles className={cn("w-4 h-4", isChatOpen ? "text-white" : "text-[#006699]")} />
           </div>

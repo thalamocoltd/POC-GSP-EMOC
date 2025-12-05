@@ -8,12 +8,14 @@ interface TaskCardProps {
   task: Task;
   stage: TaskCardStage;
   itemNumber?: number;
+  onClick?: (task: Task, formType?: string) => void;
 }
 
-export const TaskCard = ({ task, stage, itemNumber }: TaskCardProps) => {
+export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) => {
   const isEditable = stage === "editable";
   const isReadOnly = stage === "readonly";
   const isDisabled = stage === "disabled";
+  const isClickable = onClick !== undefined && !isDisabled;
 
   const getStatusBadge = () => {
     switch (task.status) {
@@ -49,14 +51,18 @@ export const TaskCard = ({ task, stage, itemNumber }: TaskCardProps) => {
   };
 
   return (
-    <div className={cn(
-      "border rounded-lg overflow-hidden transition-all duration-200",
-      isDisabled ? "bg-gray-50/50 opacity-60 border-gray-200" : "bg-white shadow-sm hover:shadow-md border-gray-200",
-    )}>
+    <div
+      className={cn(
+        "border rounded-lg overflow-hidden transition-all duration-200",
+        isDisabled ? "bg-gray-50/50 opacity-60 border-gray-200" : "bg-white shadow-sm hover:shadow-md border-gray-200",
+        isClickable && !task.subTasks && "cursor-pointer hover:border-[#006699] hover:shadow-lg"
+      )}
+      onClick={isClickable && !task.subTasks ? () => onClick(task) : undefined}
+    >
       {/* HEADER */}
       <div
         className={cn(
-          "border-b",
+          "border-b border-gray-200",
           isDisabled && "bg-gray-50",
           task.status === "In Progress" && !isDisabled && "bg-blue-50",
           task.status === "Completed" && !isDisabled && "bg-green-50",
@@ -66,44 +72,44 @@ export const TaskCard = ({ task, stage, itemNumber }: TaskCardProps) => {
         style={{ padding: "20px 24px" }}
       >
         {/* Item Number + Title Row */}
-        <div className="flex items-baseline justify-between gap-3 mb-3">
-          <div className="flex items-baseline gap-2 flex-1 min-w-0">
+        <div className="flex items-start gap-4 mb-3">
+          <div className="flex items-baseline gap-2.5 flex-1 min-w-0">
             {itemNumber && (
-              <span className="text-xs font-bold text-[#68737D] flex-shrink-0">
+              <span className="text-xs font-bold text-[#68737D] flex-shrink-0 leading-6">
                 Item {itemNumber}:
               </span>
             )}
-            <h4 className="text-base font-semibold text-[#1C1C1E] break-words">{task.taskName}</h4>
+            <h4 className="text-base font-semibold text-[#1C1C1E] break-words leading-6">{task.taskName}</h4>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 ml-auto">
             {getStatusBadge()}
           </div>
         </div>
 
         {/* Metadata Row */}
-        <div className="flex items-center gap-2 text-xs text-[#68737D] flex-wrap">
-          <div className="flex items-center gap-1">
-            <User className="w-3.5 h-3.5 flex-shrink-0" />
+        <div className="flex items-center gap-2.5 text-xs text-[#68737D] flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <User className="w-4 h-4 flex-shrink-0" />
             <span className="font-medium">{task.assignedTo}</span>
           </div>
-          <span className="text-gray-400">•</span>
+          <span className="text-gray-400 select-none">•</span>
           <span className="font-medium">{task.role}</span>
           {!isDisabled && task.assignedOn && (
             <>
-              <span className="text-gray-400">•</span>
-              <span>Assigned {task.assignedOn}</span>
+              <span className="text-gray-400 select-none">•</span>
+              <span className="text-[#8B95A1]">Assigned {task.assignedOn}</span>
             </>
           )}
           {isReadOnly && task.completedOn && (
             <>
-              <span className="text-gray-400">•</span>
-              <span>Completed {task.completedOn}</span>
+              <span className="text-gray-400 select-none">•</span>
+              <span className="text-green-600 font-medium">Completed {task.completedOn}</span>
             </>
           )}
           {isDisabled && (
             <>
-              <span className="text-gray-400">•</span>
-              <span className="italic">Pending previous approval</span>
+              <span className="text-gray-400 select-none">•</span>
+              <span className="italic text-[#8B95A1]">Pending previous approval</span>
             </>
           )}
         </div>
@@ -112,75 +118,111 @@ export const TaskCard = ({ task, stage, itemNumber }: TaskCardProps) => {
       {/* BODY */}
       {!isDisabled && (
         <div className="space-y-4 bg-white" style={{ padding: "20px 24px" }}>
-          {/* Comments */}
-          <div>
-            <label className="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider block mb-2.5">Comments {isEditable && <span className="text-red-500">*</span>}</label>
-            {isEditable ? (
-              <textarea
-                className="w-full px-3 py-2.5 border border-[#D4D9DE] rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#006699] focus:border-transparent bg-white transition-colors placeholder-gray-400"
-                rows={4}
-                value={task.comments}
-                placeholder="Enter your approval decision and any comments..."
-              />
-            ) : (
-              <div className="px-3 py-2.5 bg-[#F9FAFB] rounded-md border border-[#E5E7EB]">
-                <p className="text-sm text-[#1C1C1E] whitespace-pre-wrap leading-relaxed">{task.comments || "No comments provided"}</p>
+          {/* SubTasks - Clickable Form Links */}
+          {task.subTasks && task.subTasks.length > 0 && (
+            <div>
+              <label className="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider block mb-2.5">Status</label>
+              <div className="space-y-2">
+                {task.subTasks.map((subTask) => (
+                  <div key={subTask.id} className="flex items-center justify-between py-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onClick) {
+                          onClick(task, subTask.formType);
+                        }
+                      }}
+                      className="text-sm text-[#006699] hover:text-[#004d7a] hover:underline font-medium transition-colors text-left"
+                    >
+                      {subTask.label}
+                    </button>
+                    <span className={cn(
+                      "text-xs font-semibold px-2.5 py-1 rounded",
+                      subTask.status === "Completed" && "text-green-700 bg-green-50",
+                      subTask.status === "Not Started" && "text-gray-600 bg-gray-100",
+                      subTask.status === "In Progress" && "text-blue-700 bg-blue-50"
+                    )}>
+                      {subTask.status}
+                    </span>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Comments */}
+          {!task.subTasks && (
+            <div>
+              <label className="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider block mb-2.5">Comments {isEditable && <span className="text-red-500">*</span>}</label>
+              {isEditable ? (
+                <textarea
+                  className="w-full px-3 py-2.5 border border-[#D4D9DE] rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#006699] focus:border-transparent bg-white transition-colors placeholder-gray-400"
+                  rows={4}
+                  value={task.comments}
+                  placeholder="Enter your approval decision and any comments..."
+                />
+              ) : (
+                <div className="px-3 py-2.5 bg-[#F9FAFB] rounded-md border border-[#E5E7EB]">
+                  <p className="text-sm text-[#1C1C1E] whitespace-pre-wrap leading-relaxed">{task.comments || "No comments provided"}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Attachments */}
-          <div>
-            <label className="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider block mb-2.5">Attachments</label>
-            {isEditable ? (
-              <div className="space-y-3">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 text-sm font-semibold rounded-md bg-gradient-to-r from-[#1d3654] to-[#006699] text-white hover:brightness-110 transition-all shadow-sm"
-                  style={{ padding: "10px 16px" }}
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload File {task.attachments.length > 0 && <span className="ml-1">({task.attachments.length})</span>}
-                </button>
-                {task.attachments.length > 0 && (
-                  <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
-                    {task.attachments.map((file, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-3 hover:bg-[#F7F8FA] transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
+          {!task.subTasks && (
+            <div>
+              <label className="text-xs font-bold text-[#1C1C1E] uppercase tracking-wider block mb-2.5">Attachments</label>
+              {isEditable ? (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-2 text-sm font-semibold rounded-md bg-gradient-to-r from-[#1d3654] to-[#006699] text-white hover:brightness-110 transition-all shadow-sm"
+                    style={{ padding: "10px 16px" }}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload File {task.attachments.length > 0 && <span className="ml-1">({task.attachments.length})</span>}
+                  </button>
+                  {task.attachments.length > 0 && (
+                    <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
+                      {task.attachments.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 hover:bg-[#F7F8FA] transition-colors"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Paperclip className="w-4 h-4 text-[#68737D] flex-shrink-0" />
+                            <p className="text-sm text-[#1C1C1E] truncate">{file}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {task.attachments.length > 0 ? (
+                    <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
+                      {task.attachments.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 p-3 hover:bg-[#F7F8FA] transition-colors"
+                        >
                           <Paperclip className="w-4 h-4 text-[#68737D] flex-shrink-0" />
                           <p className="text-sm text-[#1C1C1E] truncate">{file}</p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {task.attachments.length > 0 ? (
-                  <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
-                    {task.attachments.map((file, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-2 p-3 hover:bg-[#F7F8FA] transition-colors"
-                      >
-                        <Paperclip className="w-4 h-4 text-[#68737D] flex-shrink-0" />
-                        <p className="text-sm text-[#1C1C1E] truncate">{file}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="border-2 border-dashed border-[#D4D9DE] rounded-lg p-4 text-center">
-                    <Paperclip className="w-5 h-5 text-[#A0ADB8] mx-auto mb-2" />
-                    <p className="text-sm text-[#68737D]">No attachments</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-[#D4D9DE] rounded-lg p-4 text-center">
+                      <Paperclip className="w-5 h-5 text-[#A0ADB8] mx-auto mb-2" />
+                      <p className="text-sm text-[#68737D]">No attachments</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

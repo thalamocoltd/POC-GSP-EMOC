@@ -42,7 +42,7 @@ export const INITIATION_TASKS: Task[] = [
 export const REVIEW_TASKS: Task[] = [
   {
     id: "task-2-1",
-    taskName: "Item 1: Technical Review",
+    taskName: "Technical Review",
     role: "Technical Manager",
     assignedTo: "Mike Wilson",
     assignedOn: "30/05/2024 09:00",
@@ -54,15 +54,35 @@ export const REVIEW_TASKS: Task[] = [
   },
   {
     id: "task-2-2",
-    taskName: "Item 2: Safety Review",
-    role: "Safety Officer",
-    assignedTo: "Sarah Johnson",
-    assignedOn: null,
+    taskName: "Perform Technical Review",
+    role: "MoC Champion",
+    assignedTo: "First Champion",
+    assignedOn: "22/7/2017 22:05",
     completedOn: null,
-    status: "Not Started",
+    status: "In Progress",
     comments: "",
     attachments: [],
-    actions: []
+    actions: [],
+    subTasks: [
+      {
+        id: "subtask-2-2-1",
+        label: "Click to fill in Preliminary Safety Assessment Form",
+        formType: "preliminary-safety",
+        status: "Not Started"
+      },
+      {
+        id: "subtask-2-2-2",
+        label: "Click to fill in Process Safety Information Checklist",
+        formType: "psi-checklist",
+        status: "Completed"
+      },
+      {
+        id: "subtask-2-2-3",
+        label: "Click to fill in SHE Assessment Check List Form",
+        formType: "she-assessment",
+        status: "Completed"
+      }
+    ]
   }
 ];
 

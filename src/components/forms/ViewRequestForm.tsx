@@ -21,9 +21,10 @@ interface ViewRequestFormProps {
   step: number;
   onBack: () => void;
   onStepChange?: (step: number) => void;
+  onNavigateToForm?: (formType: "psi-checklist" | "preliminary-safety" | "she-assessment") => void;
 }
 
-export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestFormProps) => {
+export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToForm }: ViewRequestFormProps) => {
   // Mock Data Loading
   const [data, setData] = useState<InitiationFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +129,32 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
     setIsProcessing(false);
   };
 
-  const ReadOnlyField = ({ label, value, multiline = false }: { label: string, value: string | number, multiline?: boolean }) => (
+  const handleTaskClick = (task: any, formType?: string) => {
+    if (!onNavigateToForm) return;
+
+    // If formType is provided (from subtask), use it directly
+    if (formType) {
+      if (formType === "psi-checklist") {
+        onNavigateToForm("psi-checklist");
+      } else if (formType === "preliminary-safety") {
+        onNavigateToForm("preliminary-safety");
+      } else if (formType === "she-assessment") {
+        onNavigateToForm("she-assessment");
+      }
+      return;
+    }
+
+    // Otherwise, check task name
+    const taskName = task.taskName.toLowerCase();
+
+    if (taskName.includes("process safety information") || taskName.includes("psi checklist")) {
+      onNavigateToForm("psi-checklist");
+    } else if (taskName.includes("preliminary safety")) {
+      onNavigateToForm("preliminary-safety");
+    } else if (taskName.includes("she assessment")) {
+      onNavigateToForm("she-assessment");
+    }
+  }; const ReadOnlyField = ({ label, value, multiline = false }: { label: string, value: string | number, multiline?: boolean }) => (
     <div className="space-y-1.5">
       <Label className="text-[13px] font-medium text-[#68737D]">{label}</Label>
       <div className={cn(
@@ -364,10 +390,14 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
           {step === 2 && (
             <TaskSection
               sectionId="section-review-tasks"
-              title="Approval Tasks"
+              title="Review Tasks"
               description="Review and approval tasks assigned to the relevant stakeholders"
             >
-              <TaskCardList tasks={REVIEW_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={REVIEW_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
 
@@ -488,7 +518,11 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               title="Approval Tasks"
               description="Initial review and approval tasks in the MOC approval chain"
             >
-              <TaskCardList tasks={INITIATION_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={INITIATION_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
 
@@ -498,7 +532,11 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               title="Implementation Tasks"
               description="Tasks assigned to the implementation team"
             >
-              <TaskCardList tasks={IMPLEMENTATION_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={IMPLEMENTATION_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
 
@@ -508,7 +546,11 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               title="Closeout Tasks"
               description="Final verification and handover tasks"
             >
-              <TaskCardList tasks={CLOSEOUT_TASKS} showItemNumbers={true} />
+              <TaskCardList
+                tasks={CLOSEOUT_TASKS}
+                showItemNumbers={true}
+                onTaskClick={handleTaskClick}
+              />
             </TaskSection>
           )}
         </div>

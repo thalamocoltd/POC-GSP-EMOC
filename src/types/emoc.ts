@@ -1,12 +1,12 @@
 // eMoC System Data Types
 
-export type WorkflowState = 
-  | "Draft" 
-  | "Submitted" 
-  | "In Review" 
-  | "Approved" 
-  | "Rejected" 
-  | "In Implementation" 
+export type WorkflowState =
+  | "Draft"
+  | "Submitted"
+  | "In Review"
+  | "Approved"
+  | "Rejected"
+  | "In Implementation"
   | "Closed";
 
 export type WorkflowStage = "Initiation" | "Review" | "Implementation" | "Closeout";
@@ -130,4 +130,38 @@ export interface InitiationFormData {
 
   // Attachments
   attachments: FileAttachment[];
+}
+
+// Process Safety Information Checklist Types
+export type PSIUpdateStatus = "yes" | "no" | null;
+export type PSICompletionStatus = "Completed" | "In Progress" | "Cancel" | "";
+
+export interface PSIChecklistItem {
+  id: string;
+  label: string;
+  requiredUpdate: PSIUpdateStatus;
+  actionBy: string;
+  status: PSICompletionStatus;
+  remark: string;
+  isCategory?: boolean;
+  level?: number; // 0 = main item, 1 = sub-item, 2 = sub-sub-item, etc.
+}
+
+export interface PSIApprovalRow {
+  unit: string;
+  name?: string;
+  position?: string;
+  signature?: string;
+  dateField?: string;
+  isDateMerged?: boolean;
+}
+
+export interface PSIChecklistData {
+  mocNumber: string;
+  mocTitle: string;
+  items: PSIChecklistItem[];
+  approvals: PSIApprovalRow[];
+  createdAt: Date;
+  updatedAt: Date;
+  status: "draft" | "submitted" | "approved";
 }

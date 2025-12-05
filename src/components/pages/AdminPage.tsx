@@ -1,24 +1,54 @@
-import React from "react";
-import { ShieldCheck } from "lucide-react";
+
+import React, { useState } from "react";
+import { AdminMenuSection } from "../admin/AdminMenuSection";
+import { WorkflowConfigPage } from "../admin/WorkflowConfigPage";
+
+// Master data menu items
+const masterItems = [
+  {
+    label: "Workflow Configuration",
+    enabled: true,
+    key: "workflow-config"
+  },
+  { label: "Areas & Units", enabled: false },
+  { label: "MOC Champions", enabled: false },
+  { label: "Type of Change", enabled: false },
+  { label: "TPM Loss Type", enabled: false },
+  { label: "Priority Options", enabled: false },
+  { label: "Benefits Value Options", enabled: false },
+  { label: "Cancellation Categories", enabled: false },
+  { label: "Length of Change Options", enabled: false },
+  { label: "Risk Assessment Criteria", enabled: false }
+];
+
+const userItems = [
+  { label: "User Management", enabled: false },
+];
+const groupItems = [
+  { label: "Group Management", enabled: false },
+];
+
 
 interface AdminPageProps {
   onBack?: () => void;
+  setSubPage?: (subPage: string | null) => void;
 }
 
-export const AdminPage = ({ onBack }: AdminPageProps) => {
+export const AdminPage = ({ onBack, setSubPage }: AdminPageProps) => {
   return (
-    <div className="pt-20 space-y-6 animate-in fade-in duration-500">
-      <h1 className="text-2xl font-bold text-[#1d3654] mb-6">Admin Panel</h1>
-
-      <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm text-center">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <ShieldCheck className="w-8 h-8 text-[#006699]" />
-        </div>
-        <h2 className="text-xl font-semibold text-[#1d3654] mb-2">Admin Features Coming Soon</h2>
-        <p className="text-gray-500">
-          User management, permissions, and system configuration will be available here.
-        </p>
-      </div>
+    <div className="pt-20 max-w-2xl mx-auto animate-in fade-in duration-500">
+      <h1 className="text-2xl font-bold text-[#1d3654] mb-8">Admin Panel</h1>
+      <AdminMenuSection
+        title="Master Data"
+        items={masterItems.map(item => ({
+          ...item,
+          onClick: item.enabled && typeof setSubPage === "function" ? () => setSubPage(item.key || "") : undefined
+        }))}
+      />
+      <AdminMenuSection title="User" items={userItems} />
+      <AdminMenuSection title="Group" items={groupItems} />
     </div>
   );
 };
+
+
