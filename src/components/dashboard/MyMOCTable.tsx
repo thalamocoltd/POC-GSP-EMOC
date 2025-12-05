@@ -71,6 +71,28 @@ const generateMockData = (): MOCRecord[] => {
     "Final Safety Assessment",
     "Closeout Verification"
   ];
+  const mocTitles = [
+    "Safety Interlocks Upgrade - Production Area A",
+    "Equipment Preventive Maintenance Program",
+    "Process Flow Optimization Initiative",
+    "HVAC System Modernization - Utilities",
+    "Compliance Documentation Update",
+    "Production Efficiency Enhancement",
+    "Environmental Control System Retrofit",
+    "Quality Assurance Protocol Revision",
+    "Emergency Response System Upgrade",
+    "Equipment Calibration and Certification",
+    "Safety Training Module Implementation",
+    "Risk Assessment and Mitigation",
+    "Storage Facility Reorganization",
+    "Laboratory Equipment Upgrade",
+    "Waste Management System Enhancement",
+    "Production Line Reconfiguration",
+    "Control System Software Update",
+    "Safety Barrier Installation",
+    "Maintenance Procedure Standardization",
+    "Energy Efficiency Improvement Project"
+  ];
 
   return Array.from({ length: 45 }).map((_, i) => {
     const procIndex = Math.floor(Math.random() * 4);
@@ -91,7 +113,7 @@ const generateMockData = (): MOCRecord[] => {
     return {
       id: `moc-${i}`,
       mocNo: `MOC-2024-${(i + 100).toString()}`,
-      title: `MOC Title ${i + 1}: ${["Pump Upgrade", "Valve Replacement", "Sensor Calibration", "Safety Override"][i % 4]}`,
+      title: mocTitles[i % mocTitles.length],
       typeOfChange,
       lengthOfChange,
       task: tasks[i % tasks.length],

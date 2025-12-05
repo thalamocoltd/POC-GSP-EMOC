@@ -5,10 +5,16 @@ import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId, MOCK_MOC_REQUESTS } from "../../lib/emoc-data";
-import { formatFileSize, createRiskAssessment } from "../../lib/emoc-utils";
+import { formatFileSize, createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { TaskCardList } from "../workflow/TaskCardList";
 import { TaskSection } from "../workflow/TaskSection";
 import { INITIATION_TASKS, REVIEW_TASKS, IMPLEMENTATION_TASKS, CLOSEOUT_TASKS } from "../../lib/workflow-demo-data";
+import { ProcessingOverlay } from "../ui/ProcessingOverlay";
+import { ChangeMOCChampionDialog } from "./action-dialogs/ChangeMOCChampionDialog";
+import { ExtendTemporaryDialog } from "./action-dialogs/ExtendTemporaryDialog";
+import { ChangeTeamDialog } from "./action-dialogs/ChangeTeamDialog";
+import { CancelMOCDialog } from "./action-dialogs/CancelMOCDialog";
+import { useActions } from "../../context/ActionsContext";
 
 interface ViewRequestFormProps {
   id: string | null;
@@ -21,6 +27,9 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
   // Mock Data Loading
   const [data, setData] = useState<InitiationFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Action dialog states from context
+  const { activeDialog, setActiveDialog, isProcessing, setIsProcessing, processingMessages, setProcessingMessages } = useActions();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -108,15 +117,15 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
     return parts[stepNum - 1] || "Unknown";
   };
 
-  const getRiskLevelConfig = (level: string | null) => {
-    if (!level) return { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-600", badge: "bg-gray-100 text-gray-700" };
-    const configs: Record<string, any> = {
-      Low: { bg: "bg-green-50", border: "border-green-200", text: "text-green-800", badge: "bg-green-100 text-green-800 border-green-300" },
-      Medium: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-800", badge: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-      High: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800", badge: "bg-orange-100 text-orange-800 border-orange-300" },
-      Extreme: { bg: "bg-red-50", border: "border-red-300", text: "text-red-800", badge: "bg-red-100 text-red-800 border-red-300" }
-    };
-    return configs[level] || configs.Low;
+
+  // Action handlers
+  const handleActionSubmit = (actionType: string) => {
+    setActiveDialog(null);
+    setIsProcessing(true);
+  };
+
+  const handleProcessingComplete = () => {
+    setIsProcessing(false);
   };
 
   const ReadOnlyField = ({ label, value, multiline = false }: { label: string, value: string | number, multiline?: boolean }) => (
@@ -274,11 +283,14 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               <div>
                 <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment Before Change</Label>
                 {(() => {
-                  const config = getRiskLevelConfig(data.riskBeforeChange.level);
+                  const riskStyle = getRiskCodeStyle(data.riskBeforeChange.riskCode || "");
                   return (
-                    <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
-                      <span className={cn("px-4 py-2 rounded-lg font-bold text-lg border-2", config.badge)}>
-                        {data.riskBeforeChange.level || "N/A"} : {data.riskBeforeChange.riskCode || data.riskBeforeChange.score}
+                    <div className="p-5 border rounded-xl bg-[#F7F8FA] border-[#E5E7EB]">
+                      <span
+                        style={riskStyle}
+                        className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                      >
+                        {data.riskBeforeChange.riskCode || "N/A"}
                       </span>
                     </div>
                   );
@@ -289,11 +301,14 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
               <div>
                 <Label className="text-[13px] font-medium text-[#68737D] mb-2 block">Risk Assessment After Change</Label>
                 {(() => {
-                  const config = getRiskLevelConfig(data.riskAfterChange.level);
+                  const riskStyle = getRiskCodeStyle(data.riskAfterChange.riskCode || "");
                   return (
-                    <div className={cn("p-5 border rounded-xl", config.bg, config.border)}>
-                      <span className={cn("px-4 py-2 rounded-lg font-bold text-lg border-2", config.badge)}>
-                        {data.riskAfterChange.level || "N/A"} : {data.riskAfterChange.riskCode || data.riskAfterChange.score}
+                    <div className="p-5 border rounded-xl bg-[#F7F8FA] border-[#E5E7EB]">
+                      <span
+                        style={riskStyle}
+                        className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                      >
+                        {data.riskAfterChange.riskCode || "N/A"}
                       </span>
                     </div>
                   );
@@ -498,6 +513,82 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
           )}
         </div>
       </div>
+
+      {/* Change MOC Champion Dialog */}
+      <ChangeMOCChampionDialog
+        isOpen={activeDialog === 'changeMOCChampion'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={(data) => {
+          setProcessingMessages([
+            "Processing change request...",
+            "Notifying current champion...",
+            "Updating responsibilities...",
+            "Sending notification to new champion...",
+            "Updating MOC records..."
+          ]);
+          handleActionSubmit('changeMOCChampion');
+        }}
+        currentChampion={data?.requesterName || "Current Champion"}
+      />
+
+      {/* Extend Temporary Dialog */}
+      <ExtendTemporaryDialog
+        isOpen={activeDialog === 'extendTemporary'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={() => {
+          setProcessingMessages([
+            "Processing extension request...",
+            "Validating new timeline...",
+            "Updating MOC schedule...",
+            "Notifying stakeholders...",
+            "Finalizing extension..."
+          ]);
+          handleActionSubmit('extendTemporary');
+        }}
+      />
+
+      {/* Change Team Dialog */}
+      <ChangeTeamDialog
+        isOpen={activeDialog === 'changeTeam'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={(data) => {
+          setProcessingMessages([
+            "Processing team change...",
+            "Transferring documentation...",
+            "Updating area assignments...",
+            "Notifying new team...",
+            "Finalizing team transfer..."
+          ]);
+          handleActionSubmit('changeTeam');
+        }}
+        currentArea={getAreaName(data?.areaId || 'area-1')}
+        currentUnit={getUnitName(data?.areaId || 'area-1', data?.unitId || 'unit-1-1')}
+      />
+
+      {/* Cancel MOC Dialog */}
+      <CancelMOCDialog
+        isOpen={activeDialog === 'cancelMOC'}
+        onClose={() => setActiveDialog(null)}
+        onSubmit={(data) => {
+          setProcessingMessages([
+            "Processing cancellation...",
+            "Notifying all stakeholders...",
+            "Archiving MOC documentation...",
+            "Updating MOC status...",
+            "Finalizing cancellation..."
+          ]);
+          handleActionSubmit('cancelMOC');
+        }}
+        mocNo={id || 'MOC-Unknown'}
+        mocTitle={data?.mocTitle || 'Unknown MOC'}
+      />
+
+      {/* Processing Overlay */}
+      <ProcessingOverlay
+        isVisible={isProcessing}
+        onComplete={handleProcessingComplete}
+        messages={processingMessages}
+      />
     </div>
   );
 };

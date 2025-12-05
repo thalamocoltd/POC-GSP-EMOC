@@ -206,8 +206,29 @@ export function generateMockMOCRequests(): MockMOCRequest[] {
   };
 
   const names = ["John Smith", "Sarah Johnson", "Mike Chen", "Emma Davis", "Robert Brown", "Lisa Anderson"];
-  const tasks = ["Safety Review", "Technical Check", "Manager Approval", "Document Verify"];
   const taskDetails = ["Review technical specs", "Approve risk assessment", "Verify installation", "Sign off closeout"];
+  const mocTitles = [
+    "Safety Interlocks Upgrade - Production Area A",
+    "Equipment Preventive Maintenance Program",
+    "Process Flow Optimization Initiative",
+    "HVAC System Modernization - Utilities",
+    "Compliance Documentation Update",
+    "Production Efficiency Enhancement",
+    "Environmental Control System Retrofit",
+    "Quality Assurance Protocol Revision",
+    "Emergency Response System Upgrade",
+    "Equipment Calibration and Certification",
+    "Safety Training Module Implementation",
+    "Risk Assessment and Mitigation",
+    "Storage Facility Reorganization",
+    "Laboratory Equipment Upgrade",
+    "Waste Management System Enhancement",
+    "Production Line Reconfiguration",
+    "Control System Software Update",
+    "Safety Barrier Installation",
+    "Maintenance Procedure Standardization",
+    "Energy Efficiency Improvement Project"
+  ];
 
   return Array.from({ length: 35 }).map((_, i) => {
     const typeChange = typeChanges[i % typeChanges.length];
@@ -217,7 +238,7 @@ export function generateMockMOCRequests(): MockMOCRequest[] {
     return {
       id: `todo-${i}`,
       mocNo: `MOC-2024-${(i + 100).toString()}`,
-      title: `Task ${i + 1}: ${tasks[i % 4]} for Unit ${i % 3 + 1}`,
+      title: mocTitles[i % mocTitles.length],
       typeOfChange: typeChange.id,
       lengthOfChange: lengthChange.id,
       task: taskDetails[i % 4],
@@ -245,3 +266,29 @@ export function generateMockMOCRequests(): MockMOCRequest[] {
 }
 
 export const MOCK_MOC_REQUESTS = generateMockMOCRequests();
+
+// MOC Actions - Champion options
+export const MOC_CHAMPION_OPTIONS = [
+  { id: "champion-1", name: "John Smith", role: "Safety Manager" },
+  { id: "champion-2", name: "Sarah Johnson", role: "Production Lead" },
+  { id: "champion-3", name: "Mike Chen", role: "Engineering Manager" },
+  { id: "champion-4", name: "Emily Davis", role: "Operations Supervisor" }
+];
+
+// MOC Actions - Cancellation categories
+export const CANCELLATION_CATEGORIES = [
+  { id: "cancel-1", name: "No longer required" },
+  { id: "cancel-2", name: "Superseded by another MOC" },
+  { id: "cancel-3", name: "Safety concerns" },
+  { id: "cancel-4", name: "Budget constraints" },
+  { id: "cancel-5", name: "Other" }
+];
+
+// Helper: Map areas to their units for easy access
+export const UNITS_BY_AREA: Record<string, Array<{ id: string; name: string }>> = {
+  "Production Area A": AREA_OPTIONS[0].units,
+  "Production Area B": AREA_OPTIONS[1].units,
+  "Utilities": AREA_OPTIONS[2].units,
+  "Storage": AREA_OPTIONS[3].units,
+  "Laboratory": AREA_OPTIONS[4].units
+};

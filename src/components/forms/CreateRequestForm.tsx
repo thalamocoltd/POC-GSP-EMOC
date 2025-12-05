@@ -12,7 +12,7 @@ import { RiskAssessmentModal } from "../emoc/RiskAssessmentModal";
 import { FileUploadSection } from "../emoc/FileUploadSection";
 import { ValidationErrorPanel } from "./ValidationErrorPanel";
 import { AREA_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
-import { createRiskAssessment } from "../../lib/emoc-utils";
+import { createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { InitiationFormData, RiskAssessment } from "../../types/emoc";
 import { cn } from "../ui/utils";
 import { useAI } from "../../context/AIContext";
@@ -432,21 +432,6 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
     onBack();
   };
 
-  const getRiskLevelConfig = (level: string | null) => {
-    if (!level) return {
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      text: "text-gray-600",
-      badge: "bg-gray-100 text-gray-700"
-    };
-    const configs: Record<string, any> = {
-      Low: { bg: "bg-green-50", border: "border-green-200", text: "text-green-800", badge: "bg-green-100 text-green-800 border-green-300" },
-      Medium: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-800", badge: "bg-yellow-100 text-yellow-800 border-yellow-300" },
-      High: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800", badge: "bg-orange-100 text-orange-800 border-orange-300" },
-      Extreme: { bg: "bg-red-50", border: "border-red-300", text: "text-red-800", badge: "bg-red-100 text-red-800 border-red-300" }
-    };
-    return configs[level] || configs.Low;
-  };
 
   const getAreaIcon = (id: string) => {
     switch (id) {
@@ -983,23 +968,22 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                     </Tooltip>
                   </div>
                   {(() => {
-                    const config = getRiskLevelConfig(formData.riskBeforeChange.level);
+                    const riskStyle = getRiskCodeStyle(formData.riskBeforeChange.riskCode || "");
                     return (
                       <div className={cn(
                         "p-5 border-2 rounded-xl transition-all duration-500",
                         errors.riskBeforeChange ? "border-red-300 bg-red-50" :
-                          formData.riskBeforeChange.level ? config.bg : "bg-white",
-                        !errors.riskBeforeChange && (formData.riskBeforeChange.level ? config.border : "border-[#E5E7EB]"),
+                          formData.riskBeforeChange.riskCode ? "bg-[#F7F8FA] border-[#E5E7EB]" : "bg-white border-[#E5E7EB]",
                         highlightedField === 'riskBeforeChange' && "ring-4 ring-[#006699]/20"
                       )}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            {formData.riskBeforeChange.level ? (
-                              <span className={cn(
-                                "px-4 py-2 rounded-lg font-bold text-lg border-2",
-                                config.badge
-                              )}>
-                                {formData.riskBeforeChange.level} : {formData.riskBeforeChange.riskCode || formData.riskBeforeChange.score}
+                            {formData.riskBeforeChange.riskCode ? (
+                              <span
+                                style={riskStyle}
+                                className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                              >
+                                {formData.riskBeforeChange.riskCode}
                               </span>
                             ) : (
                               <p className={cn("text-sm", errors.riskBeforeChange ? "text-red-500 font-medium" : "text-[#68737D]")}>
@@ -1014,7 +998,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                             onClick={() => setIsRiskBeforeModalOpen(true)}
                             className="border-[#D4D9DE] shrink-0"
                           >
-                            {formData.riskBeforeChange.level ? "Edit" : "Assess Risk"}
+                            {formData.riskBeforeChange.riskCode ? "Edit" : "Assess Risk"}
                           </Button>
                         </div>
                       </div>
@@ -1047,23 +1031,22 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                     </Tooltip>
                   </div>
                   {(() => {
-                    const config = getRiskLevelConfig(formData.riskAfterChange.level);
+                    const riskStyle = getRiskCodeStyle(formData.riskAfterChange.riskCode || "");
                     return (
                       <div className={cn(
                         "p-5 border-2 rounded-xl transition-all duration-500",
                         errors.riskAfterChange ? "border-red-300 bg-red-50" :
-                          formData.riskAfterChange.level ? config.bg : "bg-white",
-                        !errors.riskAfterChange && (formData.riskAfterChange.level ? config.border : "border-[#E5E7EB]"),
+                          formData.riskAfterChange.riskCode ? "bg-[#F7F8FA] border-[#E5E7EB]" : "bg-white border-[#E5E7EB]",
                         highlightedField === 'riskAfterChange' && "ring-4 ring-[#006699]/20"
                       )}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
-                            {formData.riskAfterChange.level ? (
-                              <span className={cn(
-                                "px-4 py-2 rounded-lg font-bold text-lg border-2",
-                                config.badge
-                              )}>
-                                {formData.riskAfterChange.level} : {formData.riskAfterChange.riskCode || formData.riskAfterChange.score}
+                            {formData.riskAfterChange.riskCode ? (
+                              <span
+                                style={riskStyle}
+                                className="inline-block px-4 py-2 rounded-lg font-bold text-lg"
+                              >
+                                {formData.riskAfterChange.riskCode}
                               </span>
                             ) : (
                               <p className={cn("text-sm", errors.riskAfterChange ? "text-red-500 font-medium" : "text-[#68737D]")}>
@@ -1078,7 +1061,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                             onClick={() => setIsRiskAfterModalOpen(true)}
                             className="border-[#D4D9DE] shrink-0"
                           >
-                            {formData.riskAfterChange.level ? "Edit" : "Assess Risk"}
+                            {formData.riskAfterChange.riskCode ? "Edit" : "Assess Risk"}
                           </Button>
                         </div>
                       </div>

@@ -5,17 +5,19 @@ import { Sparkles } from "lucide-react";
 interface ProcessingOverlayProps {
   isVisible: boolean;
   onComplete: () => void;
+  messages?: string[];
 }
 
-export const ProcessingOverlay = ({ isVisible, onComplete }: ProcessingOverlayProps) => {
+export const ProcessingOverlay = ({ isVisible, onComplete, messages }: ProcessingOverlayProps) => {
   const [statusIndex, setStatusIndex] = useState(0);
-  const statuses = [
+  const defaultStatuses = [
     "Processing your request...",
     "Analyzing patient details...",
     "Extracting information...",
     "Preparing form fields...",
     "Navigating to form..."
   ];
+  const statuses = messages || defaultStatuses;
 
   useEffect(() => {
     if (!isVisible) return;

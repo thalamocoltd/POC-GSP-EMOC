@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "../ui/utils";
 import { RiskAssessment, LikelihoodValue, ImpactValue } from "../../types/emoc";
-import { createRiskAssessment } from "../../lib/emoc-utils";
+import { createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { SEVERITY_DESCRIPTIONS, PROBABILITY_DESCRIPTIONS } from "../../lib/emoc-data";
 
 interface RiskAssessmentModalProps {
@@ -14,18 +14,6 @@ interface RiskAssessmentModalProps {
   title: string;
   initialValue?: RiskAssessment;
 }
-
-// Risk code to inline style mapping - Professional minimal colors
-const getRiskCodeStyle = (riskCode: string): React.CSSProperties => {
-  if (riskCode.startsWith("L")) {
-    return { backgroundColor: '#D1FAE5', color: '#065F46' }; // Green for L14-L16
-  } else if (riskCode.startsWith("M")) {
-    return { backgroundColor: '#FED7AA', color: '#9A3412' }; // Orange for M7-M13
-  } else if (riskCode.startsWith("H")) {
-    return { backgroundColor: '#FEE2E2', color: '#991B1B' }; // Red for H1-H6
-  }
-  return { backgroundColor: '#F3F4F6', color: '#374151' };
-};
 
 // Truncate text with tooltip
 const TextWithTooltip = ({ text, maxLength = 60 }: { text: string; maxLength?: number }) => {

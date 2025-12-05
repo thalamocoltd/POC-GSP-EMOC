@@ -18,6 +18,7 @@ import { cn } from "./components/ui/utils";
 import { LocationId } from "./components/dashboard/LocationSelector";
 import { AIProvider, useAI } from "./context/AIContext";
 import { ValidationErrorsProvider, useValidationErrors } from "./context/ValidationErrorsContext";
+import { ActionsProvider } from "./context/ActionsContext";
 import { InitiationFormData } from "./types/emoc";
 import {
   AlertDialog,
@@ -279,7 +280,7 @@ function AppContent() {
       <main
         className={cn(
           "transition-all duration-300 ease-in-out min-h-screen",
-          "pb-8",
+          "pt-6 pb-8",
           // Horizontal padding
           "px-6 md:px-8",
           // Z-index to stay above sidebar
@@ -399,7 +400,9 @@ export default function App() {
   return (
     <AIProvider>
       <ValidationErrorsProvider>
-        <AppContent />
+        <ActionsProvider>
+          <AppContent />
+        </ActionsProvider>
       </ValidationErrorsProvider>
     </AIProvider>
   );
