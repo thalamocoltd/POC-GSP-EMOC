@@ -30,7 +30,6 @@ import {
 } from "../ui/tooltip";
 
 // --- Types ---
-type MOCType = "Permanent" | "Temporary" | "Overriding" | "Emergency";
 type ProcessType = "Review" | "Initiation" | "Implementation" | "Closeout";
 
 // Order of processes for the progress tracker
@@ -41,7 +40,8 @@ interface MOCRecord {
   id: string;
   mocNo: string;
   title: string;
-  type: MOCType;
+  typeOfChange: "Plant Change (Impact PSI Cat 1,2,3)" | "Maintenance Change" | "Process Change (No Impact PSI Cat 1,2,3)" | "Override";
+  lengthOfChange: "Permanent" | "Temporary" | "More than 3 days" | "Less than 3 days";
   task: string;
   champion: string;
   lastUpdate: string;
@@ -52,7 +52,15 @@ interface MOCRecord {
 
 // --- Mock Data Generator ---
 const generateMockData = (): MOCRecord[] => {
-  const types: MOCType[] = ["Permanent", "Temporary", "Overriding", "Emergency"];
+  const typesOfChange: MOCRecord["typeOfChange"][] = [
+    "Plant Change (Impact PSI Cat 1,2,3)",
+    "Maintenance Change",
+    "Process Change (No Impact PSI Cat 1,2,3)",
+    "Override"
+  ];
+  const standardLengths = ["Permanent", "Temporary"];
+  const overrideLengths = ["More than 3 days", "Less than 3 days"];
+
   const processes: ProcessType[] = ["Review", "Initiation", "Implementation", "Closeout"];
   const champions = ["John Smith", "Jane Doe", "Mike Ross", "Sarah Chen", "Paul Smith"];
   const tasks = [
@@ -68,12 +76,24 @@ const generateMockData = (): MOCRecord[] => {
     const procIndex = Math.floor(Math.random() * 4);
     // Ensure consistent status for demo
     const status = i % 10 === 0 ? "Rejected" : i % 5 === 0 ? "Completed" : "In Progress";
-    
+
+    const typeOfChange = typesOfChange[i % typesOfChange.length];
+    const isOverride = typeOfChange === "Override";
+
+    // Select appropriate length based on type
+    let lengthOfChange: MOCRecord["lengthOfChange"];
+    if (isOverride) {
+      lengthOfChange = overrideLengths[i % overrideLengths.length] as MOCRecord["lengthOfChange"];
+    } else {
+      lengthOfChange = standardLengths[i % standardLengths.length] as MOCRecord["lengthOfChange"];
+    }
+
     return {
       id: `moc-${i}`,
-      mocNo: `MOC-2024-${(i + 100).toString()}`, 
+      mocNo: `MOC-2024-${(i + 100).toString()}`,
       title: `MOC Title ${i + 1}: ${["Pump Upgrade", "Valve Replacement", "Sensor Calibration", "Safety Override"][i % 4]}`,
-      type: types[i % types.length],
+      typeOfChange,
+      lengthOfChange,
       task: tasks[i % tasks.length],
       champion: champions[i % champions.length],
       lastUpdate: `0${(i % 9) + 1}/12/2024 10:30`,
@@ -87,12 +107,22 @@ const generateMockData = (): MOCRecord[] => {
 const mockMOCs = generateMockData();
 
 // --- Helpers ---
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case "Permanent": return "bg-blue-100 text-blue-700 border-transparent hover:bg-blue-200";
+const getTypeOfChangeColor = (typeOfChange: string) => {
+  switch (typeOfChange) {
+    case "Plant Change (Impact PSI Cat 1,2,3)": return "bg-blue-100 text-blue-700 border-transparent hover:bg-blue-200";
+    case "Maintenance Change": return "bg-purple-100 text-purple-700 border-transparent hover:bg-purple-200";
+    case "Process Change (No Impact PSI Cat 1,2,3)": return "bg-cyan-100 text-cyan-700 border-transparent hover:bg-cyan-200";
+    case "Override": return "bg-red-100 text-red-700 border-transparent hover:bg-red-200";
+    default: return "bg-gray-100 text-gray-600 border-transparent";
+  }
+};
+
+const getLengthOfChangeColor = (lengthOfChange: string) => {
+  switch (lengthOfChange) {
+    case "Permanent": return "bg-green-100 text-green-700 border-transparent hover:bg-green-200";
     case "Temporary": return "bg-amber-100 text-amber-700 border-transparent hover:bg-amber-200";
-    case "Overriding": return "bg-red-100 text-red-700 border-transparent hover:bg-red-200";
-    case "Emergency": return "bg-orange-100 text-orange-700 border-transparent hover:bg-orange-200";
+    case "More than 3 days": return "bg-orange-100 text-orange-700 border-transparent hover:bg-orange-200";
+    case "Less than 3 days": return "bg-yellow-100 text-yellow-700 border-transparent hover:bg-yellow-200";
     default: return "bg-gray-100 text-gray-600 border-transparent";
   }
 };
@@ -163,7 +193,8 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [sortConfig, setSortConfig] = useState<{ key: keyof MOCRecord; direction: 'asc' | 'desc' } | null>(null);
-  const [filterType, setFilterType] = useState("all");
+  const [filterTypeOfChange, setFilterTypeOfChange] = useState("all");
+  const [filterLengthOfChange, setFilterLengthOfChange] = useState("all");
 
   // Filter & Sort
   const filteredData = useMemo(() => {
@@ -171,7 +202,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
 
     if (searchTerm) {
       const lowerTerm = searchTerm.toLowerCase();
-      data = data.filter(item => 
+      data = data.filter(item =>
         item.mocNo.toLowerCase().includes(lowerTerm) ||
         item.title.toLowerCase().includes(lowerTerm) ||
         item.champion.toLowerCase().includes(lowerTerm) ||
@@ -179,8 +210,12 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
       );
     }
 
-    if (filterType !== "all") {
-      data = data.filter(item => item.type.toLowerCase() === filterType);
+    if (filterTypeOfChange !== "all") {
+      data = data.filter(item => item.typeOfChange.toLowerCase() === filterTypeOfChange.toLowerCase());
+    }
+
+    if (filterLengthOfChange !== "all") {
+      data = data.filter(item => item.lengthOfChange.toLowerCase() === filterLengthOfChange.toLowerCase());
     }
 
     if (sortConfig) {
@@ -192,7 +227,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
     }
 
     return data;
-  }, [searchTerm, sortConfig, filterType]);
+  }, [searchTerm, sortConfig, filterTypeOfChange, filterLengthOfChange]);
 
   // Pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -250,19 +285,35 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
             />
           </div>
           <div className="flex gap-3">
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[180px] border-gray-200">
-                 <div className="flex items-center gap-2">
-                   <Filter className="w-4 h-4 text-gray-400" />
-                   <SelectValue placeholder="All Types" />
-                 </div>
+            <Select value={filterTypeOfChange} onValueChange={setFilterTypeOfChange}>
+              <SelectTrigger className="w-[200px] border-gray-200">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-400" />
+                  <SelectValue placeholder="Type of Change" />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="permanent">Permanent</SelectItem>
-                <SelectItem value="temporary">Temporary</SelectItem>
-                <SelectItem value="overriding">Overriding</SelectItem>
-                <SelectItem value="emergency">Emergency</SelectItem>
+                <SelectItem value="Plant Change (Impact PSI Cat 1,2,3)">Plant Change</SelectItem>
+                <SelectItem value="Maintenance Change">Maintenance Change</SelectItem>
+                <SelectItem value="Process Change (No Impact PSI Cat 1,2,3)">Process Change</SelectItem>
+                <SelectItem value="Override">Override</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterLengthOfChange} onValueChange={setFilterLengthOfChange}>
+              <SelectTrigger className="w-[180px] border-gray-200">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-400" />
+                  <SelectValue placeholder="Length of Change" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Lengths</SelectItem>
+                <SelectItem value="Permanent">Permanent</SelectItem>
+                <SelectItem value="Temporary">Temporary</SelectItem>
+                <SelectItem value="More than 3 days">More than 3 days</SelectItem>
+                <SelectItem value="Less than 3 days">Less than 3 days</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -293,9 +344,12 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                     </div>
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Type
+                    Type of Change
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Length of Change
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[250px]">
                     Task
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -347,12 +401,17 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge className={cn("shadow-none font-medium rounded-full px-3", getTypeColor(moc.type))}>
-                        {moc.type}
+                      <Badge className={cn("shadow-none font-medium rounded-full px-3", getTypeOfChangeColor(moc.typeOfChange))}>
+                        {moc.typeOfChange}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900 font-medium block truncate max-w-[250px]">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge className={cn("shadow-none font-medium rounded-full px-3", getLengthOfChangeColor(moc.lengthOfChange))}>
+                        {moc.lengthOfChange}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 w-[250px]">
+                      <span className="text-sm text-gray-900 font-medium block truncate">
                         {moc.task}
                       </span>
                     </td>

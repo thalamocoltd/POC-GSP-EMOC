@@ -19,11 +19,15 @@ interface FileUploadSectionProps {
 const CATEGORIES: FileCategory[] = [
   "Technical Information",
   "Minute of Meeting",
-  "Other Documents",
-  "Temp1",
-  "Temp2",
-  "Temp3"
+  "Other Documents"
 ];
+
+// Guideline text for categories
+const CATEGORY_GUIDELINES: Record<FileCategory, string | undefined> = {
+  "Technical Information": "For example, PFD, P&ID Mark up, Presentation",
+  "Minute of Meeting": undefined,
+  "Other Documents": undefined
+};
 
 export const FileUploadSection = ({
   files,
@@ -34,19 +38,13 @@ export const FileUploadSection = ({
   const fileInputRefs = useRef<Record<FileCategory, HTMLInputElement | null>>({
     "Technical Information": null,
     "Minute of Meeting": null,
-    "Other Documents": null,
-    "Temp1": null,
-    "Temp2": null,
-    "Temp3": null
+    "Other Documents": null
   });
 
   const [errors, setErrors] = React.useState<Record<FileCategory, string | null>>({
     "Technical Information": null,
     "Minute of Meeting": null,
-    "Other Documents": null,
-    "Temp1": null,
-    "Temp2": null,
-    "Temp3": null
+    "Other Documents": null
   });
 
   const allowedTypesText = ALLOWED_FILE_TYPES.join(", ");
@@ -127,9 +125,11 @@ export const FileUploadSection = ({
                 <label className="text-[13px] font-medium text-[#1C1C1E] block">
                   {category}
                 </label>
-                <p className="text-xs text-[#68737D] mt-1">
-                  Allowed: {allowedTypesText} (Max 10MB per file, {maxFilesPerCategory} files per category)
-                </p>
+                {CATEGORY_GUIDELINES[category] && (
+                  <p className="text-xs text-[#68737D] mt-1">
+                    {CATEGORY_GUIDELINES[category]}
+                  </p>
+                )}
               </div>
               <Button
                 type="button"
@@ -174,15 +174,10 @@ export const FileUploadSection = ({
                     className="flex items-center justify-between p-3 hover:bg-[#F7F8FA] transition-colors"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <FileText className="w-5 h-5 text-[#68737D] shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-[#1C1C1E] truncate">
-                          {file.fileName}
-                        </p>
-                        <p className="text-xs text-[#68737D]">
-                          {formatFileSize(file.fileSize)}
-                        </p>
-                      </div>
+                      <FileText className="w-4 h-4 text-[#68737D] shrink-0" />
+                      <p className="text-sm text-[#1C1C1E] truncate flex-1">
+                        {file.fileName}
+                      </p>
                     </div>
                     <button
                       type="button"

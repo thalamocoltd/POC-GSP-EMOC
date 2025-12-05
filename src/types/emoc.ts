@@ -54,10 +54,7 @@ export interface ProbabilityDescription {
 export type FileCategory =
   | "Technical Information"
   | "Minute of Meeting"
-  | "Other Documents"
-  | "Temp1"
-  | "Temp2"
-  | "Temp3";
+  | "Other Documents";
 
 export interface FileAttachment {
   id: string;
@@ -109,8 +106,8 @@ export interface InitiationFormData {
   areaId: string;
   unitId: string;
   priorityId: string;  // Default: "priority-1" (Normal)
-  lengthOfChange?: string;  // Hidden if Emergency
-  typeOfChange?: string;    // Hidden if Emergency or Overriding
+  typeOfChange?: string;    // Hidden if Emergency; Options: type-1, type-2, type-3, type-4
+  lengthOfChange?: string;  // Hidden if Emergency; Options depend on typeOfChange (length-1/2 for standard, length-3/4 for Override)
   estimatedDurationStart: string;
   estimatedDurationEnd: string;
   tpmLossType: string;

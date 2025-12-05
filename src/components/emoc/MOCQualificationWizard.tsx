@@ -21,23 +21,19 @@ interface Question {
 const QUALIFICATION_QUESTIONS: Question[] = [
   {
     id: "q1",
-    question: "Does the proposed change involve any physical modification to equipment, process systems, instrumentation, control systems, operating procedures, or facility infrastructure that could impact safety, production, or environmental compliance?",
+    question: "Is this change related to TPM Loss (Total Productive Maintenance loss - including equipment downtime, defects, or efficiency improvements)?",
   },
   {
     id: "q2",
-    question: "Will this change affect any safety-critical systems, emergency shutdown procedures, pressure relief systems, fire protection systems, or other systems designed to prevent or mitigate hazardous conditions?",
+    question: "Is this change related to Safety (worker safety, hazard mitigation, incident prevention, or safety system modifications)?",
   },
   {
     id: "q3",
-    question: "Does this change involve modifications to process chemistry, operating conditions (temperature, pressure, flow rates), raw materials specifications, or could it result in the formation of new chemical compounds or hazardous byproducts?",
+    question: "Is this change related to Environment (environmental compliance, emissions reduction, waste management, or ecological impact)?",
   },
   {
     id: "q4",
-    question: "Will this change require coordination with multiple departments (Engineering, Operations, Maintenance, HSE, Quality), external contractors, or regulatory approval from government agencies or certification bodies?",
-  },
-  {
-    id: "q5",
-    question: "Does this change have potential to impact production capacity, product quality specifications, energy consumption patterns, environmental emissions, or waste generation beyond normal operating variations?",
+    question: "Is this change related to Quality (product quality, specifications, consistency, or quality management system improvements)?",
   },
 ];
 

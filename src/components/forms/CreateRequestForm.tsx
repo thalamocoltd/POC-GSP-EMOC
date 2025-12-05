@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { RiskAssessmentModal } from "../emoc/RiskAssessmentModal";
 import { FileUploadSection } from "../emoc/FileUploadSection";
 import { ValidationErrorPanel } from "./ValidationErrorPanel";
-import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
+import { AREA_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
 import { createRiskAssessment } from "../../lib/emoc-utils";
 import { InitiationFormData, RiskAssessment } from "../../types/emoc";
 import { cn } from "../ui/utils";
@@ -91,7 +91,7 @@ const DEMO_AUTOFILL_DATA_NORMAL: Partial<InitiationFormData> = {
     },
     {
       id: "att-3",
-      category: "Temp1",
+      category: "Other Documents",
       fileName: "Equipment_Photo.jpg",
       fileSize: 3500000,
       fileType: "image/jpeg",
@@ -104,8 +104,7 @@ const DEMO_AUTOFILL_DATA_NORMAL: Partial<InitiationFormData> = {
 // Demo autofill data - Emergency Priority
 const DEMO_AUTOFILL_DATA_EMERGENCY: Partial<InitiationFormData> = {
   mocTitle: "Emergency: Compressor C-205 Seal Replacement - Production Critical",
-  lengthOfChange: "length-2",
-  typeOfChange: "type-1",
+  // Note: typeOfChange and lengthOfChange are NOT set for Emergency priority (hidden in UI)
   priorityId: "priority-2",
   areaId: "area-2",
   unitId: "unit-2-2",
@@ -213,6 +212,17 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
       }
     }
   }, [formData.areaId, selectedAreaId]);
+
+  // Clear Type and Length of Change when switching to Emergency priority
+  useEffect(() => {
+    if (formData.priorityId === "priority-2") {
+      setFormData((prev: InitiationFormData) => ({
+        ...prev,
+        typeOfChange: undefined,
+        lengthOfChange: undefined
+      }));
+    }
+  }, [formData.priorityId]);
 
   // Clear highlight after delay
   useEffect(() => {
@@ -359,15 +369,29 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
   );
 
   const isEmergency = formData.priorityId === "priority-2";
-  const isOverriding = formData.lengthOfChange === "length-3";
+  const isOverride = formData.typeOfChange === "type-4";
 
   const validateAll = (): { isValid: boolean; errors: Record<string, string> } => {
     const newErrors: Record<string, string> = {};
     if (!formData.mocTitle) newErrors.mocTitle = "MOC Title is required";
 
-    // Conditional validation for lengthOfChange and typeOfChange
+    // Conditional validation for typeOfChange and lengthOfChange
+    if (!isEmergency && !formData.typeOfChange) newErrors.typeOfChange = "Type of Change is required";
     if (!isEmergency && !formData.lengthOfChange) newErrors.lengthOfChange = "Length of Change is required";
-    if (!isEmergency && !isOverriding && !formData.typeOfChange) newErrors.typeOfChange = "Type of Change is required";
+
+    // Validate Length matches Type (business rule)
+    if (!isEmergency && formData.typeOfChange && formData.lengthOfChange) {
+      const isOverrideType = formData.typeOfChange === "type-4";
+      const isOverrideLength = formData.lengthOfChange === "length-3" || formData.lengthOfChange === "length-4";
+      const isStandardLength = formData.lengthOfChange === "length-1" || formData.lengthOfChange === "length-2";
+
+      if (isOverrideType && !isOverrideLength) {
+        newErrors.lengthOfChange = "Override type must use duration options (More/Less than 3 days)";
+      }
+      if (!isOverrideType && !isStandardLength) {
+        newErrors.lengthOfChange = "Non-override types must use Permanent or Temporary";
+      }
+    }
 
     if (!formData.priorityId) newErrors.priorityId = "Priority of Change is required";
     if (!formData.areaId) newErrors.areaId = "Area is required";
@@ -634,34 +658,29 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                 </div>
 
                 {!isEmergency && (
-                  <div className="space-y-2" id="field-lengthOfChange">
-                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
-                    <Select
-                      value={formData.lengthOfChange || ""}
-                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
-                    >
-                      <SelectTrigger className={cn(
-                        "h-11 bg-gray-50",
-                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
-                      )}>
-                        <SelectValue placeholder="Select length of change" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LENGTH_OF_CHANGE_OPTIONS.map((option) => (
-                          <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
-                  </div>
-                )}
-
-                {!isEmergency && !isOverriding && (
                   <div className="space-y-2" id="field-typeOfChange">
                     {renderLabelWithAI("Type of Change", "typeOfChange", true)}
                     <Select
                       value={formData.typeOfChange || ""}
-                      onValueChange={(value) => handleInputChange('typeOfChange', value)}
+                      onValueChange={(value) => {
+                        handleInputChange('typeOfChange', value);
+
+                        // Clear lengthOfChange if switching between Override and non-Override
+                        const isNewTypeOverride = value === "type-4";
+                        const currentLength = formData.lengthOfChange;
+
+                        if (isNewTypeOverride) {
+                          // Switching TO Override: clear if current length is Permanent/Temporary
+                          if (currentLength === "length-1" || currentLength === "length-2") {
+                            handleInputChange('lengthOfChange', '');
+                          }
+                        } else {
+                          // Switching FROM Override: clear if current length is More/Less than 3 days
+                          if (currentLength === "length-3" || currentLength === "length-4") {
+                            handleInputChange('lengthOfChange', '');
+                          }
+                        }
+                      }}
                     >
                       <SelectTrigger className={cn(
                         "h-11 bg-gray-50",
@@ -676,6 +695,39 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                       </SelectContent>
                     </Select>
                     {errors.typeOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.typeOfChange}</span>}
+                  </div>
+                )}
+
+                {!isEmergency && (
+                  <div className="space-y-2" id="field-lengthOfChange">
+                    {renderLabelWithAI("Length of Change", "lengthOfChange", true)}
+                    <Select
+                      value={formData.lengthOfChange || ""}
+                      onValueChange={(value) => handleInputChange('lengthOfChange', value)}
+                    >
+                      <SelectTrigger className={cn(
+                        "h-11 bg-gray-50",
+                        errors.lengthOfChange ? "border-red-300" : "border-[#D4D9DE]"
+                      )}>
+                        <SelectValue placeholder="Select length of change" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {formData.typeOfChange === 'type-4' ? (
+                          // Override type: show duration options
+                          <>
+                            <SelectItem value="length-3">More than 3 days</SelectItem>
+                            <SelectItem value="length-4">Less than 3 days</SelectItem>
+                          </>
+                        ) : (
+                          // Non-Override types: show permanent/temporary
+                          <>
+                            <SelectItem value="length-1">Permanent</SelectItem>
+                            <SelectItem value="length-2">Temporary</SelectItem>
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.lengthOfChange && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lengthOfChange}</span>}
                   </div>
                 )}
 

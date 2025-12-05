@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
-import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId } from "../../lib/emoc-data";
+import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId, MOCK_MOC_REQUESTS } from "../../lib/emoc-data";
 import { formatFileSize, createRiskAssessment } from "../../lib/emoc-utils";
 import { TaskCardList } from "../workflow/TaskCardList";
 import { TaskSection } from "../workflow/TaskSection";
@@ -23,38 +23,68 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
     const timer = setTimeout(() => {
-      setData({
-        requesterName: "John Doe",
-        requestDate: "03/12/2025 14:30",
-        mocTitle: "Upgrade Production Line A Cooling System",
-        lengthOfChange: "length-2", // Temporary
-        typeOfChange: "type-1", // Plant Change
-        priorityId: "priority-2", // Emergency
-        areaId: "area-1",
-        unitId: "unit-1-1",
-        estimatedDurationStart: "2025-12-06",
-        estimatedDurationEnd: "2025-12-08",
-        tpmLossType: "tpm-1", // Safety
-        lossEliminateValue: 800000,
-        detailOfChange: "The current cooling system efficiency has dropped by 15% over the last quarter due to aging components.",
-        reasonForChange: "Production output is limited during peak hours. Risk of overheating.",
-        scopeOfWork: "Replace cooling pumps P-101A/B. Install new heat exchanger. Update control logic.",
-        estimatedBenefit: 1200000,
-        estimatedCost: 800000,
-        benefits: ["benefit-1", "benefit-6"], // Safety, Money
-        expectedBenefits: "Expected efficiency increase of 20%. Reduced maintenance costs. Prevent potential production shutdown.",
-        riskBeforeChange: createRiskAssessment(3, 3),
-        riskAfterChange: createRiskAssessment(1, 3),
-        attachments: [
-          { id: "1", category: "Technical Information", fileName: "P&ID Diagram.pdf", fileSize: 2500000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
-          { id: "2", category: "Technical Information", fileName: "Vendor Quote.pdf", fileSize: 1150000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
-          { id: "3", category: "Minute of Meeting", fileName: "Team_Meeting_Notes.pdf", fileSize: 850000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
-          { id: "4", category: "Other Documents", fileName: "Risk_Assessment.xlsx", fileSize: 950000, fileType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" },
-          { id: "5", category: "Temp1", fileName: "Equipment_Photo.jpg", fileSize: 3200000, fileType: "image/jpeg", uploadedAt: new Date(), uploadedBy: "John Doe", url: "#" }
-        ]
-      });
+      // Find the corresponding mock data from MOCK_MOC_REQUESTS
+      const mockRequest = MOCK_MOC_REQUESTS.find(req => req.mocNo === id);
+
+      if (mockRequest) {
+        const formData: InitiationFormData = {
+          requesterName: mockRequest.requesterName,
+          requestDate: mockRequest.requestDate,
+          mocTitle: mockRequest.title,
+          typeOfChange: mockRequest.typeOfChange,
+          lengthOfChange: mockRequest.lengthOfChange,
+          priorityId: mockRequest.priorityId,
+          areaId: mockRequest.areaId,
+          unitId: mockRequest.unitId,
+          estimatedDurationStart: mockRequest.estimatedDurationStart,
+          estimatedDurationEnd: mockRequest.estimatedDurationEnd,
+          tpmLossType: mockRequest.tpmLossType,
+          lossEliminateValue: mockRequest.lossEliminateValue,
+          detailOfChange: mockRequest.detailOfChange,
+          reasonForChange: mockRequest.reasonForChange,
+          scopeOfWork: mockRequest.scopeOfWork,
+          estimatedBenefit: mockRequest.estimatedBenefit,
+          estimatedCost: mockRequest.estimatedCost,
+          benefits: mockRequest.benefits,
+          expectedBenefits: mockRequest.expectedBenefits,
+          riskBeforeChange: createRiskAssessment(4, 3),
+          riskAfterChange: createRiskAssessment(2, 2),
+          attachments: [
+            { id: "1", category: "Technical Information", fileName: "Technical_Specifications.pdf", fileSize: 2500000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" },
+            { id: "2", category: "Technical Information", fileName: "Analysis_Report.pdf", fileSize: 1800000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" },
+            { id: "3", category: "Minute of Meeting", fileName: "Meeting_Notes.pdf", fileSize: 750000, fileType: "application/pdf", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" },
+            { id: "4", category: "Other Documents", fileName: "Documentation.jpg", fileSize: 3500000, fileType: "image/jpeg", uploadedAt: new Date(), uploadedBy: mockRequest.requesterName, url: "#" }
+          ]
+        };
+        setData(formData);
+      } else {
+        // Fallback to a default structure if MOC not found
+        setData({
+          requesterName: "Unknown",
+          requestDate: new Date().toLocaleDateString(),
+          mocTitle: `MOC Request: ${id}`,
+          typeOfChange: "type-1",
+          lengthOfChange: "length-1",
+          priorityId: "priority-1",
+          areaId: "area-1",
+          unitId: "unit-1-1",
+          estimatedDurationStart: "2025-12-10",
+          estimatedDurationEnd: "2025-12-15",
+          tpmLossType: "tpm-1",
+          lossEliminateValue: 500000,
+          detailOfChange: "Change details not available",
+          reasonForChange: "Reason not available",
+          scopeOfWork: "Scope not available",
+          estimatedBenefit: 0,
+          estimatedCost: 0,
+          benefits: [],
+          expectedBenefits: "Benefits not available",
+          riskBeforeChange: createRiskAssessment(3, 2),
+          riskAfterChange: createRiskAssessment(2, 2),
+          attachments: []
+        });
+      }
       setIsLoading(false);
     }, 500);
     return () => clearTimeout(timer);
@@ -66,7 +96,7 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
 
   const getAreaName = (id: string) => AREA_OPTIONS.find(a => a.id === id)?.name || id;
   const getUnitName = (areaId: string, unitId: string) => getUnitsByAreaId(areaId).find(u => u.id === unitId)?.name || unitId;
-  const getLengthOfChangeName = (id: string) => LENGTH_OF_CHANGE_OPTIONS.find(l => l.id === id)?.name || id;
+  const getLengthOfChangeName = (id: string) => LENGTH_OF_CHANGE_OPTIONS_ALL.find(l => l.id === id)?.name || id;
   const getTypeOfChangeName = (id: string) => TYPE_OF_CHANGE_OPTIONS.find(t => t.id === id)?.name || id;
   const getPriorityName = (id: string) => PRIORITY_OPTIONS.find(p => p.id === id)?.name || id;
   const getBenefitNames = (ids: string[]) => ids.map(id => BENEFITS_VALUE_OPTIONS.find(b => b.id === id)?.name || id).join(", ");
@@ -112,7 +142,7 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500">Status:</span>
           <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
             Pending Review
@@ -123,7 +153,7 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
       <div className="bg-white border border-[#E5E7EB] rounded-xl shadow-sm overflow-hidden">
         <div className="p-8 sm:p-10 space-y-10">
           <div>
-            <h2 className="text-[24px] font-semibold text-[#1C1C1E] mb-1">{data.mocTitle}</h2>
+            <h2 className="text-[24px] font-semibold text-[#1C1C1E] mb-1 truncate">{data.mocTitle}</h2>
             <p className="text-[#68737D] text-sm flex items-center gap-2">
               <span>{id}</span>
               <span>•</span>
@@ -188,11 +218,11 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                   );
                 })()}
               </div>
-              {data.lengthOfChange && (
-                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
-              )}
               {data.typeOfChange && (
                 <ReadOnlyField label="Type of Change" value={getTypeOfChangeName(data.typeOfChange)} />
+              )}
+              {data.lengthOfChange && (
+                <ReadOnlyField label="Length of Change" value={getLengthOfChangeName(data.lengthOfChange)} />
               )}
               <div className="grid sm:grid-cols-2 gap-6">
                 <ReadOnlyField label="Start Date" value={data.estimatedDurationStart} />
@@ -280,8 +310,8 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
 
             {data.attachments.length > 0 ? (
               <div className="space-y-6">
-                {["Technical Information", "Minute of Meeting", "Other Documents", "Temp1", "Temp2", "Temp3"].map((category) => {
-                  const categoryFiles = data.attachments.filter(f => f.category === category);
+                {["Technical Information", "Minute of Meeting", "Other Documents"].map((category: string) => {
+                  const categoryFiles = data.attachments.filter((f: any) => f.category === category);
                   if (categoryFiles.length === 0) return null;
 
                   return (
@@ -293,7 +323,7 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange }: ViewRequestF
                         </span>
                       </div>
                       <div className="border border-[#E5E7EB] rounded-lg divide-y divide-[#E5E7EB]">
-                        {categoryFiles.map((file) => (
+                        {categoryFiles.map((file: any) => (
                           <div key={file.id} className="flex items-center p-3 hover:bg-[#F7F8FA] transition-colors">
                             <FileText className="w-5 h-5 text-[#68737D] mr-3" />
                             <div className="flex-1 min-w-0">

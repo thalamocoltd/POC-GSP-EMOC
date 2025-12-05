@@ -50,16 +50,18 @@ const FIELD_RESPONSES: Record<string, {
     choices: [
       { label: "Permanent - Indefinite change with no expiration date", value: "length-1" },
       { label: "Temporary - Short-term change (< 1 year) requires end date", value: "length-2" },
-      { label: "Overriding - Emergency change for immediate safety action", value: "length-3" }
+      { label: "More than 3 days - Override duration exceeding 3 days", value: "length-3" },
+      { label: "Less than 3 days - Override duration less than 3 days", value: "length-4" }
     ]
   },
   typeOfChange: {
     text: "The change type determines approvers and review procedures. Select the type that matches your work:",
     interactionType: 'choices',
     choices: [
-      { label: "Plant Change - Physical facility or infrastructure modification", value: "type-1" },
+      { label: "Plant Change (Impact PSI Cat 1,2,3) - Physical facility or infrastructure modification", value: "type-1" },
       { label: "Maintenance Change - Equipment repair or replacement activities", value: "type-2" },
-      { label: "Process Change - Production process or operating procedure modification", value: "type-3" }
+      { label: "Process Change (No Impact PSI Cat 1,2,3) - Production process or operating procedure modification", value: "type-3" },
+      { label: "Override - Emergency change with override approval required", value: "type-4" }
     ]
   },
   priorityId: {
