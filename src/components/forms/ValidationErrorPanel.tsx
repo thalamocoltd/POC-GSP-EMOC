@@ -93,7 +93,7 @@ export const ValidationErrorPanel = ({
                         <button
                           key={fieldId}
                           onClick={() => handleErrorClick(fieldId)}
-                          className="w-full text-left px-4 py-3 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors flex items-center gap-3"
+                          className="w-full text-left px-4 py-3 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors flex items-center gap-3 cursor-pointer"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0"></span>
                           <span className="flex-1">{fieldLabels[fieldId] || fieldId}</span>

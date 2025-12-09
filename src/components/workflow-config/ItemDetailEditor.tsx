@@ -398,7 +398,7 @@ export const ItemDetailEditor = ({
                     <td className="px-4 py-3">
                       <button
                         onClick={() => removeAttachment(att.id)}
-                        className="text-red-600 hover:text-red-700 focus:outline-none"
+                        className="text-red-600 hover:text-red-700 focus:outline-none cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -506,7 +506,7 @@ export const ItemDetailEditor = ({
                     <td className="px-4 py-3">
                       <button
                         onClick={() => removeAction(act.id)}
-                        className="text-red-600 hover:text-red-700 focus:outline-none"
+                        className="text-red-600 hover:text-red-700 focus:outline-none cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>

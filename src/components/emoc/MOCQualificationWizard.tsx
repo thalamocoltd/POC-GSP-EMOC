@@ -85,7 +85,7 @@ export const MOCQualificationWizard = ({
         <aside className="fixed left-[72px] top-16 h-[calc(100vh-64px)] w-[300px] bg-white border-r border-[#E5E7EB] z-10 overflow-y-auto pb-20">
           <div className="p-6">
             <h3 className="text-xs font-semibold text-[#68737D] uppercase tracking-wider mb-6">
-              MOC Steps
+              MOC Part
             </h3>
             <nav className="space-y-1">
               {/* Step 0: MOC Prescreening - Active */}
@@ -196,7 +196,7 @@ export const MOCQualificationWizard = ({
                           type="button"
                           onClick={() => handleAnswerChange(question.id, true)}
                           className={cn(
-                            "flex-1 px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-1",
+                            "flex-1 px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-1 cursor-pointer",
                             answers[question.id] === true
                               ? "border-[#006699] bg-[#EBF5FF] text-[#006699]"
                               : "border-[#E5E7EB] bg-white text-[#68737D] hover:border-[#D4D9DE]"
@@ -209,7 +209,7 @@ export const MOCQualificationWizard = ({
                           type="button"
                           onClick={() => handleAnswerChange(question.id, false)}
                           className={cn(
-                            "flex-1 px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-1",
+                            "flex-1 px-3 py-2 rounded-lg border-2 transition-all text-sm font-medium flex items-center justify-center gap-1 cursor-pointer",
                             answers[question.id] === false
                               ? "border-red-500 bg-red-50 text-red-500"
                               : "border-[#E5E7EB] bg-white text-[#68737D] hover:border-[#D4D9DE]"

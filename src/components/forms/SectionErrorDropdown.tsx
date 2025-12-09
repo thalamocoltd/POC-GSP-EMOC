@@ -30,7 +30,7 @@ export const SectionErrorList: React.FC<SectionErrorListProps> = ({
       <div className="w-full">
         <button
           onClick={onToggleExpand}
-          className="w-full flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-colors duration-150"
+          className="w-full flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded transition-colors duration-150 cursor-pointer"
         >
           <ChevronDown
             className={cn(
@@ -59,7 +59,7 @@ export const SectionErrorList: React.FC<SectionErrorListProps> = ({
                     <TooltipTrigger asChild>
                       <button
                         onClick={() => onErrorClick(fieldId)}
-                        className="w-full text-left px-2 py-1.5 rounded hover:bg-red-100 transition-colors duration-150 flex items-start gap-1.5 group text-xs"
+                        className="w-full text-left px-2 py-1.5 rounded hover:bg-red-100 transition-colors duration-150 flex items-start gap-1.5 group text-xs cursor-pointer"
                       >
                         <X className="w-3 h-3 text-red-500 shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">

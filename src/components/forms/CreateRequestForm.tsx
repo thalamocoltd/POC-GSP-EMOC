@@ -155,7 +155,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
 
   // Form State
   const [formData, setFormData] = useState<InitiationFormData>({
-    requesterName: "John Doe",
+    requesterName: "Chatree Dechabumphen (บค.วบก.)",
     requestDate: new Date().toLocaleString('th-TH', {
       year: 'numeric',
       month: '2-digit',

@@ -62,7 +62,7 @@ const generateMockData = (): MOCRecord[] => {
   const overrideLengths = ["More than 3 days", "Less than 3 days"];
 
   const processes: ProcessType[] = ["Review", "Initiation", "Implementation", "Closeout"];
-  const projectEngineers = ["John Smith", "Jane Doe", "Mike Ross", "Sarah Chen", "Paul Smith"];
+  const projectEngineers = ["John Smith (ศศ.B ปล.)", "Jane Doe (ผ.ปก.B ศธ.)", "Mike Ross (ผ.ปก.C ศธ.)", "Sarah Chen (ศศ.E ปค.)", "Paul Smith (ศศ.E ปล.)"];
   const tasks = [
     "Asset owner review and approve initiation",
     "Assign Project Manager",

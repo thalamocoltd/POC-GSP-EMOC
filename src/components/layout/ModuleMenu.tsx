@@ -2,16 +2,23 @@
 
 import React from "react";
 import { cn } from "../ui/utils";
-import { Check, Zap, UserCog, Clock, Users, XCircle, ChevronDown } from "lucide-react";
+import { Check, Zap, UserCog, Clock, Users, XCircle, ChevronDown, ArrowRight } from "lucide-react";
 import { Button } from "../ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { useActions } from "../../context/ActionsContext";
+
+interface InProgressTask {
+  id: string;
+  taskName: string;
+  step: number;
+}
 
 interface ModuleMenuProps {
   isMobile?: boolean;
   currentStep?: number;
   maxReachedStep?: number;
   isReadOnly?: boolean;
+  inProgressTasks?: InProgressTask[];
   onStepClick?: (step: number) => void;
   onChangeMOCChampion?: () => void;
   onExtendTemporary?: () => void;
@@ -53,7 +60,7 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isReadOnly = false, onStepClick, onChangeMOCChampion, onExtendTemporary, onChangeTeam, onCancelMOC }: ModuleMenuProps) => {
+export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isReadOnly = false, inProgressTasks, onStepClick, onChangeMOCChampion, onExtendTemporary, onChangeTeam, onCancelMOC }: ModuleMenuProps) => {
   if (isMobile) return null;
 
   // Use context for dialog state management
@@ -77,7 +84,7 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isRe
     <aside className="fixed left-[72px] top-16 h-[calc(100vh-64px)] w-[300px] bg-white border-r border-[#E5E7EB] z-10 overflow-y-auto pb-20 overflow-x-hidden pointer-events-auto" style={{ scrollbarGutter: 'stable' }}>
       <div className="p-6">
         <h3 className="text-xs font-semibold text-[#68737D] uppercase tracking-wider mb-6">
-          MOC Steps
+          MOC Part
         </h3>
         <nav className="space-y-1">
           {menuItems.map((item) => {
@@ -97,7 +104,7 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isRe
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all text-left relative",
                     status === "active"
-                      ? "bg-[#EBF5FF] border-2 border-[#006699]"
+                      ? "bg-[#EBF5FF] border-2 border-[#006699] cursor-pointer"
                       : (isReadOnly ? (item.step <= currentStep) : (item.step <= maxReachedStep || item.step === 0))
                         ? "hover:bg-gray-50 cursor-pointer"
                         : "opacity-40 cursor-not-allowed"
@@ -139,6 +146,42 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isRe
             );
           })}
         </nav>
+
+        {/* Next Step Section - Only show if there are in-progress tasks */}
+        {isReadOnly && inProgressTasks && inProgressTasks.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-[#E5E7EB]">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-4 h-4 text-blue-600 animate-pulse" />
+              <h3 className="text-xs font-semibold text-[#68737D] uppercase tracking-wider">
+                Next Step
+              </h3>
+            </div>
+
+            <div className="space-y-2">
+              {inProgressTasks.map((task) => (
+                <button
+                  key={task.id}
+                  type="button"
+                  onClick={() => {
+                    const element = document.getElementById(task.id);
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg
+                             bg-blue-50 border border-blue-200 hover:border-blue-300 hover:bg-blue-100
+                             text-blue-900 transition-colors cursor-pointer"
+                >
+                  <Clock className="w-4 h-4 shrink-0 animate-pulse" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-xs block">Item : {task.taskName}</span>
+                    <span className="text-xs text-blue-600">Part {task.step}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Actions Section - Only show in view mode (isReadOnly) */}
         {isReadOnly && (

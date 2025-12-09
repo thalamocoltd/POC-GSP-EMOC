@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Clock,
+  CheckCircle2,
   Paperclip,
   Upload,
   Check,
@@ -8,9 +9,11 @@ import {
   Save,
   RotateCcw,
   Eye,
+  ChevronDown,
 } from "lucide-react";
 import { AssignProjectEngineerCardProps } from "../../../types/task-cards";
 import { PeoplePicker } from "../../ui/people-picker";
+import { cn } from "../../ui/utils";
 
 export const AssignProjectEngineerCard = ({
   itemNumber,
@@ -31,39 +34,88 @@ export const AssignProjectEngineerCard = ({
   onDiscard,
   onRevise,
 }: AssignProjectEngineerCardProps) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const getStatusBadge = () => {
+    switch (status) {
+      case "In Progress":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">
+            <Clock className="w-3.5 h-3.5" />
+            In Progress
+          </span>
+        );
+      case "Completed":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-300">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            Completed
+          </span>
+        );
+      case "Not Started":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">
+            <Clock className="w-3.5 h-3.5" />
+            Not Started
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">
+            <Clock className="w-3.5 h-3.5" />
+            {status}
+          </span>
+        );
+    }
+  };
+
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden shadow-sm bg-white hover:shadow-md transition-all duration-200">
+    <div className={cn(
+      "border rounded-lg overflow-hidden shadow-sm transition-all duration-200",
+      status === "Completed"
+        ? "border-green-200 bg-green-50/50 hover:shadow-md"
+        : "border-gray-200 bg-white hover:shadow-md"
+    )}>
       {/* HEADER */}
-      <div className="border-b border-gray-200 bg-blue-50/30 p-6">
+      <div className={cn(
+        "border-b p-6 cursor-pointer transition-colors",
+        status === "Completed"
+          ? "border-green-200 bg-green-50 hover:bg-green-100/50"
+          : "border-gray-200 bg-blue-50/30 hover:bg-blue-100/30"
+      )}
+      onClick={() => setIsCollapsed(!isCollapsed)}
+      >
         {/* Title and Status Row */}
         <div className="flex items-center justify-between gap-4 mb-3">
           <h4 className="text-base font-semibold text-[#006699] break-words flex-1">
             Item {itemNumber}: {taskName}
           </h4>
-          <div className="flex-shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">
-              <Clock className="w-3.5 h-3.5" />
-              In Progress
-            </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {getStatusBadge()}
+            <ChevronDown className={cn("w-5 h-5 text-gray-600 transition-transform", isCollapsed ? "-rotate-90" : "")} />
           </div>
         </div>
 
-        {/* Assigned To Info */}
-        <div className="flex items-center gap-2 flex-wrap text-sm">
-          <span className="text-base font-semibold text-[#1C1C1E]">
-            {assignedTo}
-          </span>
-          <span className="text-gray-400 select-none">•</span>
-          <span className="text-base font-semibold text-[#1C1C1E]">{role}</span>
-          <span className="text-gray-400 select-none">•</span>
-          <span className="text-base font-semibold text-[#1C1C1E]">
+        {/* Assigned To Info with Date on Right */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-base font-semibold text-[#1C1C1E]">
+              {assignedTo}
+            </span>
+            <span className="text-gray-400 select-none hidden">•</span>
+            <span className="text-sm text-gray-500 hidden">{role}</span>
+          </div>
+          <span className="text-sm text-gray-500 whitespace-nowrap">
             Assigned On {assignedOn}
           </span>
         </div>
       </div>
 
-      {/* BODY */}
-      <div className="space-y-4 bg-white p-6">
+      {/* BODY - Only show if not "Not Started" */}
+      {status !== "Not Started" && !isCollapsed && (
+      <div className={cn(
+        "space-y-4 p-6 bg-white"
+      )}>
         {/* People Picker for Project Engineer */}
         <div>
           <PeoplePicker
@@ -73,6 +125,7 @@ export const AssignProjectEngineerCard = ({
             options={availableEngineers}
             placeholder="Select a Project Engineer"
             required
+            disabled={status !== "In Progress"}
           />
         </div>
 
@@ -82,7 +135,13 @@ export const AssignProjectEngineerCard = ({
             Comments <span className="text-red-500">*</span>
           </label>
           <textarea
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#006699] focus:border-transparent bg-white transition-colors placeholder-gray-400"
+            disabled={status !== "In Progress"}
+            className={cn(
+              "w-full px-3 py-2.5 border rounded-md text-sm resize-none transition-colors placeholder-gray-400",
+              status === "In Progress"
+                ? "border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#006699] focus:border-transparent"
+                : "border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed opacity-75"
+            )}
             rows={4}
             value={comments}
             onChange={(e) => onCommentsChange(e.target.value)}
@@ -98,7 +157,13 @@ export const AssignProjectEngineerCard = ({
           <div className="space-y-3">
             <button
               type="button"
-              className="inline-flex items-center gap-2 text-sm font-semibold rounded-md bg-gradient-to-r from-[#1d3654] to-[#006699] text-white hover:brightness-110 transition-all duration-200 shadow-sm px-4 py-2.5"
+              disabled={status !== "In Progress"}
+              className={cn(
+                "inline-flex items-center gap-2 text-sm font-semibold rounded-md transition-all duration-200 shadow-sm px-4 py-2.5",
+                status === "In Progress"
+                  ? "bg-gradient-to-r from-[#1d3654] to-[#006699] text-white hover:brightness-110"
+                  : "bg-gray-200 text-gray-500 cursor-not-allowed opacity-75"
+              )}
             >
               <Upload className="w-4 h-4" />
               Upload file
@@ -122,11 +187,14 @@ export const AssignProjectEngineerCard = ({
         </div>
       </div>
 
-      {/* FOOTER - Action Buttons */}
+      )}
+
+      {/* FOOTER - Action Buttons - Only show if "In Progress" */}
+      {status === "In Progress" && !isCollapsed && (
       <div className="bg-gray-50 border-t border-gray-200 flex items-center gap-3 p-4 flex-wrap">
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5"
+          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5 cursor-pointer"
           style={{
             background: "linear-gradient(to right, #059669, #10b981)",
           }}
@@ -142,7 +210,7 @@ export const AssignProjectEngineerCard = ({
 
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5"
+          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5 cursor-pointer"
           style={{
             background: "linear-gradient(to right, #1d3654, #006699)",
           }}
@@ -158,7 +226,7 @@ export const AssignProjectEngineerCard = ({
 
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5"
+          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5 cursor-pointer"
           style={{
             background: "linear-gradient(to right, #6b7280, #9ca3af)",
           }}
@@ -174,7 +242,7 @@ export const AssignProjectEngineerCard = ({
 
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5"
+          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5 cursor-pointer"
           style={{
             background: "linear-gradient(to right, #2563eb, #3b82f6)",
           }}
@@ -190,7 +258,7 @@ export const AssignProjectEngineerCard = ({
 
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5"
+          className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm px-4 py-2.5 cursor-pointer"
           style={{
             background: "linear-gradient(to right, #dc2626, #ef4444)",
           }}
@@ -203,7 +271,8 @@ export const AssignProjectEngineerCard = ({
           <X className="w-4 h-4" />
           Reject
         </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

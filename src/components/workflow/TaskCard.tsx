@@ -82,29 +82,27 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
         </div>
 
         {/* Assigned To Info - Same style as title */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <User className="w-4 h-4 text-[#68737D] flex-shrink-0" />
-          <span className="text-base font-semibold text-[#1C1C1E]">{task.assignedTo}</span>
-          <span className="text-gray-400 select-none">•</span>
-          <span className="text-base font-semibold text-[#1C1C1E]">{task.role}</span>
-          {!isDisabled && task.assignedOn && (
-            <>
-              <span className="text-gray-400 select-none">•</span>
-              <span className="text-base font-semibold text-[#1C1C1E]">Assigned {task.assignedOn}</span>
-            </>
-          )}
-          {isReadOnly && task.completedOn && (
-            <>
-              <span className="text-gray-400 select-none">•</span>
-              <span className="text-base font-semibold text-green-600">Completed {task.completedOn}</span>
-            </>
-          )}
-          {isDisabled && (
-            <>
-              <span className="text-gray-400 select-none">•</span>
-              <span className="text-base font-semibold italic text-[#8B95A1]">Pending previous approval</span>
-            </>
-          )}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            <User className="w-4 h-4 text-[#68737D] flex-shrink-0" />
+            <span className="text-base font-semibold text-[#1C1C1E]">{task.assignedTo}</span>
+            <span className="text-gray-300 select-none">•</span>
+            <span className="text-sm text-[#9CA3AF]">{task.role}</span>
+            {isDisabled && (
+              <>
+                <span className="text-gray-300 select-none">•</span>
+                <span className="text-base font-semibold italic text-[#8B95A1]">Pending previous approval</span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {!isDisabled && task.assignedOn && (
+              <span className="text-sm text-[#68737D]">Assigned {task.assignedOn}</span>
+            )}
+            {isReadOnly && task.completedOn && (
+              <span className="text-sm font-semibold text-green-600">Completed {task.completedOn}</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -228,7 +226,7 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
                 <button
                   key={action}
                   type="button"
-                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm cursor-pointer"
                   style={{
                     padding: "10px 18px",
                     background: "linear-gradient(to right, #059669, #10b981)",
@@ -246,7 +244,7 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
                 <button
                   key={action}
                   type="button"
-                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm cursor-pointer"
                   style={{
                     padding: "10px 18px",
                     background: "linear-gradient(to right, #dc2626, #ef4444)",
@@ -264,7 +262,7 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
                 <button
                   key={action}
                   type="button"
-                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm cursor-pointer"
                   style={{
                     padding: "10px 18px",
                     background: "linear-gradient(to right, #1d3654, #006699)",
@@ -282,7 +280,7 @@ export const TaskCard = ({ task, stage, itemNumber, onClick }: TaskCardProps) =>
                 <button
                   key={action}
                   type="button"
-                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm"
+                  className="inline-flex items-center justify-center gap-2 text-sm font-semibold rounded-md text-white transition-all duration-200 shadow-sm cursor-pointer"
                   style={{
                     padding: "10px 18px",
                     background: "linear-gradient(to right, #6b7280, #9ca3af)",

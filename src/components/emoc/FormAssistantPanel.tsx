@@ -153,7 +153,7 @@ const RiskAssessmentFlow = ({ onComplete }: { onComplete: (impact: number, likel
                 setImpact(opt.val);
                 setStep(2);
               }}
-              className="text-left p-3 rounded-lg border border-gray-200 hover:border-[#006699] hover:bg-blue-50 transition-all group"
+              className="text-left p-3 rounded-lg border border-gray-200 hover:border-[#006699] hover:bg-blue-50 transition-all group cursor-pointer"
             >
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-[#1d3654] group-hover:text-[#006699]">{opt.label} ({opt.val})</span>
@@ -185,7 +185,7 @@ const RiskAssessmentFlow = ({ onComplete }: { onComplete: (impact: number, likel
                 setStep(3);
                 onComplete(impact!, opt.val);
               }}
-              className="text-left p-3 rounded-lg border border-gray-200 hover:border-[#006699] hover:bg-blue-50 transition-all group"
+              className="text-left p-3 rounded-lg border border-gray-200 hover:border-[#006699] hover:bg-blue-50 transition-all group cursor-pointer"
             >
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-[#1d3654] group-hover:text-[#006699]">{opt.label} ({opt.val})</span>
@@ -234,7 +234,7 @@ export const FormAssistantPanel = ({ isOpen, onClose, fieldId, onAutoFill }: For
       onAutoFill(fieldId!, value);
       setIsLoading(false);
       setIsSuccess(true);
-      
+
       // Auto close after success
       setTimeout(() => {
         onClose();
@@ -262,7 +262,7 @@ export const FormAssistantPanel = ({ isOpen, onClose, fieldId, onAutoFill }: For
             </div>
             <h2 className="font-semibold text-lg">AI Assistant</h2>
           </div>
-          <button onClick={onClose} className="hover:bg-white/20 p-1.5 rounded-full transition-colors">
+          <button onClick={onClose} className="hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -270,24 +270,24 @@ export const FormAssistantPanel = ({ isOpen, onClose, fieldId, onAutoFill }: For
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {isRiskField ? (
-             <div className="space-y-6">
-                <h3 className="text-xl font-bold text-[#1d3654]">Risk Assessment Guide</h3>
-                <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 text-sm text-blue-800">
-                  I'll help you determine the risk level by asking about Impact and Likelihood.
-                </div>
-                
-                <RiskAssessmentFlow 
-                   key={riskKey}
-                   onComplete={(impact, likelihood) => {
-                      const assessment = createRiskAssessment(impact, likelihood);
-                      handleAutoFill(assessment);
-                   }} 
-                />
-             </div>
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold text-[#1d3654]">Risk Assessment Guide</h3>
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 text-sm text-blue-800">
+                I'll help you determine the risk level by asking about Impact and Likelihood.
+              </div>
+
+              <RiskAssessmentFlow
+                key={riskKey}
+                onComplete={(impact, likelihood) => {
+                  const assessment = createRiskAssessment(impact, likelihood);
+                  handleAutoFill(assessment);
+                }}
+              />
+            </div>
           ) : response ? (
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-[#1d3654]">{response.title}</h3>
-              
+
               <div className="prose prose-sm text-gray-600 max-w-none">
                 {response.content}
               </div>
@@ -296,14 +296,14 @@ export const FormAssistantPanel = ({ isOpen, onClose, fieldId, onAutoFill }: For
                 <div className="flex flex-col items-center gap-3">
                   <p className="text-sm font-medium text-gray-500">Ready to proceed?</p>
                   {isSuccess ? (
-                     <motion.div 
-                       initial={{ scale: 0.8, opacity: 0 }}
-                       animate={{ scale: 1, opacity: 1 }}
-                       className="flex items-center gap-2 px-6 py-3 bg-green-50 text-green-700 rounded-full border border-green-200 font-medium"
-                     >
-                       <Check className="w-5 h-5" />
-                       Field filled successfully!
-                     </motion.div>
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="flex items-center gap-2 px-6 py-3 bg-green-50 text-green-700 rounded-full border border-green-200 font-medium"
+                    >
+                      <Check className="w-5 h-5" />
+                      Field filled successfully!
+                    </motion.div>
                   ) : (
                     <Button
                       onClick={() => handleAutoFill(response.autoFillValue)}

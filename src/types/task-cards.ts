@@ -104,6 +104,11 @@ export interface ApproveTechReviewTeamCardProps extends TaskCardBaseProps {
   onStatusChange: (rowId: string, status: ApprovalStatus) => void;
   onRemarkChange: (rowId: string, remark: string) => void;
   onCommentsChange: (value: string) => void;
+  onApprove: () => void;
+  onReject: () => void;
+  onSaveDraft: () => void;
+  onDiscard: () => void;
+  onRevise: () => void;
 }
 
 export interface PerformTechReviewCardProps extends TaskCardBaseProps {

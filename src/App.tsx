@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "motion/react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
@@ -33,6 +33,12 @@ import {
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
 
+interface InProgressTask {
+  id: string;
+  taskName: string;
+  step: number;
+}
+
 interface RequestData {
   mocNo: string;
   title: string;
@@ -52,6 +58,7 @@ function AppContent() {
   const [currentRequestData, setCurrentRequestData] = useState<RequestData | null>(null);
   const [isAIAutofilled, setIsAIAutofilled] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [inProgressTasks, setInProgressTasks] = useState<InProgressTask[]>([]);
 
   // Form overlay state (for inline form display without navigation)
   const [activeFormOverlay, setActiveFormOverlay] = useState<"psi-checklist" | "preliminary-safety" | "she-assessment" | null>(null);
@@ -199,6 +206,10 @@ function AppContent() {
     }
   };
 
+  const handleInProgressTasksChange = useCallback((tasks: InProgressTask[]) => {
+    setInProgressTasks(tasks);
+  }, []);
+
   const handleLocationChange = (newLocation: LocationId) => {
     if (newLocation === currentLocation) return;
 
@@ -322,6 +333,7 @@ function AppContent() {
           currentStep={currentMocStep}
           maxReachedStep={maxReachedStep}
           isReadOnly={mocMode === "view"}
+          inProgressTasks={inProgressTasks}
           onStepClick={handleStepNavigation}
         />
       )}
@@ -343,7 +355,7 @@ function AppContent() {
       <main
         className={cn(
           "transition-all duration-300 ease-in-out min-h-screen",
-          "pt-6 pb-8",
+          "pb-8",
           // Horizontal padding
           "px-6 md:px-8",
           // Z-index to stay above sidebar
@@ -357,7 +369,7 @@ function AppContent() {
         {isMobile && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="mb-4 p-2 bg-white rounded-md shadow-sm mt-4"
+            className="mb-4 p-2 bg-white rounded-md shadow-sm mt-4 cursor-pointer"
           >
             <span className="sr-only">Open Menu</span>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -452,6 +464,7 @@ function AppContent() {
                   onBack={handleBackToDashboard}
                   onStepChange={handleStepNavigation}
                   onNavigateToForm={handleNavigateToAssessmentForm}
+                  onInProgressTasksChange={handleInProgressTasksChange}
                 />
               </motion.div>
             )}

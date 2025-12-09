@@ -182,7 +182,7 @@ export const FileUploadSection = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveFile(file.id)}
-                      className="p-1 hover:bg-red-50 rounded transition-colors shrink-0 ml-2"
+                      className="p-1 hover:bg-red-50 rounded transition-colors shrink-0 ml-2 cursor-pointer"
                       title={`Remove ${file.fileName}`}
                     >
                       <X className="w-4 h-4 text-[#D93F4C]" />

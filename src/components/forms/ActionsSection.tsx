@@ -43,7 +43,7 @@ export const ActionsSection = ({
               onClick={onChangeMOCChampion}
               className="group flex items-start gap-4 p-5 bg-gradient-to-br from-amber-50 to-orange-50
                          border-2 border-amber-200 rounded-xl hover:border-amber-400 hover:shadow-lg
-                         transition-all duration-200 text-left"
+                         transition-all duration-200 text-left cursor-pointer"
             >
               <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center
                               shrink-0 group-hover:bg-amber-200 transition-colors">
@@ -66,7 +66,7 @@ export const ActionsSection = ({
               onClick={onExtendTemporary}
               className="group flex items-start gap-4 p-5 bg-gradient-to-br from-blue-50 to-cyan-50
                          border-2 border-blue-200 rounded-xl hover:border-blue-400 hover:shadow-lg
-                         transition-all duration-200 text-left"
+                         transition-all duration-200 text-left cursor-pointer"
             >
               <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center
                               shrink-0 group-hover:bg-blue-200 transition-colors">
@@ -89,7 +89,7 @@ export const ActionsSection = ({
               onClick={onChangeTeam}
               className="group flex items-start gap-4 p-5 bg-gradient-to-br from-purple-50 to-pink-50
                          border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:shadow-lg
-                         transition-all duration-200 text-left"
+                         transition-all duration-200 text-left cursor-pointer"
             >
               <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center
                               shrink-0 group-hover:bg-purple-200 transition-colors">
@@ -112,7 +112,7 @@ export const ActionsSection = ({
               onClick={onCancelMOC}
               className="group flex items-start gap-4 p-5 bg-gradient-to-br from-red-50 to-rose-50
                          border-2 border-red-200 rounded-xl hover:border-red-400 hover:shadow-lg
-                         transition-all duration-200 text-left"
+                         transition-all duration-200 text-left cursor-pointer"
             >
               <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center
                               shrink-0 group-hover:bg-red-200 transition-colors">

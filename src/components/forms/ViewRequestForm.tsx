@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
+import { TaskStatus } from "../../types/task-cards";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId, MOCK_MOC_REQUESTS } from "../../lib/emoc-data";
 import { formatFileSize, createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { ProcessingOverlay } from "../ui/ProcessingOverlay";
@@ -20,15 +21,22 @@ import { ApproveTechReviewTeamCard } from "../workflow/task-cards/ApproveTechRev
 import { PerformTechReviewCard } from "../workflow/task-cards/PerformTechReviewCard";
 import { AVAILABLE_PEOPLE, INITIATION_TASK_CARDS, REVIEW_TASK_CARDS, TECHNICAL_DISCIPLINES, TECHNICAL_REVIEW_APPROVALS, DOCUMENT_REVIEW_ITEMS } from "../../lib/task-card-data";
 
+interface InProgressTask {
+  id: string;
+  taskName: string;
+  step: number;
+}
+
 interface ViewRequestFormProps {
   id: string | null;
   step: number;
   onBack: () => void;
   onStepChange?: (step: number) => void;
   onNavigateToForm?: (formType: "psi-checklist" | "preliminary-safety" | "she-assessment") => void;
+  onInProgressTasksChange?: (tasks: InProgressTask[]) => void;
 }
 
-export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToForm }: ViewRequestFormProps) => {
+export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToForm, onInProgressTasksChange }: ViewRequestFormProps) => {
   // Mock Data Loading
   const [data, setData] = useState<InitiationFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,6 +57,76 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
   const [reviewTask2Comments, setReviewTask2Comments] = useState("");
   const [reviewDocuments, setReviewDocuments] = useState(DOCUMENT_REVIEW_ITEMS);
   const [reviewTask3Comments, setReviewTask3Comments] = useState("");
+
+  // Task Status Management - Initiation & Review
+  const [initiationTaskStatuses, setInitiationTaskStatuses] = useState<TaskStatus[]>([
+    "In Progress",
+    "Not Started",
+    "Not Started",
+  ]);
+  const [reviewTaskStatuses, setReviewTaskStatuses] = useState<TaskStatus[]>([
+    "In Progress",
+    "Not Started",
+    "Not Started",
+  ]);
+
+  // Task Name Constants
+  const INITIATION_TASK_NAMES = [
+    "Initial Review and approve MOC Request",
+    "Assign Project Engineer",
+    "Review and Approve MOC Request",
+  ];
+
+  const REVIEW_TASK_NAMES = [
+    "Assign Technical Review Team",
+    "Approve Technical Review Team",
+    "Perform Technical Review",
+  ];
+
+  // Helper function to get In Progress tasks for ModuleMenu
+  interface InProgressTask {
+    id: string;
+    taskName: string;
+    step: number;
+  }
+
+  const getInProgressTasks = (): InProgressTask[] => {
+    const tasks: InProgressTask[] = [];
+
+    if (step === 1) {
+      initiationTaskStatuses.forEach((status: TaskStatus, index: number) => {
+        if (status === "In Progress") {
+          tasks.push({
+            id: `initiation-task-${index + 1}`,
+            taskName: INITIATION_TASK_NAMES[index],
+            step: 1,
+          });
+        }
+      });
+    }
+
+    if (step === 2) {
+      reviewTaskStatuses.forEach((status: TaskStatus, index: number) => {
+        if (status === "In Progress") {
+          tasks.push({
+            id: `review-task-${index + 1}`,
+            taskName: REVIEW_TASK_NAMES[index],
+            step: 2,
+          });
+        }
+      });
+    }
+
+    return tasks;
+  };
+
+  // Notify parent component of in-progress tasks
+  useEffect(() => {
+    if (onInProgressTasksChange) {
+      const tasks = getInProgressTasks();
+      onInProgressTasksChange(tasks);
+    }
+  }, [initiationTaskStatuses, reviewTaskStatuses, step, onInProgressTasksChange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,7 +214,6 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
     return parts[stepNum - 1] || "Unknown";
   };
 
-
   // Action handlers
   const handleActionSubmit = (actionType: string) => {
     setActiveDialog(null);
@@ -145,6 +222,66 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
 
   const handleProcessingComplete = () => {
     setIsProcessing(false);
+  };
+
+  // Initiation Task Approve Handler
+  const handleInitiationApprove = (taskIndex: number) => {
+    setProcessingMessages([
+      "Processing approval...",
+      "Updating task status...",
+      "Activating next task...",
+      "Saving changes..."
+    ]);
+    setIsProcessing(true);
+
+    setTimeout(() => {
+      setInitiationTaskStatuses(prev => {
+        const newStatuses = [...prev];
+        newStatuses[taskIndex] = "Completed";
+        if (taskIndex + 1 < newStatuses.length) {
+          newStatuses[taskIndex + 1] = "In Progress";
+        }
+        return newStatuses;
+      });
+
+      // Scroll to next task
+      if (taskIndex + 1 < initiationTaskStatuses.length) {
+        const nextTaskElement = document.getElementById(`initiation-task-${taskIndex + 2}`);
+        if (nextTaskElement) {
+          nextTaskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }, 2100);
+  };
+
+  // Review Task Approve Handler
+  const handleReviewApprove = (taskIndex: number) => {
+    setProcessingMessages([
+      "Processing approval...",
+      "Updating task status...",
+      "Activating next task...",
+      "Saving changes..."
+    ]);
+    setIsProcessing(true);
+
+    setTimeout(() => {
+      setReviewTaskStatuses(prev => {
+        const newStatuses = [...prev];
+        newStatuses[taskIndex] = "Completed";
+        if (taskIndex + 1 < newStatuses.length) {
+          newStatuses[taskIndex + 1] = "In Progress";
+        }
+        return newStatuses;
+      });
+
+      // Scroll to next task
+      if (taskIndex + 1 < reviewTaskStatuses.length) {
+        const nextTaskElement = document.getElementById(`review-task-${taskIndex + 2}`);
+        if (nextTaskElement) {
+          nextTaskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }, 2100);
   };
 
   const handleTaskClick = (task: any, formType?: string) => {
@@ -421,62 +558,68 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
 
 
               {/* Task 1: Initial Review and approve MOC Request */}
-              <InitiationApprovalCard
-                itemNumber={1}
-                taskName="Initial Review and approve MOC Request"
-                role="Direct Manager of Requester"
-                assignedTo="Robert Chen"
-                assignedOn="15/01/2024 10:00"
-                status="In Progress"
-                comments={initiationTask1Comments}
-                attachments={[]}
-                onCommentsChange={setInitiationTask1Comments}
-                onApprove={() => console.log("Task 1 Approved")}
-                onReject={() => console.log("Task 1 Rejected")}
-                onSaveDraft={() => console.log("Task 1 Draft Saved")}
-                onDiscard={() => console.log("Task 1 Discarded")}
-                onRevise={() => console.log("Task 1 Revised")}
-              />
+              <div id="initiation-task-1">
+                <InitiationApprovalCard
+                  itemNumber={1}
+                  taskName="Initial Review and approve MOC Request"
+                  role="Direct Manager of Requester"
+                  assignedTo="Chatree Dechabumphen (บค.วบก.)"
+                  assignedOn="15/01/2024 10:00"
+                  status={initiationTaskStatuses[0]}
+                  comments={initiationTask1Comments}
+                  attachments={[]}
+                  onCommentsChange={setInitiationTask1Comments}
+                  onApprove={() => handleInitiationApprove(0)}
+                  onReject={() => console.log("Task 1 Rejected")}
+                  onSaveDraft={() => console.log("Task 1 Draft Saved")}
+                  onDiscard={() => console.log("Task 1 Discarded")}
+                  onRevise={() => console.log("Task 1 Revised")}
+                />
+              </div>
 
               {/* Task 2: Assign Project Engineer */}
-              <AssignProjectEngineerCard
-                itemNumber={2}
-                taskName="Assign Project Engineer"
-                role="Division Manager"
-                assignedTo="Sarah Williams"
-                assignedOn="15/01/2024 11:00"
-                status="In Progress"
-                selectedEngineer={initiationTask2SelectedEngineer}
-                availableEngineers={AVAILABLE_PEOPLE}
-                comments={initiationTask2Comments}
-                attachments={[]}
-                onEngineerChange={setInitiationTask2SelectedEngineer}
-                onCommentsChange={setInitiationTask2Comments}
-                onApprove={() => console.log("Task 2 Approved")}
-                onReject={() => console.log("Task 2 Rejected")}
-                onSaveDraft={() => console.log("Task 2 Draft Saved")}
-                onDiscard={() => console.log("Task 2 Discarded")}
-                onRevise={() => console.log("Task 2 Revised")}
-              />
+              <div id="initiation-task-2">
+                <AssignProjectEngineerCard
+                  itemNumber={2}
+                  taskName="Assign Project Engineer"
+                  role="Division Manager"
+                  assignedTo="Chatree Dechabumphen (บค.วบก.)"
+                  assignedOn="15/01/2024 11:00"
+                  status={initiationTaskStatuses[1]}
+                  selectedEngineer={initiationTask2SelectedEngineer}
+                  availableEngineers={AVAILABLE_PEOPLE}
+                  comments={initiationTask2Comments}
+                  attachments={[]}
+                  onEngineerChange={setInitiationTask2SelectedEngineer}
+                  onCommentsChange={setInitiationTask2Comments}
+                  onApprove={() => handleInitiationApprove(1)}
+                  onReject={() => console.log("Task 2 Rejected")}
+                  onSaveDraft={() => console.log("Task 2 Draft Saved")}
+                  onDiscard={() => console.log("Task 2 Discarded")}
+                  onRevise={() => console.log("Task 2 Revised")}
+                />
+              </div>
 
               {/* Task 3: Review and Approve MOC Request */}
-              <ApproveWithPECard
-                itemNumber={3}
-                taskName="Review and Approve MOC Request"
-                role="VP Operation"
-                assignedTo="David Thompson"
-                assignedOn="15/01/2024 12:00"
-                status="In Progress"
-                selectedEngineer={initiationTask2SelectedEngineer ? AVAILABLE_PEOPLE.find(p => p.id === initiationTask2SelectedEngineer)?.name || "Michael Anderson" : "Michael Anderson"}
-                comments={initiationTask3Comments}
-                attachments={[]}
-                onCommentsChange={setInitiationTask3Comments}
-                onApprove={() => console.log("Task 3 Approved")}
-                onReject={() => console.log("Task 3 Rejected")}
-                onSaveDraft={() => console.log("Task 3 Draft Saved")}
-                onDiscard={() => console.log("Task 3 Discarded")}
-                onRevise={() => console.log("Task 3 Revised")}
-              />
+              <div id="initiation-task-3">
+                <ApproveWithPECard
+                  itemNumber={3}
+                  taskName="Review and Approve MOC Request"
+                  role="VP Operation"
+                  assignedTo={initiationTask2SelectedEngineer ? AVAILABLE_PEOPLE.find(p => p.id === initiationTask2SelectedEngineer)?.name || "TBD" : "TBD"}
+                  assignedOn="15/01/2024 12:00"
+                  status={initiationTaskStatuses[2]}
+                  selectedEngineer={initiationTask2SelectedEngineer ? AVAILABLE_PEOPLE.find(p => p.id === initiationTask2SelectedEngineer)?.name || "Chatree Dechabumphen (บค.วบก.)" : "Chatree Dechabumphen (บค.วบก.)"}
+                  comments={initiationTask3Comments}
+                  attachments={[]}
+                  onCommentsChange={setInitiationTask3Comments}
+                  onApprove={() => handleInitiationApprove(2)}
+                  onReject={() => console.log("Task 3 Rejected")}
+                  onSaveDraft={() => console.log("Task 3 Draft Saved")}
+                  onDiscard={() => console.log("Task 3 Discarded")}
+                  onRevise={() => console.log("Task 3 Revised")}
+                />
+              </div>
             </section>
           </div>
         </div>
@@ -491,87 +634,110 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
 
 
               {/* Task 1: Assign Technical Review Team */}
-              <AssignTechReviewTeamCard
-                itemNumber={1}
-                taskName="Assign Technical Review Team"
-                role="Project Engineer"
-                assignedTo="Michael Anderson"
-                assignedOn="16/01/2024 09:30"
-                status="In Progress"
-                disciplines={reviewDisciplines}
-                availableTeamMembers={AVAILABLE_PEOPLE}
-                comments={reviewTask1Comments}
-                attachments={[]}
-                onDisciplineChange={(disciplineId, teamMemberId) => {
-                  setReviewDisciplines(prev =>
-                    prev.map(d => d.id === disciplineId ? { ...d, teamMember: teamMemberId } : d)
-                  );
-                }}
-                onNotApplicableChange={(disciplineId, notApplicable) => {
-                  setReviewDisciplines(prev =>
-                    prev.map(d => d.id === disciplineId ? { ...d, notApplicable } : d)
-                  );
-                }}
-                onCommentsChange={setReviewTask1Comments}
-                onSubmit={() => console.log("Task 1 Submitted")}
-                onSaveDraft={() => console.log("Task 1 Draft Saved")}
-                onDiscard={() => console.log("Task 1 Discarded")}
-              />
+              <div id="review-task-1">
+                <AssignTechReviewTeamCard
+                  itemNumber={1}
+                  taskName="Assign Technical Review Team"
+                  role="Project Engineer"
+                  assignedTo="Chatree Dechabumphen (บค.วบก.)"
+                  assignedOn="16/01/2024 09:30"
+                  status={reviewTaskStatuses[0]}
+                  disciplines={reviewDisciplines}
+                  availableTeamMembers={AVAILABLE_PEOPLE}
+                  comments={reviewTask1Comments}
+                  attachments={[]}
+                  onDisciplineChange={(disciplineId, teamMemberId) => {
+                    setReviewDisciplines(prev =>
+                      prev.map(d => d.id === disciplineId ? { ...d, teamMember: teamMemberId } : d)
+                    );
+                  }}
+                  onNotApplicableChange={(disciplineId, notApplicable) => {
+                    setReviewDisciplines(prev =>
+                      prev.map(d => d.id === disciplineId ? { ...d, notApplicable } : d)
+                    );
+                  }}
+                  onCommentsChange={setReviewTask1Comments}
+                  onSubmit={() => handleReviewApprove(0)}
+                  onSaveDraft={() => console.log("Task 1 Draft Saved")}
+                  onDiscard={() => console.log("Task 1 Discarded")}
+                />
+              </div>
 
               {/* Task 2: Approve Technical Review Team */}
-              <ApproveTechReviewTeamCard
-                itemNumber={2}
-                taskName="Approve Technical Review Team"
-                role="Relevant Managers"
-                assignedTo="Multiple Managers"
-                assignedOn="16/01/2024 16:00"
-                status="In Progress"
-                approvalRows={reviewApprovalRows}
-                availableTeamMembers={AVAILABLE_PEOPLE}
-                comments={reviewTask2Comments}
-                attachments={[]}
-                onTeamMemberChange={(rowId, teamMemberId) => {
-                  setReviewApprovalRows(prev =>
-                    prev.map(r => r.id === rowId ? { ...r, taTeam: AVAILABLE_PEOPLE.find(p => p.id === teamMemberId)?.name || r.taTeam } : r)
-                  );
-                }}
-                onStatusChange={(rowId, status) => {
-                  setReviewApprovalRows(prev =>
-                    prev.map(r => r.id === rowId ? { ...r, status } : r)
-                  );
-                }}
-                onRemarkChange={(rowId, remark) => {
-                  setReviewApprovalRows(prev =>
-                    prev.map(r => r.id === rowId ? { ...r, remark } : r)
-                  );
-                }}
-                onCommentsChange={setReviewTask2Comments}
-              />
+              <div id="review-task-2">
+                <ApproveTechReviewTeamCard
+                  itemNumber={2}
+                  taskName="Approve Technical Review Team"
+                  role="Relevant Managers"
+                  assignedTo="Chatree Dechabumphen (บค.วบก.)"
+                  assignedOn="16/01/2024 16:00"
+                  status={reviewTaskStatuses[1]}
+                  approvalRows={reviewApprovalRows}
+                  availableTeamMembers={AVAILABLE_PEOPLE}
+                  comments={reviewTask2Comments}
+                  attachments={[]}
+                  onTeamMemberChange={(rowId, teamMemberId) => {
+                    setReviewApprovalRows(prev =>
+                      prev.map(r => r.id === rowId ? { ...r, taTeam: AVAILABLE_PEOPLE.find(p => p.id === teamMemberId)?.name || r.taTeam } : r)
+                    );
+                  }}
+                  onStatusChange={(rowId, status) => {
+                    setReviewApprovalRows(prev =>
+                      prev.map(r => r.id === rowId ? { ...r, status } : r)
+                    );
+                  }}
+                  onRemarkChange={(rowId, remark) => {
+                    setReviewApprovalRows(prev =>
+                      prev.map(r => r.id === rowId ? { ...r, remark } : r)
+                    );
+                  }}
+                  onCommentsChange={setReviewTask2Comments}
+                  onApprove={() => handleReviewApprove(1)}
+                  onReject={() => {
+                    setReviewTaskStatuses(prev => {
+                      const newStatuses = [...prev];
+                      newStatuses[1] = "Rejected";
+                      return newStatuses;
+                    });
+                  }}
+                  onSaveDraft={() => console.log("Review Task 2: Save Draft")}
+                  onDiscard={() => {
+                    setReviewTaskStatuses(prev => {
+                      const newStatuses = [...prev];
+                      newStatuses[1] = "In Progress";
+                      return newStatuses;
+                    });
+                  }}
+                  onRevise={() => console.log("Review Task 2: Revise")}
+                />
+              </div>
 
               {/* Task 3: Perform Technical Review */}
-              <PerformTechReviewCard
-                itemNumber={3}
-                taskName="Perform Technical Review"
-                role="Project Engineer"
-                assignedTo="Michael Anderson"
-                assignedOn="16/01/2024 11:30"
-                status="In Progress"
-                documents={reviewDocuments}
-                comments={reviewTask3Comments}
-                attachments={[]}
-                onDocumentClick={(documentId) => {
-                  const doc = reviewDocuments.find(d => d.id === documentId);
-                  if (doc && doc.formType) {
-                    if (onNavigateToForm) {
-                      onNavigateToForm(doc.formType);
+              <div id="review-task-3">
+                <PerformTechReviewCard
+                  itemNumber={3}
+                  taskName="Perform Technical Review"
+                  role="Project Engineer"
+                  assignedTo="Chatree Dechabumphen (บค.วบก.)"
+                  assignedOn="16/01/2024 11:30"
+                  status={reviewTaskStatuses[2]}
+                  documents={reviewDocuments}
+                  comments={reviewTask3Comments}
+                  attachments={[]}
+                  onDocumentClick={(documentId) => {
+                    const doc = reviewDocuments.find(d => d.id === documentId);
+                    if (doc && doc.formType) {
+                      if (onNavigateToForm) {
+                        onNavigateToForm(doc.formType);
+                      }
                     }
-                  }
-                }}
-                onCommentsChange={setReviewTask3Comments}
-                onSubmit={() => console.log("Task 3 Submitted")}
-                onSaveDraft={() => console.log("Task 3 Draft Saved")}
-                onDiscard={() => console.log("Task 3 Discarded")}
-              />
+                  }}
+                  onCommentsChange={setReviewTask3Comments}
+                  onSubmit={() => handleReviewApprove(2)}
+                  onSaveDraft={() => console.log("Task 3 Draft Saved")}
+                  onDiscard={() => console.log("Task 3 Discarded")}
+                />
+              </div>
             </section>
           </div>
         </div>

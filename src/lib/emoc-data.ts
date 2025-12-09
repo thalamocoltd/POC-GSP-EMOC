@@ -205,7 +205,7 @@ export function generateMockMOCRequests(): MockMOCRequest[] {
     "type-4": { id: "length-3", name: "More than 3 days" }
   };
 
-  const names = ["John Smith", "Sarah Johnson", "Mike Chen", "Emma Davis", "Robert Brown", "Lisa Anderson"];
+  const names = ["John Smith (ศศ.B ปล.)", "Sarah Johnson (ศศ.C ปล.)", "Mike Chen (ศศ.D ปล.)", "Emma Davis (สยก.)", "Robert Brown (บศ.สยก.)", "Lisa Anderson (ศศ.C ปค.)"];
   const taskDetails = ["Review technical specs", "Approve risk assessment", "Verify installation", "Sign off closeout"];
   const mocTitles = [
     "Safety Interlocks Upgrade - Production Area A",
@@ -269,10 +269,10 @@ export const MOCK_MOC_REQUESTS = generateMockMOCRequests();
 
 // MOC Actions - Champion options
 export const MOC_CHAMPION_OPTIONS = [
-  { id: "champion-1", name: "John Smith", role: "Safety Manager" },
-  { id: "champion-2", name: "Sarah Johnson", role: "Production Lead" },
-  { id: "champion-3", name: "Mike Chen", role: "Engineering Manager" },
-  { id: "champion-4", name: "Emily Davis", role: "Operations Supervisor" }
+  { id: "champion-1", name: "John Smith (ศศ.B ปล.)", role: "Safety Manager" },
+  { id: "champion-2", name: "Sarah Johnson (ศศ.C ปล.)", role: "Production Lead" },
+  { id: "champion-3", name: "Mike Chen (ศศ.D ปล.)", role: "Engineering Manager" },
+  { id: "champion-4", name: "Emily Davis (ปก.สยก.)", role: "Operations Supervisor" }
 ];
 
 // MOC Actions - Cancellation categories

@@ -8,6 +8,7 @@ import {
   BarChart,
 } from "lucide-react";
 import { cn } from "../ui/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -18,34 +19,13 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ isMobile, isOpen, onClose, currentPage, onNavigate }: SidebarProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
-
-  // Handle hover intent
-  const handleMouseEnter = () => {
-    if (isMobile) return;
-    const timeout = setTimeout(() => {
-      setIsHovered(true);
-      setIsExpanded(true);
-    }, 200); // 200ms delay for intent
-    setHoverTimeout(timeout);
-  };
-
-  const handleMouseLeave = () => {
-    if (isMobile) return;
-    if (hoverTimeout) clearTimeout(hoverTimeout);
-    setIsHovered(false);
-    setIsExpanded(false);
-  };
-
   const handleNavClick = (page: "dashboard" | "qualification" | "create-request" | "search" | "report" | "admin" | "coming-soon") => {
     if (onNavigate) onNavigate(page);
     if (isMobile && onClose) onClose();
   };
 
   // Mobile drawer handling
-  const sidebarWidth = isMobile ? "100%" : isExpanded ? "240px" : "72px";
+  const sidebarWidth = isMobile ? "280px" : "72px";
 
   return (
     <>
@@ -67,60 +47,57 @@ export const Sidebar = ({ isMobile, isOpen, onClose, currentPage, onNavigate }: 
           duration: 0.25,
           ease: [0.4, 0, 0.2, 1],
         }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         className={cn(
           "fixed left-0 top-0 z-40 h-full bg-[#1d3654] text-white shadow-[2px_0_8px_rgba(0,0,0,0.15)] flex flex-col",
           isMobile && "w-[280px]" // Override width for mobile drawer
         )}
       >
         {/* Logo Section - aligned with header height */}
-        <div className="h-16 flex items-center px-4 border-b border-[#2c4a6d] overflow-hidden shrink-0">
-          <div className="flex items-center gap-3 min-w-[240px]">
+        <div className="h-16 flex items-center justify-center px-4 border-b border-[#2c4a6d] overflow-hidden shrink-0">
+          <div className={cn("flex items-center gap-3", isMobile && "w-full")}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1d3654] to-[#006699] border border-white/20 flex items-center justify-center shrink-0 shadow-lg">
               <span className="text-white font-bold text-sm">PTT</span>
             </div>
-            <motion.span
-              animate={{ opacity: isExpanded ? 1 : 0 }}
-              className="text-lg font-semibold whitespace-nowrap"
-            >
-              PTT GSP MoC
-            </motion.span>
+            {isMobile && (
+              <span className="text-lg font-semibold whitespace-nowrap">
+                PTT GSP MoC
+              </span>
+            )}
           </div>
         </div>
 
         {/* Navigation Items */}
         <nav className="flex-1 py-4 space-y-1 overflow-hidden">
-          <NavItem 
-            icon={Home} 
-            label="Home" 
-            isActive={currentPage === "dashboard"} 
-            isExpanded={isExpanded} 
+          <NavItem
+            icon={Home}
+            label="Home"
+            isActive={currentPage === "dashboard"}
+            isMobile={isMobile}
             onClick={() => handleNavClick("dashboard")}
           />
-          <NavItem 
-            icon={Plus} 
-            label="New MOC Request" 
+          <NavItem
+            icon={Plus}
+            label="New MOC Request"
             isActive={currentPage === "qualification" || currentPage === "create-request"}
-            isExpanded={isExpanded} 
+            isMobile={isMobile}
             onClick={() => handleNavClick("qualification")}
           />
           <NavItem
             icon={Search}
             label="Search"
-            isExpanded={isExpanded}
+            isMobile={isMobile}
             onClick={() => handleNavClick("search")}
           />
           <NavItem
             icon={BarChart}
             label="Report / Dashboard"
-            isExpanded={isExpanded}
+            isMobile={isMobile}
             onClick={() => handleNavClick("report")}
           />
           <NavItem
             icon={ShieldCheck}
             label="Admin"
-            isExpanded={isExpanded}
+            isMobile={isMobile}
             onClick={() => handleNavClick("admin")}
           />
         </nav>
@@ -133,17 +110,18 @@ interface NavItemProps {
   icon: React.ElementType;
   label: string;
   isActive?: boolean;
-  isExpanded: boolean;
+  isMobile?: boolean;
   badge?: string;
   onClick?: () => void;
 }
 
-const NavItem = ({ icon: Icon, label, isActive, isExpanded, badge, onClick }: NavItemProps) => {
-  return (
+const NavItem = ({ icon: Icon, label, isActive, isMobile, badge, onClick }: NavItemProps) => {
+  const button = (
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 transition-all duration-200 relative group",
+        "w-full flex items-center gap-3 py-3 transition-all duration-200 relative group cursor-pointer",
+        isMobile ? "px-4" : "justify-center px-4",
         isActive
           ? "bg-[#2c4a6d] text-white border-l-4 border-white"
           : "text-[#B8C9C8] hover:bg-[#2c4a6d] hover:text-white border-l-4 border-transparent"
@@ -151,31 +129,39 @@ const NavItem = ({ icon: Icon, label, isActive, isExpanded, badge, onClick }: Na
     >
       <div className="relative shrink-0">
         <Icon className={cn("w-6 h-6", isActive ? "opacity-100" : "opacity-70 group-hover:opacity-100")} />
-        {/* Collapsed Badge */}
-        {!isExpanded && badge && (
+        {badge && (
           <span className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-[#D93F4C] rounded-full text-[10px] flex items-center justify-center text-white font-bold border border-[#1d3654]">
             {badge}
           </span>
         )}
       </div>
-      
-      <motion.span
-        animate={{ opacity: isExpanded ? 1 : 0, x: isExpanded ? 0 : -10 }}
-        className="text-sm font-medium whitespace-nowrap"
-      >
-        {label}
-      </motion.span>
 
-      {/* Expanded Badge */}
-      {isExpanded && badge && (
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="ml-auto bg-[#D93F4C] text-white text-[11px] font-bold px-2 py-0.5 rounded-full"
-        >
+      {isMobile && (
+        <span className="text-sm font-medium whitespace-nowrap">
+          {label}
+        </span>
+      )}
+
+      {isMobile && badge && (
+        <span className="ml-auto bg-[#D93F4C] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
           {badge}
-        </motion.span>
+        </span>
       )}
     </button>
+  );
+
+  if (isMobile) {
+    return button;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {button}
+      </TooltipTrigger>
+      <TooltipContent side="right" sideOffset={10}>
+        <p className="text-sm font-medium">{label}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };

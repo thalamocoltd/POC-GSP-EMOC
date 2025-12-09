@@ -47,7 +47,7 @@ export interface ToDoItem {
 }
 
 // Convert mock data to ToDoItem format with resolved names
-const champions = ["John Smith", "Sarah Johnson", "Mike Chen", "Emma Davis", "Robert Brown", "Lisa Anderson"];
+const champions = ["John Smith (ศศ.B ปล.)", "Sarah Johnson (ศศ.C ปล.)", "Mike Chen (ศศ.D ปล.)", "Emma Davis (สยก.)", "Robert Brown (บศ.สยก.)", "Lisa Anderson (ศศ.C ปค.)"];
 
 const mockSearchResults: ToDoItem[] = MOCK_MOC_REQUESTS.map((req, index) => {
   const typeOfChangeName = TYPE_OF_CHANGE_OPTIONS.find(t => t.id === req.typeOfChange)?.name || req.typeOfChange;
