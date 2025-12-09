@@ -33,7 +33,7 @@ interface AdminPageProps {
 
 export const AdminPage = ({ onBack, setSubPage }: AdminPageProps) => {
   return (
-    <div className="pt-20 animate-in fade-in duration-500">
+    <div className="pt-20 animate-in fade-in duration-500 mt-8">
       <h1 className="text-2xl font-bold text-[#1d3654] mb-8">Admin Panel</h1>
       <AdminMenuSection
         title="Master Data"

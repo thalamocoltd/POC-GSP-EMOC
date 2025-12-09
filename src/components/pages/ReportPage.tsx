@@ -10,7 +10,7 @@ interface ReportPageProps {
 
 export const ReportPage = ({ onBack }: ReportPageProps) => {
   return (
-    <div className="pt-20 space-y-6 animate-in fade-in duration-500">
+    <div className="pt-20 space-y-6 animate-in fade-in duration-500 mt-8">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#1d3654] mb-2">Reports & Dashboard</h1>

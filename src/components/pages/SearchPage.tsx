@@ -152,10 +152,10 @@ const ProgressTracker = ({ process, status }: { process: ProcessType, status: st
             // Current step
             if (status === "Rejected") {
               colorClass = "text-red-500 fill-red-500";
-               Icon = XCircle;
+              Icon = XCircle;
             } else if (status === "Completed") {
               colorClass = "text-green-500 fill-green-500";
-               Icon = CheckCircle2;
+              Icon = CheckCircle2;
             } else {
               colorClass = "text-amber-500 fill-amber-500"; // In Progress
               Icon = Circle;
@@ -164,7 +164,7 @@ const ProgressTracker = ({ process, status }: { process: ProcessType, status: st
 
           return (
             <div key={step} className="relative group">
-               <Icon className={cn("w-4 h-4", colorClass)} />
+              <Icon className={cn("w-4 h-4", colorClass)} />
             </div>
           );
         })}
@@ -296,7 +296,7 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
   };
 
   return (
-    <div className="pt-20 space-y-6 animate-in fade-in duration-500">
+    <div className="pt-20 space-y-6 animate-in fade-in duration-500 mt-8">
       <h1 className="text-2xl font-bold text-[#1d3654] mb-6">Search MOC Requests</h1>
 
       {/* Search Criteria Section */}
@@ -486,171 +486,176 @@ export const SearchPage = ({ onBack }: SearchPageProps) => {
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                <thead className="bg-[#F8FAFC] border-b border-gray-200">
-                  <tr>
-                    <th
-                      className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
-                      onClick={() => handleSort('mocNo')}
-                    >
-                      <div className="flex items-center gap-2">
-                        MOC No
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
-                      onClick={() => handleSort('title')}
-                    >
-                      <div className="flex items-center gap-2">
-                        MOC Title
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Type of Change
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Length of Change
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[250px]">
-                      Task
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Part
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
-                      onClick={() => handleSort('champion')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Project Engineer
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                    <th
-                      className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
-                      onClick={() => handleSort('lastUpdate')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Last Update
-                        <ArrowUpDown className="w-3 h-3" />
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {paginatedData.length > 0 ? (
-                    paginatedData.map((item, index) => (
-                      <tr
-                        key={item.id}
-                        className={cn(
-                          "group transition-colors hover:bg-blue-50/50",
-                          index % 2 === 0 ? "bg-white" : "bg-[#F8FAFC]/50"
-                        )}
+                  <thead className="bg-[#F8FAFC] border-b border-gray-200">
+                    <tr>
+                      <th
+                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort('mocNo')}
                       >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            type="button"
-                            className="font-medium text-[#006699] hover:underline cursor-pointer focus:outline-none text-left"
-                          >
-                            {item.mocNo}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button
-                            type="button"
-                            className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer focus:outline-none text-left"
-                          >
-                            {item.title}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={cn("shadow-none font-medium rounded-full px-3", getTypeOfChangeColor(item.typeOfChange))}>
-                            {item.typeOfChange}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge className={cn("shadow-none font-medium rounded-full px-3", getLengthOfChangeColor(item.lengthOfChange))}>
-                            {item.lengthOfChange}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 w-[250px]">
-                          <span className="text-sm text-gray-900 font-medium block truncate">
-                            {item.task}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <ProgressTracker process={item.process as ProcessType} status={item.status} />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-700 font-medium">{item.champion}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-600">{item.lastUpdate}</span>
+                        <div className="flex items-center gap-2">
+                          MOC No
+                          <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort('title')}
+                      >
+                        <div className="flex items-center gap-2">
+                          MOC Title
+                          <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Type of Change
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Length of Change
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-[250px]">
+                        Task
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Part
+                      </th>
+                      <th
+                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort('champion')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Project Engineer
+                          <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
+                        onClick={() => handleSort('lastUpdate')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Last Update
+                          <ArrowUpDown className="w-3 h-3" />
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {paginatedData.length > 0 ? (
+                      paginatedData.map((item, index) => (
+                        <tr
+                          key={item.id}
+                          className={cn(
+                            "group transition-colors hover:bg-blue-50/50",
+                            index % 2 === 0 ? "bg-white" : "bg-[#F8FAFC]/50"
+                          )}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              type="button"
+                              className="font-medium text-[#006699] hover:underline cursor-pointer focus:outline-none text-left"
+                            >
+                              {item.mocNo}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer focus:outline-none text-left"
+                                >
+                                  {item.title}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>{item.title}</TooltipContent>
+                            </Tooltip>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge className={cn("shadow-none font-medium rounded-full px-3", getTypeOfChangeColor(item.typeOfChange))}>
+                              {item.typeOfChange}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge className={cn("shadow-none font-medium rounded-full px-3", getLengthOfChangeColor(item.lengthOfChange))}>
+                              {item.lengthOfChange}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 w-[250px]">
+                            <span className="text-sm text-gray-900 font-medium block truncate">
+                              {item.task}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <ProgressTracker process={item.process as ProcessType} status={item.status} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-700 font-medium">{item.champion}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-600">{item.lastUpdate}</span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                          No results found
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
-                        No results found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Pagination Controls */}
-          {filteredData.length > 0 && (
-            <div className="pt-2 flex items-center justify-between border-t border-gray-100">
-              <div className="text-sm text-gray-500">
-                Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> of <span className="font-medium">{filteredData.length}</span> results
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
-                  className="h-8 w-8 text-gray-400 border-gray-200"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-
-                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-                  let pageNum = i + 1;
-                  if (totalPages > 5 && currentPage > 3) {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  if (pageNum > totalPages) return null;
-
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={currentPage === pageNum ? "bg-[#006699] hover:bg-[#005c8a] text-white" : "border-gray-200"}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
-                  className="h-8 w-8 text-gray-400 border-gray-200"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-          )}
+
+            {/* Pagination Controls */}
+            {filteredData.length > 0 && (
+              <div className="pt-2 flex items-center justify-between border-t border-gray-100">
+                <div className="text-sm text-gray-500">
+                  Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> of <span className="font-medium">{filteredData.length}</span> results
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    className="h-8 w-8 text-gray-400 border-gray-200"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+
+                  {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                    let pageNum = i + 1;
+                    if (totalPages > 5 && currentPage > 3) {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    if (pageNum > totalPages) return null;
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={currentPage === pageNum ? "bg-[#006699] hover:bg-[#005c8a] text-white" : "border-gray-200"}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    className="h-8 w-8 text-gray-400 border-gray-200"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </TooltipProvider>
       )}

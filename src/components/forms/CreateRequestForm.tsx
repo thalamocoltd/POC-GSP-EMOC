@@ -57,8 +57,8 @@ const DEMO_AUTOFILL_DATA_NORMAL: Partial<InitiationFormData> = {
   priorityId: "priority-1",
   areaId: "area-1",
   unitId: "unit-1-1",
-  estimatedDurationStart: "06/12/2025",
-  estimatedDurationEnd: "08/12/2025",
+  estimatedDurationStart: "2025-12-06",
+  estimatedDurationEnd: "2025-12-08",
   tpmLossType: "tpm-4",
   lossEliminateValue: 500000,
   detailOfChange: "Replace Pump P-101 motor from IE1 to IE3 efficiency class to improve efficiency and reduce energy consumption. Specifications: 75 kW, 380V, 50Hz. Motor brand: Siemens 1LE1 series with premium efficiency rating.",
@@ -108,8 +108,8 @@ const DEMO_AUTOFILL_DATA_EMERGENCY: Partial<InitiationFormData> = {
   priorityId: "priority-2",
   areaId: "area-2",
   unitId: "unit-2-2",
-  estimatedDurationStart: "04/12/2025",
-  estimatedDurationEnd: "05/12/2025",
+  estimatedDurationStart: "2025-12-04",
+  estimatedDurationEnd: "2025-12-05",
   tpmLossType: "tpm-1",
   lossEliminateValue: 1200000,
   detailOfChange: "Emergency replacement of seal assembly in Compressor C-205 main housing. Seal failure detected during routine inspection with visible oil leakage. Current seals model: XYZ-3000A, replacement model: XYZ-3000B upgraded seal assembly. Temporary measures in place but permanent replacement required within 24 hours to prevent equipment damage.",
@@ -152,6 +152,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
   const { setErrors: setContextErrors } = useValidationErrors();
   const [hasReportedErrors, setHasReportedErrors] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState<InitiationFormData>({
@@ -418,6 +419,8 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
     const { isValid, errors: validationErrors } = validateAll();
     if (isValid) {
       console.log("Form Valid & Submitted:", formData);
+      // Call the onSubmit callback with form data
+      onSubmit(formData);
       // Show success dialog instead of alert
       setShowSubmitDialog(true);
     } else {
@@ -429,6 +432,8 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
   const handleSubmitConfirm = () => {
     setShowSubmitDialog(false);
     setIsFormDirty(false);
+    setIsExiting(true);
+    // Immediately navigate back to dashboard
     onBack();
   };
 
@@ -445,7 +450,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="max-w-4xl mx-auto pb-32 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+      <div className={isExiting ? "max-w-4xl mx-auto pb-32 pt-6 relative animate-out fade-out slide-out-to-top-4 duration-400" : "max-w-4xl mx-auto pb-32 pt-6 relative animate-in fade-in slide-in-from-bottom-4 duration-500"}>
 
         {/* Header Actions */}
         <div className="flex items-center justify-between mb-6">

@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
-import { TaskStatus } from "../../types/task-cards";
+import { TaskStatus, TechnicalDiscipline, TechnicalReviewApprovalRow } from "../../types/task-cards";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId, MOCK_MOC_REQUESTS } from "../../lib/emoc-data";
 import { formatFileSize, createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { ProcessingOverlay } from "../ui/ProcessingOverlay";
@@ -254,8 +254,38 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
     }, 2100);
   };
 
+  // Validation function for Item 1: At least one discipline must have team member assigned (not N/A)
+  const validateAssignedDisciplines = (disciplines: TechnicalDiscipline[]): boolean => {
+    return disciplines.some(d => d.teamMember !== null && !d.notApplicable);
+  };
+
+  // Transformation function: Build approval rows from assigned disciplines
+  const buildApprovalRowsFromDisciplines = (disciplines: TechnicalDiscipline[]): TechnicalReviewApprovalRow[] => {
+    return disciplines
+      .filter(d => !d.notApplicable && d.teamMember !== null) // Exclude N/A even if team member selected
+      .map(d => {
+        const teamMember = AVAILABLE_PEOPLE.find(p => p.id === d.teamMember);
+        return {
+          id: `approval-${d.id}`,
+          discipline: d.name,
+          taTeam: teamMember?.name || '',
+          directManager: d.directManager || '',
+          status: null,
+          remark: ''
+        };
+      });
+  };
+
   // Review Task Approve Handler
   const handleReviewApprove = (taskIndex: number) => {
+    // Item 1: Validate before submission
+    if (taskIndex === 0) {
+      if (!validateAssignedDisciplines(reviewDisciplines)) {
+        alert('Please assign at least one team member to a discipline (without marking it as Not Applicable) before submitting.');
+        return;
+      }
+    }
+
     setProcessingMessages([
       "Processing approval...",
       "Updating task status...",
@@ -273,6 +303,12 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
         }
         return newStatuses;
       });
+
+      // Item 1: Sync assigned disciplines to Item 2 approval rows
+      if (taskIndex === 0) {
+        const filteredRows = buildApprovalRowsFromDisciplines(reviewDisciplines);
+        setReviewApprovalRows(filteredRows);
+      }
 
       // Scroll to next task
       if (taskIndex + 1 < reviewTaskStatuses.length) {

@@ -170,12 +170,12 @@ const ProgressTracker = ({ process, status }: { process: ProcessType, status: st
       <span className={cn("text-xs font-bold uppercase tracking-wider", getProcessTextColor(process))}>
         {process}
       </span>
-      
+
       {/* Progress Icons */}
       <div className="flex items-center gap-2">
         {PROCESS_ORDER.map((step, index) => {
           let colorClass = "text-gray-200 fill-gray-100"; // Default/Pending
-          let Icon = Circle; 
+          let Icon = Circle;
 
           if (index < currentIndex) {
             // Completed steps
@@ -185,19 +185,19 @@ const ProgressTracker = ({ process, status }: { process: ProcessType, status: st
             // Current step
             if (status === "Rejected") {
               colorClass = "text-red-500 fill-red-500";
-               Icon = XCircle;
+              Icon = XCircle;
             } else if (status === "Completed") {
               colorClass = "text-green-500 fill-green-500";
-               Icon = CheckCircle2;
+              Icon = CheckCircle2;
             } else {
               colorClass = "text-amber-500 fill-amber-500"; // In Progress
-              Icon = Circle; 
+              Icon = Circle;
             }
           }
 
           return (
             <div key={step} className="relative group">
-               <Icon className={cn("w-4 h-4", colorClass)} />
+              <Icon className={cn("w-4 h-4", colorClass)} />
             </div>
           );
         })}
@@ -271,32 +271,32 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
   return (
     <TooltipProvider>
       <div className="space-y-6 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100">
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-[#1d3654]">Related MOCs</h2>
             <p className="text-sm text-gray-500">Track and manage your MOC requests</p>
           </div>
-          
+
           {/* Legend */}
           <div className="flex items-center gap-4 text-xs text-gray-600 bg-gray-50 px-4 py-2 rounded-lg">
-             <div className="flex items-center gap-1.5">
-               <CheckCircle2 className="w-4 h-4 text-green-500 fill-green-500" />
-               <span>Completed</span>
-             </div>
-             <div className="flex items-center gap-1.5">
-               <Circle className="w-4 h-4 text-amber-500 fill-amber-500" />
-               <span>In Progress</span>
-             </div>
-             <div className="flex items-center gap-1.5">
-               <XCircle className="w-4 h-4 text-red-500 fill-red-500" />
-               <span>Rejected</span>
-             </div>
-             <div className="flex items-center gap-1.5">
-               <Circle className="w-4 h-4 text-gray-200 fill-gray-100" />
-               <span>Pending</span>
-             </div>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-green-500 fill-green-500" />
+              <span>Completed</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Circle className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <span>In Progress</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <XCircle className="w-4 h-4 text-red-500 fill-red-500" />
+              <span>Rejected</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Circle className="w-4 h-4 text-gray-200 fill-gray-100" />
+              <span>Pending</span>
+            </div>
           </div>
         </div>
 
@@ -304,8 +304,8 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input 
-              placeholder="Search MOC No, Title, Type..." 
+            <Input
+              placeholder="Search MOC No, Title, Type..."
               className="pl-10 bg-white border-gray-200"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -368,7 +368,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
             <table className="w-full">
               <thead className="bg-[#F8FAFC] border-b border-gray-200">
                 <tr>
-                  <th 
+                  <th
                     className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
                     onClick={() => handleSort('mocNo')}
                   >
@@ -377,7 +377,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                       <ArrowUpDown className="w-3 h-3" />
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
                     onClick={() => handleSort('title')}
                   >
@@ -407,7 +407,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                       <ArrowUpDown className="w-3 h-3" />
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition-colors"
                     onClick={() => handleSort('lastUpdate')}
                   >
@@ -420,8 +420,8 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {paginatedData.map((moc, index) => (
-                  <tr 
-                    key={moc.id} 
+                  <tr
+                    key={moc.id}
                     className={cn(
                       "group transition-colors hover:bg-blue-50/50",
                       index % 2 === 0 ? "bg-white" : "bg-[#F8FAFC]/50"
@@ -436,12 +436,18 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                       </button>
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => onViewRequest?.(moc.mocNo, moc.title, getStepFromProcess(moc.process))}
-                        className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer text-left focus:outline-none"
-                      >
-                        {moc.title}
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => onViewRequest?.(moc.mocNo, moc.title, getStepFromProcess(moc.process))}
+                            className="text-sm text-[#006699] font-medium block truncate max-w-[250px] hover:underline cursor-pointer text-left focus:outline-none"
+                          >
+                            {moc.title}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>{moc.title}</TooltipContent>
+                      </Tooltip>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge className={cn("shadow-none font-medium rounded-full px-3", getTypeOfChangeColor(moc.typeOfChange))}>
@@ -459,7 +465,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                       <ProgressTracker process={moc.process} status={moc.status} />
+                      <ProgressTracker process={moc.process} status={moc.status} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-700 font-medium">{moc.projectEngineer}</span>
@@ -474,7 +480,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
 
             {paginatedData.length === 0 && (
               <div className="p-12 text-center text-gray-500">
-                 No MOCs found matching your filters.
+                No MOCs found matching your filters.
               </div>
             )}
           </div>
@@ -486,9 +492,9 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
             Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> of <span className="font-medium">{filteredData.length}</span> results
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="icon" 
+            <Button
+              variant="outline"
+              size="icon"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(p => p - 1)}
               className="h-8 w-8 text-gray-400 border-gray-200"
@@ -496,32 +502,32 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
               <ChevronLeft className="w-4 h-4" />
             </Button>
             {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
-               let pageNum = i + 1;
-               if (totalPages > 5 && currentPage > 3) {
-                 pageNum = currentPage - 3 + i;
-                 if (pageNum > totalPages) pageNum = i + (totalPages - 4);
-               }
-               
-               if (pageNum <= 0) return null;
+              let pageNum = i + 1;
+              if (totalPages > 5 && currentPage > 3) {
+                pageNum = currentPage - 3 + i;
+                if (pageNum > totalPages) pageNum = i + (totalPages - 4);
+              }
 
-               return (
-                 <Button
-                   key={pageNum}
-                   variant={currentPage === pageNum ? "default" : "outline"}
-                   size="icon"
-                   onClick={() => setCurrentPage(pageNum)}
-                   className={cn(
-                     "h-8 w-8 font-mono", 
-                     currentPage === pageNum ? "bg-[#006699] hover:bg-[#005c8a]" : "text-gray-600"
-                   )}
-                 >
-                   {pageNum}
-                 </Button>
-               );
+              if (pageNum <= 0) return null;
+
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={cn(
+                    "h-8 w-8 font-mono",
+                    currentPage === pageNum ? "bg-[#006699] hover:bg-[#005c8a]" : "text-gray-600"
+                  )}
+                >
+                  {pageNum}
+                </Button>
+              );
             })}
-            <Button 
-              variant="outline" 
-              size="icon" 
+            <Button
+              variant="outline"
+              size="icon"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(p => p + 1)}
               className="h-8 w-8 text-gray-400 border-gray-200"
