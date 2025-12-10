@@ -21,10 +21,10 @@ class ClaudeApiService {
    */
   async sendQuickFillRequest(prompt: string, connectionId: number): Promise<any> {
     try {
-      // Prepare request payload
+      // Prepare request payload - backend expects 'request' field and connectionId as string
       const payload = {
-        prompt: JSON.stringify(prompt),
-        connectionId: connectionId
+        request: prompt,
+        connectionId: connectionId.toString()
       };
 
       // Call external API with 30-second timeout
@@ -98,10 +98,10 @@ class ClaudeApiService {
     connectionId: number
   ): Promise<{ connectionId: string; result: { Summary: string; BenefitValue: number } }> {
     try {
-      // Prepare request payload
+      // Prepare request payload - backend expects 'request' field and connectionId as string
       const payload = {
-        prompt: prompt, // Send as plain string (NOT JSON.stringify)
-        connectionId: connectionId
+        request: prompt,
+        connectionId: connectionId.toString()
       };
 
       // Call external API with 60-second timeout (benefit calc may take longer)
