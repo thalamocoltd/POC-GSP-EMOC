@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { InitiationFormData } from '../types/emoc';
 
 export interface Message {
   role: 'ai' | 'user';
@@ -17,7 +18,7 @@ interface AIContextType {
   setChatOpen: (open: boolean) => void;
   activeFieldId: string | null;
   setActiveFieldId: (id: string | null) => void;
-  openAssistantForField: (fieldId: string, question: string, onAutoFill: (value: any) => void) => void;
+  openAssistantForField: (fieldId: string, question: string, onAutoFill: (value: any) => void, formData?: Partial<InitiationFormData>) => void;
   triggerAutoFill: (value: any) => void;
   lastQuestion: string | null;
   messages: Message[];
@@ -30,6 +31,8 @@ interface AIContextType {
   validationErrorsToReport: Record<string, string> | null;
   shouldAutoSubmitQuestion: boolean;
   setShouldAutoSubmitQuestion: (should: boolean) => void;
+  formContext: Partial<InitiationFormData>;
+  setFormContext: (context: Partial<InitiationFormData>) => void;
 }
 
 const AIContext = createContext<AIContextType | undefined>(undefined);
@@ -43,6 +46,7 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
   const [errorAutoFillCallback, setErrorAutoFillCallback] = useState<((field: string, value: any) => void) | null>(null);
   const [validationErrorsToReport, setValidationErrorsToReport] = useState<Record<string, string> | null>(null);
   const [shouldAutoSubmitQuestion, setShouldAutoSubmitQuestion] = useState(false);
+  const [formContext, setFormContext] = useState<Partial<InitiationFormData>>({});
   const [messages, setMessages] = useState<Message[]>([
     { role: 'ai', content: "Hello! How can I assist you with your MOC requests or plant operations today?" }
   ]);
@@ -51,17 +55,23 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
     setMessages(prev => [...prev, message]);
   };
 
-  const openAssistantForField = (fieldId: string, question: string, onAutoFill: (value: any) => void) => {
+  const openAssistantForField = (fieldId: string, question: string, onAutoFill: (value: any) => void, formData?: Partial<InitiationFormData>) => {
     setActiveFieldId(fieldId);
     setLastQuestion(question);
     setAutoFillCallback(() => onAutoFill);
     setShouldAutoSubmitQuestion(true);
+    if (formData) {
+      setFormContext(formData);
+    }
     setChatOpen(true);
   };
 
   const triggerAutoFill = (value: any) => {
     if (autoFillCallback) {
-      autoFillCallback(value);
+      const actualCallback = autoFillCallback();
+      if (typeof actualCallback === 'function') {
+        actualCallback(value);
+      }
     }
   };
 
@@ -102,7 +112,9 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
       errorAutoFillCallback,
       validationErrorsToReport,
       shouldAutoSubmitQuestion,
-      setShouldAutoSubmitQuestion
+      setShouldAutoSubmitQuestion,
+      formContext,
+      setFormContext
     }}>
       {children}
     </AIContext.Provider>

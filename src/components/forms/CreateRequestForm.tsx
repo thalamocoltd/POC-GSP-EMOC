@@ -354,16 +354,17 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
             type="button"
             onClick={() => openAssistantForField(
               fieldId,
-              `How should I fill the ${label} field?`,
-              (val) => handleAutoFill(fieldId, val)
+              `Help me fill the "${label}" field. I'll provide more project context in our conversation.`,
+              (val) => handleAutoFill(fieldId, val),
+              formData // Pass current form data for context-aware guidance
             )}
-            className="text-[#006699] opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 hover:bg-blue-50 rounded-full"
+            className="text-[#006699] opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 hover:bg-blue-50 rounded-full cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="right" className="bg-[#1d3654] text-white border-none shadow-md">
-          Ask AI
+          Ask AI Expert
         </TooltipContent>
       </Tooltip>
     </div>
