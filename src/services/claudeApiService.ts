@@ -31,8 +31,8 @@ class ClaudeApiService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      // Use relative path so Vite proxy can intercept and forward to backend
-      const response = await fetch('/api/Ai/ask', {
+      // Use absolute path to external server
+      const response = await fetch('http://72.61.117.172:8090/api/Ai/ask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,8 +108,8 @@ class ClaudeApiService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      // Use relative path so Vite proxy can intercept and forward to backend
-      const response = await fetch('/api/Ai/ask2', {
+      // Use absolute path to external server
+      const response = await fetch('http://72.61.117.172:8090/api/Ai/ask2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
