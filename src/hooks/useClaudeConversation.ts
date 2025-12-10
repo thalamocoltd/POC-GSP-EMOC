@@ -1,21 +1,13 @@
-// Hook for managing Claude API conversations with field context
+// Hook for managing n8n webhook conversations with field context
 
 import { useState, useCallback, useRef } from 'react';
 import { claudeApiService } from '../services/claudeApiService';
-import { getFieldPrompt } from '../lib/fieldPrompts';
-import { CLAUDE_TOOLS } from '../lib/claudeFunctionTools';
-import {
-  ConversationMessage,
-  ConversationState,
-  UseClaudeConversationReturn,
-  ClaudeMessage,
-  ClaudeToolCallResult,
-} from '../types/claude';
+import { ConversationMessage, ConversationState, UseClaudeConversationReturn } from '../types/claude';
 import { InitiationFormData } from '../types/emoc';
 
 /**
- * Hook for managing multi-turn conversations with Claude API
- * Handles conversation state, message history, and tool calls
+ * Hook for managing multi-turn conversations with n8n webhook
+ * Handles conversation state and message history
  */
 export function useClaudeConversation(
   formContext: Partial<InitiationFormData>
@@ -28,13 +20,16 @@ export function useClaudeConversation(
     intermediateData: {},
   });
 
-  // Keep conversation history ref for API calls
+  // Keep conversation history ref for state management
   const conversationHistoryRef = useRef<
     Array<{ role: 'user' | 'assistant'; content: string }>
   >([]);
 
   // Track if we're in the middle of starting a conversation
   const startingConversationRef = useRef(false);
+
+  // Store connection ID for conversation session
+  const connectionIdRef = useRef<number | null>(null);
 
   /**
    * Start a new conversation for a specific field
@@ -55,10 +50,12 @@ export function useClaudeConversation(
       });
 
       conversationHistoryRef.current = [];
+      // Generate new connection ID for this conversation session
+      connectionIdRef.current = claudeApiService.generateConnectionId();
 
       // Immediately send the initial question
       setTimeout(() => {
-        console.log('Sending initial question to Claude...');
+        console.log('Sending initial question to webhook...');
         sendMessage(initialQuestion, fieldId);
         startingConversationRef.current = false;
       }, 0);
@@ -67,24 +64,20 @@ export function useClaudeConversation(
   );
 
   /**
-   * Send a message to Claude and handle response
+   * Send a message to webhook and handle response
    */
   const sendMessage = useCallback(
-    async (
-      userMessage: string,
-      fieldId?: string
-    ): Promise<void> => {
+    async (userMessage: string, fieldId?: string): Promise<void> => {
       const currentFieldId = fieldId || state.fieldId;
       if (!currentFieldId) {
         console.error('No field ID specified for conversation');
         return;
       }
 
-      // Validate API is ready
-      if (!claudeApiService.isReady()) {
+      if (!userMessage.trim()) {
         setState((prev) => ({
           ...prev,
-          error: 'Claude API is not configured. Please check your .env.local file.',
+          error: 'Message cannot be empty',
           isLoading: false,
         }));
         return;
@@ -111,32 +104,28 @@ export function useClaudeConversation(
       }));
 
       try {
-        // Get field-specific system prompt
-        const systemPrompt = getFieldPrompt(currentFieldId, formContext);
+        // Use existing connection ID or generate new one
+        const connectionId = connectionIdRef.current || claudeApiService.generateConnectionId();
+        if (!connectionIdRef.current) {
+          connectionIdRef.current = connectionId;
+        }
 
-        // Call Claude API
-        const response = await claudeApiService.sendMessage({
-          messages: conversationHistoryRef.current,
-          systemPrompt,
-          tools: CLAUDE_TOOLS,
-          maxTokens: 800, // Reduced from 2048 - Haiku is efficient
-        });
+        // Send message to webhook
+        const aiResponse = await claudeApiService.sendChatMessage(userMessage, connectionId);
 
-        // Add assistant message to history (only if there's text content)
-        // API doesn't allow empty messages except as final assistant message
-        if (response.content.trim()) {
+        // Add assistant message to history
+        if (aiResponse.trim()) {
           conversationHistoryRef.current.push({
             role: 'assistant',
-            content: response.content,
+            content: aiResponse,
           });
         }
 
         const assistantMessage: ConversationMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: response.content || '(Processing your request...)',
+          content: aiResponse || '(No response from server)',
           timestamp: new Date(),
-          toolCalls: response.toolCalls,
         };
 
         setState((prev) => ({
@@ -145,13 +134,10 @@ export function useClaudeConversation(
           isLoading: false,
         }));
       } catch (error) {
-        console.error('Claude API error:', error);
+        console.error('Webhook error:', error);
 
-        // Handle ClaudeError objects (from claudeApiService)
         let errorMessage = 'An error occurred while processing your request';
-        if (typeof error === 'object' && error !== null && 'userMessage' in error) {
-          errorMessage = (error as any).userMessage;
-        } else if (error instanceof Error) {
+        if (error instanceof Error) {
           errorMessage = error.message;
         }
 
@@ -162,79 +148,15 @@ export function useClaudeConversation(
         }));
       }
     },
-    [state.fieldId, formContext]
+    [state.fieldId]
   );
 
   /**
-   * Handle tool calls from Claude responses
-   * Determines action needed based on tool type
+   * Handle tool calls - not used for simple webhook chat
+   * Kept for backwards compatibility with existing type definitions
    */
-  const handleToolCall = useCallback((toolCall: ClaudeToolCallResult) => {
-    const { name, input } = toolCall;
-
-    switch (name) {
-      case 'fill_field': {
-        // Return structured data for auto-filling
-        return {
-          type: 'fill_field' as const,
-          fieldId: input.fieldId,
-          value: input.value,
-          confidence: input.confidence,
-          reasoning: input.reasoning,
-        };
-      }
-
-      case 'ask_followup': {
-        // Return question data for rendering choice buttons
-        return {
-          type: 'ask_followup' as const,
-          question: input.question,
-          questionType: input.questionType,
-          choices: input.choices,
-          context: input.context,
-        };
-      }
-
-      case 'show_calculation': {
-        // Return calculation breakdown for display
-        return {
-          type: 'show_calculation' as const,
-          title: input.title,
-          steps: input.steps,
-          finalResult: input.finalResult,
-          finalUnit: input.finalUnit,
-          assumptions: input.assumptions,
-          confidenceLevel: input.confidenceLevel,
-        };
-      }
-
-      case 'request_confirmation': {
-        // Return confirmation request data
-        return {
-          type: 'request_confirmation' as const,
-          summary: input.summary,
-          value: input.value,
-          fieldId: input.fieldId,
-          alternativeOptions: input.alternativeOptions,
-        };
-      }
-
-      case 'provide_guidance': {
-        // Return guidance for display
-        return {
-          type: 'provide_guidance' as const,
-          fieldId: input.fieldId,
-          guidance: input.guidance,
-          examples: input.examples,
-          suggestedFormat: input.suggestedFormat,
-        };
-      }
-
-      default: {
-        console.warn(`Unknown tool type: ${name}`);
-        return null;
-      }
-    }
+  const handleToolCall = useCallback(() => {
+    return null;
   }, []);
 
   /**
@@ -262,6 +184,7 @@ export function useClaudeConversation(
       intermediateData: {},
     });
     conversationHistoryRef.current = [];
+    connectionIdRef.current = null;
   }, []);
 
   /**
@@ -286,6 +209,14 @@ export function useClaudeConversation(
     });
   }, []);
 
+  /**
+   * Generate a new connection ID
+   * Can be used to start a new conversation thread
+   */
+  const generateNewConnectionId = useCallback(() => {
+    connectionIdRef.current = claudeApiService.generateConnectionId();
+  }, []);
+
   return {
     // State
     fieldId: state.fieldId,
@@ -301,6 +232,7 @@ export function useClaudeConversation(
     updateIntermediateData,
     resetConversation,
     addMessage,
+    generateNewConnectionId,
   };
 }
 

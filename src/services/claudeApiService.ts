@@ -1,90 +1,25 @@
-// Claude API Service for GSP eMoC Chat Integration
-
-import Anthropic from '@anthropic-ai/sdk';
-import {
-  ClaudeApiCallParams,
-  ClaudeApiResponse,
-  ClaudeToolCallResult,
-  ClaudeError,
-  ClaudeErrorType,
-} from '../types/claude';
-
-interface MessageParam {
-  role: 'user' | 'assistant';
-  content: string;
-}
+// AI Service for GSP eMoC Chat Integration
+// Handles Quick Fill, Estimated Benefit, and Chat modes with n8n webhook
 
 /**
- * Service for communicating with Claude API
- * Handles API calls, streaming, error handling, and tool parsing
+ * Service for communicating with external AI APIs
+ * Handles Quick Fill requests, Estimated Benefit calculations, and chat messages
  */
 class ClaudeApiService {
-  private client: Anthropic;
-  private apiKey: string;
-  private isConfigured: boolean = false;
-
-  constructor() {
-    this.apiKey = import.meta.env.VITE_CLAUDE_API_KEY || '';
-    this.isConfigured = this.validateApiKey();
-
-    if (this.isConfigured) {
-      this.client = new Anthropic({
-        apiKey: this.apiKey,
-        dangerouslyAllowBrowser: true, // Demo only - remove in production
-      });
-    } else {
-      console.warn(
-        'Claude API not configured. Please set VITE_CLAUDE_API_KEY in .env.local'
-      );
-    }
-  }
-
   /**
-   * Validate API key format
+   * Generate a unique numeric connection ID for API requests
    */
-  validateApiKey(): boolean {
-    if (!this.apiKey) {
-      console.error('VITE_CLAUDE_API_KEY is not set');
-      return false;
-    }
-
-    if (!this.apiKey.startsWith('sk-ant-')) {
-      console.error('Invalid API key format. Should start with sk-ant-');
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Check if Claude API is properly configured
-   */
-  isReady(): boolean {
-    return this.isConfigured;
-  }
-
-  /**
-   * Generate a unique connection ID for Quick Fill API requests
-   */
-  generateConnectionId(): string {
-    // Use crypto.randomUUID() if available, otherwise fallback to timestamp-based UUID
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-
-    // Fallback: Generate UUID v4-like string using timestamp and random numbers
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 15);
-    return `${timestamp}-${random}-${Math.random().toString(36).substring(2, 15)}`;
+  generateConnectionId(): number {
+    return Date.now();
   }
 
   /**
    * Send Quick Fill request to external API
    * @param prompt - User's description of the MOC request
-   * @param connectionId - Unique connection ID for this request
+   * @param connectionId - Unique numeric connection ID for this request
    * @returns Parsed form data from API response
    */
-  async sendQuickFillRequest(prompt: string, connectionId: string): Promise<any> {
+  async sendQuickFillRequest(prompt: string, connectionId: number): Promise<any> {
     try {
       // Prepare request payload
       const payload = {
@@ -155,12 +90,12 @@ class ClaudeApiService {
   /**
    * Send Estimated Benefit request to external API (ask2 endpoint)
    * @param prompt - Formatted conversation history or system prompt + user message
-   * @param connectionId - Unique connection ID for this session
+   * @param connectionId - Unique numeric connection ID for this session
    * @returns Parsed benefit calculation with Summary and BenefitValue
    */
   async sendEstimatedBenefitRequest(
     prompt: string,
-    connectionId: string
+    connectionId: number
   ): Promise<{ connectionId: string; result: { Summary: string; BenefitValue: number } }> {
     try {
       // Prepare request payload
@@ -234,245 +169,67 @@ class ClaudeApiService {
     }
   }
 
-  // DEPRECATED: Old Quick Fill implementation using Claude API - kept for future reference
   /**
-   * Send a message to Claude and receive response with tool calls
-   * @param params - The API call parameters
-   * @param modelOverride - Optional: Use specific model (e.g., for Haiku vs Sonnet comparison)
-   * @deprecated Use sendQuickFillRequest() for Quick Fill feature. This method is preserved for future use.
+   * Send chat message to n8n webhook
+   * @param userMessage - The user's message
+   * @param connectionId - Unique numeric connection ID for this conversation
+   * @returns AI response text
    */
-  async sendMessage(params: ClaudeApiCallParams, modelOverride?: string): Promise<ClaudeApiResponse> {
-    if (!this.isConfigured) {
-      throw this.createError(
-        'api_key_invalid',
-        'Claude API is not configured',
-        'Please set VITE_CLAUDE_API_KEY in environment variables.'
-      );
-    }
-
+  async sendChatMessage(userMessage: string, connectionId: number): Promise<string> {
     try {
-      // Wrap in timeout (30 seconds) to prevent hanging
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => {
-          reject(new Error('Claude API request timed out after 30 seconds'));
-        }, 30000)
-      );
+      const webhookUrl =
+        import.meta.env.VITE_N8N_WEBHOOK_URL ||
+        'https://n8n.srv1155402.hstgr.cloud/webhook/7d36d1c1-aa69-4bd8-9897-f824de33e3e6';
 
-      const response = await Promise.race([
-        this.client.messages.create({
-          model: modelOverride || import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-20250514',
-          max_tokens: params.maxTokens || 4096,
-          system: params.systemPrompt,
-          messages: params.messages as MessageParam[],
-          tools: params.tools || undefined,
-          temperature: 0.7,
-        }),
-        timeoutPromise
-      ]);
-
-      // Parse response content
-      const textContent = response.content
-        .filter((block: any) => block.type === 'text')
-        .map((block: any) => block.text)
-        .join('\n');
-
-      const toolCalls = response.content
-        .filter((block: any) => block.type === 'tool_use')
-        .map((block: any) => ({
-          name: block.name,
-          input: block.input,
-        }));
-
-      return {
-        content: textContent,
-        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-        stopReason: response.stop_reason as 'end_turn' | 'tool_use' | 'max_tokens',
+      const payload = {
+        chatInput: userMessage,
+        connectionId: connectionId,
       };
-    } catch (error) {
-      return this.handleError(error);
-    }
-  }
 
-  /**
-   * Stream a message from Claude with callback support
-   */
-  async streamMessage(params: {
-    messages: Array<{ role: 'user' | 'assistant'; content: string }>;
-    systemPrompt: string;
-    tools?: any[];
-    onChunk: (chunk: string) => void;
-    onToolCall?: (toolCall: ClaudeToolCallResult) => void;
-    onComplete: () => void;
-    onError: (error: ClaudeError) => void;
-  }): Promise<void> {
-    if (!this.isConfigured) {
-      params.onError(
-        this.createError(
-          'api_key_invalid',
-          'Claude API is not configured',
-          'Please set VITE_CLAUDE_API_KEY in environment variables.'
-        )
-      );
-      return;
-    }
+      // Call webhook with 30-second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    try {
-      const stream = this.client.messages.stream({
-        model: import.meta.env.VITE_CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
-        max_tokens: 4096,
-        system: params.systemPrompt,
-        messages: params.messages,
-        tools: params.tools || undefined,
-        temperature: 0.7,
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-          params.onChunk(event.delta.text);
-        } else if (
-          event.type === 'content_block_start' &&
-          event.content_block.type === 'tool_use'
-        ) {
-          // Tool use started
-          if (params.onToolCall) {
-            // Will be processed when tool_use content block delta occurs
-          }
-        } else if (event.type === 'message_stop') {
-          params.onComplete();
-        }
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Webhook returned status ${response.status}: ${response.statusText}`);
       }
-    } catch (error) {
-      const apiError = this.parseError(error);
-      params.onError(apiError);
-    }
-  }
 
-  /**
-   * Parse tool calls from Claude response
-   */
-  parseToolCalls(content: any[]): ClaudeToolCallResult[] {
-    return content
-      .filter((block) => block.type === 'tool_use')
-      .map((block) => ({
-        name: block.name,
-        input: block.input,
-      }));
-  }
+      const data = await response.json();
 
-  /**
-   * Handle API errors and convert to user-friendly messages
-   */
-  private handleError(error: any): never {
-    const apiError = this.parseError(error);
-    throw apiError;
-  }
+      // Return the AI response text - try multiple possible field names
+      return data.response || data.message || data.text || '';
+    } catch (error: any) {
+      // Handle abort/timeout
+      if (error.name === 'AbortError') {
+        throw new Error('การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง');
+      }
 
-  /**
-   * Parse various error types from Claude API
-   */
-  private parseError(error: any): ClaudeError {
-    if (error instanceof Anthropic.APIError) {
-      // Handle rate limiting
-      if (error.status === 429) {
-        return this.createError(
-          'rate_limit',
-          'API rate limit exceeded',
-          'Too many requests to Claude API. Please wait a moment and try again.'
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(
+          'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต'
         );
       }
 
-      // Handle authentication errors
-      if (error.status === 401) {
-        return this.createError(
-          'api_key_invalid',
-          'Invalid API key',
-          'Configuration error. Please contact system administrator.'
-        );
+      // Handle JSON parsing errors
+      if (error instanceof SyntaxError) {
+        throw new Error('ไม่สามารถประมวลผลข้อมูลจากเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
       }
 
-      // Handle server errors
-      if (error.status >= 500) {
-        return this.createError(
-          'network_error',
-          'Claude API server error',
-          'The Claude API service is temporarily unavailable. Please try again later.'
-        );
-      }
-
-      // Generic API error
-      return this.createError(
-        'invalid_response',
-        `API Error (${error.status}): ${error.message}`,
-        'An unexpected error occurred while communicating with Claude. You can continue filling the form manually.'
-      );
+      // Re-throw with original message or generic error
+      throw new Error(error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ กรุณาลองใหม่อีกครั้ง');
     }
-
-    if (error instanceof Anthropic.APIConnectionError) {
-      return this.createError(
-        'network_error',
-        'Network connection error',
-        'Unable to connect to Claude API. Please check your internet connection.'
-      );
-    }
-
-    if (error instanceof Anthropic.RateLimitError) {
-      return this.createError(
-        'rate_limit',
-        'Rate limit exceeded',
-        'Too many requests. Please wait and try again.'
-      );
-    }
-
-    if (error instanceof Anthropic.AuthenticationError) {
-      return this.createError(
-        'api_key_invalid',
-        'Authentication failed',
-        'Invalid API credentials. Please contact system administrator.'
-      );
-    }
-
-    // Unknown error
-    console.error('Unknown error in Claude API:', error);
-    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
-    return this.createError(
-      'unknown_error',
-      errorMessage,
-      'An unexpected error occurred. You can continue filling the form manually.'
-    );
-  }
-
-  /**
-   * Create a structured error object
-   */
-  private createError(
-    type: ClaudeErrorType,
-    message: string,
-    userMessage: string
-  ): ClaudeError {
-    const recoverable = type !== 'api_key_invalid';
-    const retryable = type === 'rate_limit' || type === 'network_error';
-
-    return {
-      type,
-      message,
-      userMessage,
-      recoverable,
-      retryable,
-    };
-  }
-
-  /**
-   * Get error message suitable for UI display
-   */
-  getErrorMessage(error: ClaudeError): string {
-    return error.userMessage;
-  }
-
-  /**
-   * Check if error is retryable
-   */
-  isRetryable(error: ClaudeError): boolean {
-    return error.retryable;
   }
 }
 
