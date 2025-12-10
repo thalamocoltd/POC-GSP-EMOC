@@ -64,9 +64,184 @@ class ClaudeApiService {
   }
 
   /**
-   * Send a message to Claude and receive response with tool calls
+   * Generate a unique connection ID for Quick Fill API requests
    */
-  async sendMessage(params: ClaudeApiCallParams): Promise<ClaudeApiResponse> {
+  generateConnectionId(): string {
+    // Use crypto.randomUUID() if available, otherwise fallback to timestamp-based UUID
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+
+    // Fallback: Generate UUID v4-like string using timestamp and random numbers
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 15);
+    return `${timestamp}-${random}-${Math.random().toString(36).substring(2, 15)}`;
+  }
+
+  /**
+   * Send Quick Fill request to external API
+   * @param prompt - User's description of the MOC request
+   * @param connectionId - Unique connection ID for this request
+   * @returns Parsed form data from API response
+   */
+  async sendQuickFillRequest(prompt: string, connectionId: string): Promise<any> {
+    try {
+      // Prepare request payload
+      const payload = {
+        prompt: JSON.stringify(prompt),
+        connectionId: connectionId
+      };
+
+      // Call external API with 30-second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      // Use relative path /api/Ai/ask which will be proxied by Vite to http://72.61.117.172:8090
+      const response = await fetch('/api/Ai/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`API returned status ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Parse the nested JSON response
+      if (!data.response) {
+        throw new Error('Invalid API response: missing response field');
+      }
+
+      // Parse the stringified JSON inside response.response
+      const parsedResponse = JSON.parse(data.response);
+
+      if (!parsedResponse.result) {
+        throw new Error('Invalid API response: missing result field');
+      }
+
+      return {
+        connectionId: parsedResponse.connectionId,
+        result: parsedResponse.result
+      };
+
+    } catch (error: any) {
+      // Handle abort/timeout
+      if (error.name === 'AbortError') {
+        throw new Error('การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง');
+      }
+
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
+      }
+
+      // Handle JSON parsing errors
+      if (error instanceof SyntaxError) {
+        throw new Error('ไม่สามารถประมวลผลข้อมูลจากเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
+      }
+
+      // Re-throw with original message or generic error
+      throw new Error(error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ กรุณาลองใหม่อีกครั้ง');
+    }
+  }
+
+  /**
+   * Send Estimated Benefit request to external API (ask2 endpoint)
+   * @param prompt - Formatted conversation history or system prompt + user message
+   * @param connectionId - Unique connection ID for this session
+   * @returns Parsed benefit calculation with Summary and BenefitValue
+   */
+  async sendEstimatedBenefitRequest(
+    prompt: string,
+    connectionId: string
+  ): Promise<{ connectionId: string; result: { Summary: string; BenefitValue: number } }> {
+    try {
+      // Prepare request payload
+      const payload = {
+        prompt: prompt, // Send as plain string (NOT JSON.stringify)
+        connectionId: connectionId
+      };
+
+      // Call external API with 60-second timeout (benefit calc may take longer)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      // Use relative path /api/Ai/ask2 which will be proxied by Vite
+      const response = await fetch('/api/Ai/ask2', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`API returned status ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Parse the nested JSON response
+      if (!data.response) {
+        throw new Error('Invalid API response: missing response field');
+      }
+
+      // Parse the stringified JSON inside response.response
+      const parsedResponse = JSON.parse(data.response);
+
+      if (!parsedResponse.result) {
+        throw new Error('Invalid API response: missing result field');
+      }
+
+      // Validate result structure
+      if (!parsedResponse.result.Summary || typeof parsedResponse.result.BenefitValue !== 'number') {
+        throw new Error('Invalid API response: missing Summary or BenefitValue');
+      }
+
+      return {
+        connectionId: parsedResponse.connectionId,
+        result: parsedResponse.result
+      };
+
+    } catch (error: any) {
+      // Handle abort/timeout
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout. Benefit calculation is taking longer than expected. Please try again.');
+      }
+
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to server. Please check your internet connection.');
+      }
+
+      // Handle JSON parsing errors
+      if (error instanceof SyntaxError) {
+        throw new Error('Unable to process server response. Please try again.');
+      }
+
+      // Re-throw with original message or generic error
+      throw new Error(error.message || 'An unknown error occurred. Please try again.');
+    }
+  }
+
+  // DEPRECATED: Old Quick Fill implementation using Claude API - kept for future reference
+  /**
+   * Send a message to Claude and receive response with tool calls
+   * @param params - The API call parameters
+   * @param modelOverride - Optional: Use specific model (e.g., for Haiku vs Sonnet comparison)
+   * @deprecated Use sendQuickFillRequest() for Quick Fill feature. This method is preserved for future use.
+   */
+  async sendMessage(params: ClaudeApiCallParams, modelOverride?: string): Promise<ClaudeApiResponse> {
     if (!this.isConfigured) {
       throw this.createError(
         'api_key_invalid',
@@ -85,7 +260,7 @@ class ClaudeApiService {
 
       const response = await Promise.race([
         this.client.messages.create({
-          model: import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-20250514',
+          model: modelOverride || import.meta.env.VITE_CLAUDE_MODEL || 'claude-sonnet-4-20250514',
           max_tokens: params.maxTokens || 4096,
           system: params.systemPrompt,
           messages: params.messages as MessageParam[],

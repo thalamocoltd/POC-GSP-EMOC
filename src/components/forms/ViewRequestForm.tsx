@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { cn } from "../ui/utils";
 import { InitiationFormData } from "../../types/emoc";
-import { TaskStatus, TechnicalDiscipline, TechnicalReviewApprovalRow } from "../../types/task-cards";
+import { TaskStatus, TechnicalDiscipline, TechnicalReviewApprovalRow, DocumentReviewItem } from "../../types/task-cards";
 import { AREA_OPTIONS, LENGTH_OF_CHANGE_OPTIONS_ALL, TYPE_OF_CHANGE_OPTIONS, PRIORITY_OPTIONS, BENEFITS_VALUE_OPTIONS, TPM_LOSS_TYPE_OPTIONS, getUnitsByAreaId, MOCK_MOC_REQUESTS } from "../../lib/emoc-data";
 import { formatFileSize, createRiskAssessment, getRiskCodeStyle } from "../../lib/emoc-utils";
 import { ProcessingOverlay } from "../ui/ProcessingOverlay";
@@ -108,11 +108,26 @@ export const ViewRequestForm = ({ id, step, onBack, onStepChange, onNavigateToFo
     if (step === 2) {
       reviewTaskStatuses.forEach((status: TaskStatus, index: number) => {
         if (status === "In Progress") {
-          tasks.push({
-            id: `review-task-${index + 1}`,
-            taskName: REVIEW_TASK_NAMES[index],
-            step: 2,
-          });
+          // Special handling for "Perform Technical Review" (index 2 = task 3)
+          if (index === 2) {
+            // Show document sub-items instead of parent task
+            reviewDocuments.forEach((doc: DocumentReviewItem) => {
+              if (doc.status !== "Completed") {
+                tasks.push({
+                  id: `review-task-3`, // All point to same parent card
+                  taskName: doc.name.replace("Click to fill ", ""), // Clean name
+                  step: 2,
+                });
+              }
+            });
+          } else {
+            // Normal behavior for other tasks
+            tasks.push({
+              id: `review-task-${index + 1}`,
+              taskName: REVIEW_TASK_NAMES[index],
+              step: 2,
+            });
+          }
         }
       });
     }

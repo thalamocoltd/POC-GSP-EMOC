@@ -197,6 +197,39 @@ export const CLAUDE_TOOLS = [
       required: ['fieldId', 'guidance'],
     },
   },
+  // DEPRECATED: Old Quick Fill implementation - kept for future reference
+  // This tool was used with Claude API for bulk extraction
+  // Currently not in use for demo phase (using external API instead)
+  {
+    name: 'bulk_fill_preview',
+    description:
+      'Extract all form fields from user description and show preview before filling (for Quick Fill mode)',
+    input_schema: {
+      type: 'object',
+      properties: {
+        extractedData: {
+          type: 'object',
+          description: 'All extracted form fields as key-value pairs',
+          additionalProperties: true,
+        },
+        confidence: {
+          type: 'string',
+          enum: ['high', 'medium', 'low'],
+          description: 'Your confidence level in the extracted data',
+        },
+        missingFields: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of required fields that could not be extracted from the description',
+        },
+        notes: {
+          type: 'string',
+          description: 'Optional: Additional notes or recommendations for the user',
+        },
+      },
+      required: ['extractedData', 'confidence'],
+    },
+  },
 ];
 
 /**
@@ -260,6 +293,13 @@ export interface ProvideGuidanceInput {
   suggestedFormat?: string;
 }
 
+export interface BulkFillPreviewInput {
+  extractedData: Record<string, any>;
+  confidence: 'high' | 'medium' | 'low';
+  missingFields?: string[];
+  notes?: string;
+}
+
 /**
  * Type guard to check if a tool call is a specific type
  */
@@ -281,4 +321,8 @@ export function isRequestConfirmationCall(input: any): input is RequestConfirmat
 
 export function isProvideGuidanceCall(input: any): input is ProvideGuidanceInput {
   return input && typeof input === 'object' && 'fieldId' in input && 'guidance' in input;
+}
+
+export function isBulkFillPreviewCall(input: any): input is BulkFillPreviewInput {
+  return input && typeof input === 'object' && 'extractedData' in input && 'confidence' in input;
 }

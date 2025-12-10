@@ -251,15 +251,14 @@ export const MOCQualificationWizard = ({
           >
             {validationError ? (
               <>
-                <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-300">
-                  <AlertTriangle className="w-10 h-10 text-red-500" />
+                <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-300">
+                  <AlertTriangle className="w-10 h-10 text-blue-500" />
                 </div>
                 <h2 className="text-2xl font-bold text-[#1C1C1E] mb-3">
-                  Validation Failed
+                  In-Kind Change Detected
                 </h2>
                 <p className="text-[#68737D] mb-8 max-w-md mx-auto">
-                  Minimum 2 "Yes" selections are required to proceed with the MOC initiation.
-                  This change may not meet the criteria for a formal Management of Change process.
+                  This change is an In-Kind change and therefore does not require MOC process.
                 </p>
                 <div className="flex justify-center gap-3">
                   <Button

@@ -151,3 +151,21 @@ export interface UseClaudeConversationReturn {
   updateIntermediateData: (key: string, value: any) => void;
   resetConversation: () => void;
 }
+
+// Estimated Benefit API Types
+export interface EstimatedBenefitRequest {
+  prompt: string;
+  connectionId: string;
+}
+
+export interface EstimatedBenefitResponse {
+  response: string; // JSON stringified
+}
+
+export interface EstimatedBenefitResult {
+  connectionId: string;
+  result: {
+    Summary: string;
+    BenefitValue: number;
+  };
+}

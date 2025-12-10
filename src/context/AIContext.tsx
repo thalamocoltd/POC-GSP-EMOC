@@ -20,6 +20,8 @@ interface AIContextType {
   setActiveFieldId: (id: string | null) => void;
   openAssistantForField: (fieldId: string, question: string, onAutoFill: (value: any) => void, formData?: Partial<InitiationFormData>) => void;
   triggerAutoFill: (value: any) => void;
+  registerBulkFill: (callback: (data: any) => void) => void;
+  triggerBulkFill: (data: any) => void;
   lastQuestion: string | null;
   messages: Message[];
   addMessage: (message: Message) => void;
@@ -42,6 +44,7 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
   const [activeFieldId, setActiveFieldId] = useState<string | null>(null);
   const [lastQuestion, setLastQuestion] = useState<string | null>(null);
   const [autoFillCallback, setAutoFillCallback] = useState<((value: any) => void) | null>(null);
+  const [bulkFillCallback, setBulkFillCallback] = useState<((data: any) => void) | null>(null);
   const [scrollToCallback, setScrollToCallback] = useState<((id: string) => void) | null>(null);
   const [errorAutoFillCallback, setErrorAutoFillCallback] = useState<((field: string, value: any) => void) | null>(null);
   const [validationErrorsToReport, setValidationErrorsToReport] = useState<Record<string, string> | null>(null);
@@ -75,6 +78,26 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const registerBulkFill = (callback: (data: any) => void) => {
+    console.log('AIContext: registerBulkFill called');
+    setBulkFillCallback(() => callback);
+  };
+
+  const triggerBulkFill = (data: any) => {
+    console.log('AIContext: triggerBulkFill called with data:', data);
+    if (bulkFillCallback) {
+      const actualCallback = bulkFillCallback;
+      if (typeof actualCallback === 'function') {
+        console.log('AIContext: Executing bulk fill callback');
+        actualCallback(data);
+      } else {
+        console.warn('AIContext: bulkFillCallback is not a function');
+      }
+    } else {
+      console.warn('AIContext: No bulk fill callback registered');
+    }
+  };
+
   const reportValidationErrors = (errors: Record<string, string>, scrollToField: (id: string) => void, onAutoFill: (field: string, value: any) => void) => {
     console.log("AIContext: reportValidationErrors called with", errors);
     setScrollToCallback(() => scrollToField);
@@ -102,6 +125,8 @@ export const AIProvider = ({ children }: { children: ReactNode }) => {
       setActiveFieldId,
       openAssistantForField,
       triggerAutoFill,
+      registerBulkFill,
+      triggerBulkFill,
       lastQuestion,
       messages,
       addMessage,

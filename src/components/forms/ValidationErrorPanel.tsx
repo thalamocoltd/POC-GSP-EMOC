@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AlertCircle, X } from "lucide-react";
+import Draggable from "react-draggable";
+import type { DraggableData, DraggableEvent } from "react-draggable";
 import { cn } from "../ui/utils";
 
 interface ValidationErrorPanelProps {
@@ -17,6 +19,8 @@ export const ValidationErrorPanel = ({
   isVisible
 }: ValidationErrorPanelProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const nodeRef = useRef(null);
   const errorCount = Object.keys(errors).length;
   const errorEntries = Object.entries(errors);
 
@@ -35,24 +39,36 @@ export const ValidationErrorPanel = ({
     setIsCollapsed(!isCollapsed);
   };
 
+  const handleDrag = (e: DraggableEvent, data: DraggableData) => {
+    setPosition({ x: data.x, y: data.y });
+  };
+
   return (
     <AnimatePresence mode="wait">
       {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
-          className="fixed right-6 top-20 z-40"
-          style={{ width: '340px' }}
+        <Draggable
+          nodeRef={nodeRef}
+          position={position}
+          onDrag={handleDrag}
+          bounds="parent"
+          handle=".drag-handle"
         >
-          {/* Error Panel with Red Border */}
-          <div className="bg-white rounded-lg shadow-xl border-2 border-red-600 overflow-hidden">
-            {/* Header - Always Visible */}
-            <button
-              onClick={handleToggle}
-              className="w-full px-4 py-3 flex items-center gap-3 bg-red-100 border-b-2 border-red-300 hover:bg-red-200 transition-colors cursor-pointer"
-            >
+          <motion.div
+            ref={nodeRef}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed right-6 top-20 z-40"
+            style={{ width: '340px' }}
+          >
+            {/* Error Panel with Red Border */}
+            <div className="bg-white rounded-lg shadow-xl border-2 border-red-600 overflow-hidden">
+              {/* Header - Always Visible (Draggable Handle) */}
+              <button
+                onClick={handleToggle}
+                className="drag-handle w-full px-4 py-3 flex items-center gap-3 bg-red-100 border-b-2 border-red-300 hover:bg-red-200 transition-colors cursor-move"
+              >
               <div className="w-8 h-8 rounded-md border-2 border-red-600 bg-white flex items-center justify-center shrink-0">
                 <AlertCircle className="w-5 h-5 text-red-600" />
               </div>
@@ -105,7 +121,8 @@ export const ValidationErrorPanel = ({
               )}
             </AnimatePresence>
           </div>
-        </motion.div>
+          </motion.div>
+        </Draggable>
       )}
     </AnimatePresence>
   );

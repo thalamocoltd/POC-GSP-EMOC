@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, Sparkles, X, Shield, AlertCircle, CheckCircle2, MapPin, Factory, Building2, Warehouse, Clock, AlertTriangle, Check, Edit3 } from "lucide-react";
 import { Button } from "../ui/button";
@@ -148,7 +148,7 @@ const getDemoAutofillData = (priority?: string) =>
   priority === "emergency" ? DEMO_AUTOFILL_DATA_EMERGENCY : DEMO_AUTOFILL_DATA_NORMAL;
 
 export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, onFormDirtyChange, autofillPriority }: CreateRequestFormProps) => {
-  const { openAssistantForField, reportValidationErrors, reportValidationSuccess } = useAI();
+  const { openAssistantForField, reportValidationErrors, reportValidationSuccess, registerBulkFill } = useAI();
   const { setErrors: setContextErrors } = useValidationErrors();
   const [hasReportedErrors, setHasReportedErrors] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
@@ -319,20 +319,116 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
     }
   };
 
-  const handleAutoFill = (fieldId: string, value: any) => {
-    // Special handling for benefits (array field)
-    if (fieldId === 'benefits') {
-      if (Array.isArray(value)) {
-        handleInputChange(fieldId as keyof InitiationFormData, value);
-      } else {
-        // Toggle single value
-        handleBenefitsToggle(value);
+
+  // Map API response text values to form field IDs
+  const mapApiDataToFormData = (apiData: any): any => {
+    const mapped: any = { ...apiData };
+
+    // Map priorityId: "Normal" -> "priority-1", "Emergency" -> "priority-2"
+    if (apiData.priorityId) {
+      const priorityMap: Record<string, string> = {
+        'Normal': 'priority-1',
+        'Emergency': 'priority-2'
+      };
+      mapped.priorityId = priorityMap[apiData.priorityId] || apiData.priorityId;
+    }
+
+    // Map typeOfChange: "Plant Change (Impact PSI Cat 1,2,3)" -> "type-1", etc.
+    if (apiData.typeOfChange) {
+      const typeMap: Record<string, string> = {
+        'Plant Change (Impact PSI Cat 1,2,3)': 'type-1',
+        'Maintenance Change': 'type-2',
+        'Process Change (No Impact PSI Cat 1,2,3)': 'type-3',
+        'Override': 'type-4'
+      };
+      mapped.typeOfChange = typeMap[apiData.typeOfChange] || apiData.typeOfChange;
+    }
+
+    // Map lengthOfChange: "Permanent" -> "length-1", "Temporary" -> "length-2"
+    if (apiData.lengthOfChange) {
+      const lengthMap: Record<string, string> = {
+        'Permanent': 'length-1',
+        'Temporary': 'length-2',
+        'More than 3 days': 'length-3',
+        'Less than 3 days': 'length-4'
+      };
+      mapped.lengthOfChange = lengthMap[apiData.lengthOfChange] || apiData.lengthOfChange;
+    }
+
+    // Map tpmLossType: "Productivity" -> "tpm-4", etc.
+    if (apiData.tpmLossType) {
+      const tpmMap: Record<string, string> = {
+        'Safety': 'tpm-1',
+        'Environment': 'tpm-2',
+        'Quality': 'tpm-3',
+        'Productivity': 'tpm-4'
+      };
+      mapped.tpmLossType = tpmMap[apiData.tpmLossType] || apiData.tpmLossType;
+    }
+
+    // Map benefits: ["Productivity", "Environment"] -> ["benefit-4", "benefit-2"]
+    if (apiData.benefits && Array.isArray(apiData.benefits)) {
+      const benefitMap: Record<string, string> = {
+        'Safety': 'benefit-1',
+        'Environment': 'benefit-2',
+        'Community': 'benefit-3',
+        'Reputation': 'benefit-4',
+        'Law': 'benefit-5',
+        'Money': 'benefit-6'
+      };
+      mapped.benefits = apiData.benefits
+        .map((b: string) => benefitMap[b])
+        .filter((id: string | undefined) => id !== undefined);
+    }
+
+    return mapped;
+  };
+
+  const handleAutoFill = useCallback((fieldIdOrData: string | Record<string, any>, value?: any) => {
+    console.log('CreateRequestForm: handleAutoFill called with:', fieldIdOrData);
+    // Check if this is bulk fill (object passed as first parameter)
+    if (typeof fieldIdOrData === 'object' && fieldIdOrData !== null) {
+      // Bulk fill mode - map API data to form field IDs first
+      const apiData = fieldIdOrData;
+      const mappedData = mapApiDataToFormData(apiData);
+      console.log('CreateRequestForm: Original API data:', apiData);
+      console.log('CreateRequestForm: Mapped data:', mappedData);
+      console.log('CreateRequestForm: Processing bulk fill with', Object.keys(mappedData).length, 'fields');
+
+      Object.entries(mappedData).forEach(([fieldId, fieldValue]) => {
+        // Apply each field individually
+        console.log(`CreateRequestForm: Setting field ${fieldId} =`, fieldValue);
+        if (fieldId === 'benefits') {
+          if (Array.isArray(fieldValue)) {
+            handleInputChange(fieldId as keyof InitiationFormData, fieldValue);
+          }
+        } else if (fieldId in formData) {
+          handleInputChange(fieldId as keyof InitiationFormData, fieldValue);
+        }
+      });
+      // Highlight first field as indicator
+      const firstField = Object.keys(bulkData)[0];
+      if (firstField) {
+        setHighlightedField(firstField);
+        setTimeout(() => setHighlightedField(null), 2000);
       }
     } else {
-      handleInputChange(fieldId as keyof InitiationFormData, value);
+      // Single field fill mode (original behavior)
+      const fieldId = fieldIdOrData as string;
+      if (fieldId === 'benefits') {
+        if (Array.isArray(value)) {
+          handleInputChange(fieldId as keyof InitiationFormData, value);
+        } else {
+          // Toggle single value
+          handleBenefitsToggle(value);
+        }
+      } else {
+        handleInputChange(fieldId as keyof InitiationFormData, value);
+      }
+      setHighlightedField(fieldId);
     }
-    setHighlightedField(fieldId);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleBenefitsToggle = (benefitId: string) => {
     setFormData(prev => {
@@ -342,6 +438,12 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
       return { ...prev, benefits: newBenefits };
     });
   };
+
+  // Register bulk fill callback for Quick Fill (must be after handleAutoFill is defined)
+  useEffect(() => {
+    console.log('CreateRequestForm: Registering bulk fill callback');
+    registerBulkFill(handleAutoFill);
+  }, [registerBulkFill, handleAutoFill]);
 
   const renderLabelWithAI = (label: string, fieldId: string, required: boolean = false) => (
     <div className="flex items-center gap-2 mb-2 group">
@@ -508,6 +610,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                 <AlertCircle className="w-5 h-5 text-[#006699]" />
                 General Information
               </h3>
+
 
               <div className="grid gap-6">
                 {/* Read-only fields */}
@@ -1159,6 +1262,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
             </div>
           </AlertDialogContent>
         </AlertDialog>
+
 
         {/* Validation Error Panel - Right Side */}
         <ValidationErrorPanel

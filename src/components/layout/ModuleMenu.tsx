@@ -153,7 +153,7 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isRe
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-blue-600 animate-pulse" />
               <h3 className="text-xs font-semibold text-[#68737D] uppercase tracking-wider">
-                Next Step
+                Pending Actions
               </h3>
             </div>
 
@@ -169,13 +169,12 @@ export const ModuleMenu = ({ isMobile, currentStep = 1, maxReachedStep = 0, isRe
                     }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm rounded-lg
-                             bg-blue-50 border border-blue-200 hover:border-blue-300 hover:bg-blue-100
-                             text-blue-900 transition-colors cursor-pointer"
+                             text-blue-900 transition-colors cursor-pointer bg-red-100 border-orange-200 hover:border-orange-300 hover:bg-orange-100 text-orange-900"
                 >
                   <Clock className="w-4 h-4 shrink-0 animate-pulse" />
                   <div className="flex-1 min-w-0">
                     <span className="font-medium text-xs block">Item : {task.taskName}</span>
-                    <span className="text-xs text-blue-600">Part {task.step}</span>
+                    {/* <span className="text-xs text-blue-600">Part {task.step}</span> */}
                   </div>
                 </button>
               ))}
