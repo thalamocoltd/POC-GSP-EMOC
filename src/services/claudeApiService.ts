@@ -173,7 +173,7 @@ class ClaudeApiService {
    * Send chat message to n8n webhook
    * @param userMessage - The user's message
    * @param connectionId - Unique numeric connection ID for this conversation
-   * @returns AI response text
+   * @returns AI response text from the result field
    */
   async sendChatMessage(userMessage: string, connectionId: number): Promise<string> {
     try {
@@ -207,8 +207,22 @@ class ClaudeApiService {
 
       const data = await response.json();
 
-      // Return the AI response text - try multiple possible field names
-      return data.response || data.message || data.text || '';
+      // Handle direct JSON response (no wrapper layer)
+      // Response format: { connectionId: string, result: string }
+      if (data.result) {
+        return data.result;
+      }
+
+      // Fallback: try nested JSON pattern (in case of wrapper)
+      if (data.response) {
+        const parsedResponse = JSON.parse(data.response);
+        if (parsedResponse.result) {
+          return parsedResponse.result;
+        }
+      }
+
+      throw new Error('Invalid API response: missing result field');
+
     } catch (error: any) {
       // Handle abort/timeout
       if (error.name === 'AbortError') {
@@ -217,9 +231,7 @@ class ClaudeApiService {
 
       // Handle network errors
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error(
-          'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต'
-        );
+        throw new Error('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต');
       }
 
       // Handle JSON parsing errors
