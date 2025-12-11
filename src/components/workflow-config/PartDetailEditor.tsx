@@ -111,7 +111,10 @@ export const PartDetailEditor = ({
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-gray-900">Part Items</h3>
-
+          <Button variant="outline" size="sm" onClick={handleAddItem}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Item
+          </Button>
         </div>
 
         {localItems.length > 0 ? (

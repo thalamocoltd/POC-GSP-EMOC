@@ -36,10 +36,6 @@ export const ReportTable: React.FC = () => {
                 <h3 className="text-lg font-bold text-[#1d3654]">Detailed MOC Reports</h3>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm">
-                        <Download className="w-4 h-4 mr-2" />
-                        Export PDF
-                    </Button>
-                    <Button variant="outline" size="sm">
                         <FileSpreadsheet className="w-4 h-4 mr-2" />
                         Export Excel
                     </Button>
