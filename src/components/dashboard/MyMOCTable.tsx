@@ -40,7 +40,7 @@ interface MOCRecord {
   id: string;
   mocNo: string;
   title: string;
-  typeOfChange: "Plant Change (Impact PSI Cat 1,2,3)" | "Maintenance Change" | "Process Change (No Impact PSI Cat 1,2,3)" | "Override";
+  typeOfChange: "Plant Change (Impact PSI Cat 1,2,3)" | "Maintenance Change" | "Plant Change (No Impact PSI Cat 1,2,3)" | "Override";
   lengthOfChange: "Permanent" | "Temporary" | "More than 3 days" | "Less than 3 days";
   task: string;
   projectEngineer: string;
@@ -55,7 +55,7 @@ const generateMockData = (): MOCRecord[] => {
   const typesOfChange: MOCRecord["typeOfChange"][] = [
     "Plant Change (Impact PSI Cat 1,2,3)",
     "Maintenance Change",
-    "Process Change (No Impact PSI Cat 1,2,3)",
+    "Plant Change (No Impact PSI Cat 1,2,3)",
     "Override"
   ];
   const standardLengths = ["Permanent", "Temporary"];
@@ -133,7 +133,7 @@ const getTypeOfChangeColor = (typeOfChange: string) => {
   switch (typeOfChange) {
     case "Plant Change (Impact PSI Cat 1,2,3)": return "bg-blue-100 text-blue-700 border-transparent hover:bg-blue-200";
     case "Maintenance Change": return "bg-purple-100 text-purple-700 border-transparent hover:bg-purple-200";
-    case "Process Change (No Impact PSI Cat 1,2,3)": return "bg-green-100 text-green-700 border-transparent hover:bg-green-200";
+    case "Plant Change (No Impact PSI Cat 1,2,3)": return "bg-green-100 text-green-700 border-transparent hover:bg-green-200";
     case "Override": return "bg-red-100 text-red-700 border-transparent hover:bg-red-200";
     default: return "bg-gray-100 text-gray-600 border-transparent";
   }
@@ -323,7 +323,7 @@ export const MyMOCTable = ({ onViewRequest }: MyMOCTableProps) => {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Plant Change (Impact PSI Cat 1,2,3)">Plant Change (Impact PSI Cat 1,2,3)</SelectItem>
                 <SelectItem value="Maintenance Change">Maintenance Change</SelectItem>
-                <SelectItem value="Process Change (No Impact PSI Cat 1,2,3)">Process Change (No Impact PSI Cat 1,2,3)</SelectItem>
+                <SelectItem value="Plant Change (No Impact PSI Cat 1,2,3)">Plant Change (No Impact PSI Cat 1,2,3)</SelectItem>
                 <SelectItem value="Override">Override</SelectItem>
               </SelectContent>
             </Select>

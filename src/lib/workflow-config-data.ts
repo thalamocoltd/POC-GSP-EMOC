@@ -333,7 +333,7 @@ export const INITIAL_WORKFLOW_DATA: WorkflowTemplateData = {
       id: generateId("template"),
       formNo: 5,
       formName: "Process Change - Permanent",
-      typeOfChange: "Process Change (No Impact PSI Cat 1,2,3)",
+      typeOfChange: "Plant Change (No Impact PSI Cat 1,2,3)",
       lengthOfChange: "Permanent",
       parts: createParts(generateId("template"))
     },
@@ -341,7 +341,7 @@ export const INITIAL_WORKFLOW_DATA: WorkflowTemplateData = {
       id: generateId("template"),
       formNo: 6,
       formName: "Process Change - Temporary",
-      typeOfChange: "Process Change (No Impact PSI Cat 1,2,3)",
+      typeOfChange: "Plant Change (No Impact PSI Cat 1,2,3)",
       lengthOfChange: "Temporary",
       parts: createParts(generateId("template"))
     },
@@ -379,7 +379,7 @@ export const getTypeOfChangeColor = (typeOfChange: string): string => {
       return "bg-blue-100 text-blue-700 border-transparent hover:bg-blue-200";
     case "Maintenance Change":
       return "bg-purple-100 text-purple-700 border-transparent hover:bg-purple-200";
-    case "Process Change (No Impact PSI Cat 1,2,3)":
+    case "Plant Change (No Impact PSI Cat 1,2,3)":
       return "bg-green-100 text-green-700 border-transparent hover:bg-green-200";
     case "Override":
       return "bg-red-100 text-red-700 border-transparent hover:bg-red-200";

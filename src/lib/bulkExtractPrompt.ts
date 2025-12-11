@@ -24,7 +24,7 @@ export function getBulkExtractPrompt(): string {
 3. typeOfChange (string): ประเภทของการเปลี่ยนแปลง
    - "type-1" = Plant Change (มีผลต่อ PSI Cat 1,2,3)
    - "type-2" = Maintenance Change
-   - "type-3" = Process Change (ไม่มีผลต่อ PSI Cat 1,2,3)
+   - "type-3" = Plant Change (ไม่มีผลต่อ PSI Cat 1,2,3)
    - "type-4" = Override
 
 4. lengthOfChange (string): ระยะเวลาของการเปลี่ยนแปลง

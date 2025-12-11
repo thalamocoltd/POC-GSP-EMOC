@@ -62,7 +62,7 @@ export const LENGTH_OF_CHANGE_OPTIONS_ALL = [
 export const TYPE_OF_CHANGE_OPTIONS = [
   { id: "type-1", name: "Plant Change (Impact PSI Cat 1,2,3)" },
   { id: "type-2", name: "Maintenance Change" },
-  { id: "type-3", name: "Process Change (No Impact PSI Cat 1,2,3)" },
+  { id: "type-3", name: "Plant Change (No Impact PSI Cat 1,2,3)" },
   { id: "type-4", name: "Override" }
 ];
 
@@ -194,7 +194,7 @@ export function generateMockMOCRequests(): MockMOCRequest[] {
   const typeChanges = [
     { id: "type-1" as const, name: "Plant Change (Impact PSI Cat 1,2,3)" },
     { id: "type-2" as const, name: "Maintenance Change" },
-    { id: "type-3" as const, name: "Process Change (No Impact PSI Cat 1,2,3)" },
+    { id: "type-3" as const, name: "Plant Change (No Impact PSI Cat 1,2,3)" },
     { id: "type-4" as const, name: "Override" }
   ];
 

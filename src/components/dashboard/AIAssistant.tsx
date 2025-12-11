@@ -59,7 +59,7 @@ const FIELD_HELP_DATA: Record<string, {
     choices: [
       { label: "Plant Change (Impact PSI Cat 1,2,3) - Physical facility or infrastructure modification", value: "type-1" },
       { label: "Maintenance Change - Equipment repair or replacement activities", value: "type-2" },
-      { label: "Process Change (No Impact PSI Cat 1,2,3) - Production process or operating procedure modification", value: "type-3" },
+      { label: "Plant Change (No Impact PSI Cat 1,2,3) - Production process or operating procedure modification", value: "type-3" },
       { label: "Override - Emergency change with override approval required", value: "type-4" }
     ]
   },

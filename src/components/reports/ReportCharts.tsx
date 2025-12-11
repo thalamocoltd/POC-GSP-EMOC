@@ -15,7 +15,7 @@ export const ReportCharts: React.FC = () => {
     const typeData = [
         { name: "Plant Change", value: MOCK_MOC_REQUESTS.filter(r => r.typeOfChange === "type-1").length, color: "#006699" },
         { name: "Maintenance", value: MOCK_MOC_REQUESTS.filter(r => r.typeOfChange === "type-2").length, color: "#8b5cf6" },
-        { name: "Process Change", value: MOCK_MOC_REQUESTS.filter(r => r.typeOfChange === "type-3").length, color: "#ec4899" },
+        { name: "Plant Change", value: MOCK_MOC_REQUESTS.filter(r => r.typeOfChange === "type-3").length, color: "#ec4899" },
         { name: "Override", value: MOCK_MOC_REQUESTS.filter(r => r.typeOfChange === "type-4").length, color: "#f59e0b" }
     ];
 

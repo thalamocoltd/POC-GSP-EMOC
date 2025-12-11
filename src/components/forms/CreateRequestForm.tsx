@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import { ArrowLeft, Sparkles, X, Shield, AlertCircle, CheckCircle2, MapPin, Factory, Building2, Warehouse, Clock, AlertTriangle, Check, Edit3 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { CurrencyInput } from "../ui/currency-input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -338,7 +339,7 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
       const typeMap: Record<string, string> = {
         'Plant Change (Impact PSI Cat 1,2,3)': 'type-1',
         'Maintenance Change': 'type-2',
-        'Process Change (No Impact PSI Cat 1,2,3)': 'type-3',
+        'Plant Change (No Impact PSI Cat 1,2,3)': 'type-3',
         'Override': 'type-4'
       };
       mapped.typeOfChange = typeMap[apiData.typeOfChange] || apiData.typeOfChange;
@@ -879,17 +880,14 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
 
                   <div className="space-y-2" id="field-lossEliminateValue">
                     {renderLabelWithAI("Loss Eliminate Value (THB)", "lossEliminateValue", true)}
-                    <Input
+                    <CurrencyInput
+                      value={formData.lossEliminateValue}
+                      onChange={(value: number) => handleInputChange('lossEliminateValue', value)}
+                      placeholder="0.00"
                       className={cn(
                         "h-11 border-[#D4D9DE]",
                         errors.lossEliminateValue && "border-red-300"
                       )}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.lossEliminateValue || ""}
-                      onChange={(e) => handleInputChange('lossEliminateValue', parseFloat(e.target.value) || 0)}
                     />
                     {errors.lossEliminateValue && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.lossEliminateValue}</span>}
                   </div>
@@ -967,34 +965,28 @@ export const CreateRequestForm = ({ onBack, onSubmit, isAIAutofilled = false, on
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="space-y-2" id="field-estimatedBenefit">
                     {renderLabelWithAI("Estimated Benefit (THB)", "estimatedBenefit", true)}
-                    <Input
+                    <CurrencyInput
+                      value={formData.estimatedBenefit}
+                      onChange={(value: number) => handleInputChange('estimatedBenefit', value)}
+                      placeholder="0.00"
                       className={cn(
                         "h-11 border-[#D4D9DE]",
                         errors.estimatedBenefit && "border-red-300"
                       )}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.estimatedBenefit || ""}
-                      onChange={(e) => handleInputChange('estimatedBenefit', parseFloat(e.target.value) || 0)}
                     />
                     {errors.estimatedBenefit && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedBenefit}</span>}
                   </div>
 
                   <div className="space-y-2" id="field-estimatedCost">
                     {renderLabelWithAI("Estimated Cost (THB)", "estimatedCost", true)}
-                    <Input
+                    <CurrencyInput
+                      value={formData.estimatedCost}
+                      onChange={(value: number) => handleInputChange('estimatedCost', value)}
+                      placeholder="0.00"
                       className={cn(
                         "h-11 border-[#D4D9DE]",
                         errors.estimatedCost && "border-red-300"
                       )}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      value={formData.estimatedCost || ""}
-                      onChange={(e) => handleInputChange('estimatedCost', parseFloat(e.target.value) || 0)}
                     />
                     {errors.estimatedCost && <span className="text-xs text-red-500 flex items-center gap-1 mt-1"><AlertCircle className="w-3 h-3" /> {errors.estimatedCost}</span>}
                   </div>
