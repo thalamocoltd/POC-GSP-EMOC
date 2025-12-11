@@ -32,8 +32,8 @@ class ClaudeApiService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      // Use Vite proxy to avoid CORS issues in development
-      const response = await fetch('/api/Ai/ask', {
+      // Use absolute path to backend API
+      const response = await fetch('http://72.61.117.172:8090/api/Ai/ask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,8 +109,8 @@ class ClaudeApiService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      // Use Vite proxy to avoid CORS issues in development
-      const response = await fetch('/api/Ai/ask2', {
+      // Use absolute path to backend API
+      const response = await fetch('http://72.61.117.172:8090/api/Ai/ask2', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
